@@ -1,1 +1,0 @@
-"""Algorithm that solves the time assignment problem."""
