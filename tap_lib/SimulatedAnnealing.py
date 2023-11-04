@@ -37,18 +37,17 @@ def plot_scope(scope: Scope) -> None:
     axes[0, 0].set_ylabel(ScopeParams.temperature.value)
     axes[0, 0].grid(True)
 
-    axes[1, 0].plot(scope[ScopeParams.iteration], scope[ScopeParams.delta_energy])
+    axes[1, 0].plot(scope[ScopeParams.iteration], scope[ScopeParams.delta_energy], 'b.', markersize=1)
     axes[1, 0].set_title(ScopeParams.delta_energy.value)
     axes[1, 0].set_xlabel(ScopeParams.iteration.value)
     axes[1, 0].set_ylabel(ScopeParams.delta_energy.value)
     axes[1, 0].grid(True)
 
-    axes[1, 1].plot(scope[ScopeParams.iteration], scope[ScopeParams.probability_of_transition])
+    axes[1, 1].plot(scope[ScopeParams.iteration], scope[ScopeParams.probability_of_transition], 'b.', markersize=1)
     axes[1, 1].set_title(ScopeParams.probability_of_transition.value)
     axes[1, 1].set_xlabel(ScopeParams.iteration.value)
     axes[1, 1].set_ylabel(ScopeParams.probability_of_transition.value)
     axes[1, 1].grid(True)
-    # axes[1, 1].set_ylim([0, max(scope[ScopeParams.probability_of_transition])])
 
     axes[0, 1].plot(scope[ScopeParams.iteration], scope[ScopeParams.cost_function])
     axes[0, 1].set_title(ScopeParams.cost_function.value)
@@ -154,16 +153,6 @@ def main():
     def sol_gen_fun(vec):
         (x, y) = vec
         step = 0.01
-        # if randint(2) == 0:
-        #     if randint(2) == 0:
-        #         x += random(1) * step
-        #     else:
-        #         x -= random(1) * step
-        # else:
-        #     if randint(2) == 0:
-        #         y += random(1) * step
-        #     else:
-        #         y -= random(1) * step
 
         if randint(2) == 0:
             if randint(2) == 0:
