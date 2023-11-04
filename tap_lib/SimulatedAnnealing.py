@@ -4,7 +4,7 @@ from typing import Callable, Any, Dict, List, Tuple
 from numpy import int32, int64, float32, float64, min, max
 from numpy.random import random
 from matplotlib.pyplot import subplots, show
-from DataTypes import ScopeParams, Scope, PositiveNumber, RealNumber, NonNegativeInt
+from tap_lib.DataTypes.DataTypes import ScopeParams, Scope, PositiveNumber, RealNumber, NonNegativeInt
 
 
 class SimulatedAnnealingValidationError(Exception):
