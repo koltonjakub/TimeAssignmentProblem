@@ -14,9 +14,11 @@ PositiveNumber = Union[float, float32, float64, int, int32, int64]
 
 class Scope(BaseModel):
     """BaseModel that stores all the runtime data of simulation"""
+
     class Config(BaseConfig):
+        """Config sets crucial BaseModel settings"""
         arbitrary_types_allowed = True  # Allows for validation of numpy numeric types
-        validate_assignment = True  # Allows the model to validate data every time
+        validate_assignment = True  # Allows the model to validate data every time field is assigned/changed
         smart_union = True  # Prevents unnecessary rounding to int
 
     iteration: Annotated[List[NonNegativeInt], Field(ge=0)] = []
@@ -29,6 +31,7 @@ class Scope(BaseModel):
 
 class ScopeParams(Enum):
     """Enum type of all data available within Scope type"""
+
     iteration: str = 'iteration'
     temperature: str = 'temperature'
     delta_energy: str = "delta_energy"
@@ -106,7 +109,7 @@ class ResourceManager:
 
 
 def resources_creation_example():
-    manager = ResourceManager()  # call the manager, should be used as singleton
+    manager = ResourceManager()  # call the manager
 
     employees = [manager.create_resource(data={'hourly_cost': 1, 'hourly_gain': 1,  # pass data
                                                'name': 'John', 'surname': 'Smith'},  # pass data
