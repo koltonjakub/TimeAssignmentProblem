@@ -1,66 +1,26 @@
 """Algorithm that performs simulated annealing method."""
 
 from typing import Callable, Any, Dict, List, Tuple
-from numpy import int32, int64, float32, float64, min, max
+from numpy import int32, int64, float32, float64
 from numpy.random import random
-from matplotlib.pyplot import subplots, show
-from tap_lib.DataTypes.DataTypes import ScopeParams, Scope, PositiveNumber, RealNumber, NonNegativeInt
+from SimulatedAnnealing.Utils.DataTypes import ScopeParams, Scope, PositiveNumber, RealNumber, NonNegativeInt
 
 
 class SimulatedAnnealingValidationError(Exception):
-    def __init__(self, message, value=None):
+    def __init__(self, message, value=None) -> Exception:
         self.value = value
         self.message = message
         super().__init__(self.message)
 
 
-def plot_scope(scope: Scope) -> None:
-    """
-    Function that plots runtime values of simulation.
-
-    :param scope: Scope of simulated annealing algorithm
-    :type scope: Scope
-    :return: None    :rtype:
-    """
-
-    figure, axes = subplots(2, 2, figsize=(10, 10))
-
-    axes[0, 0].plot(scope.iteration, scope.temperature)
-    axes[0, 0].set_title(ScopeParams.iteration.value)
-    axes[0, 0].set_xlabel(ScopeParams.iteration.value)
-    axes[0, 0].set_ylabel(ScopeParams.temperature.value)
-    axes[0, 0].grid(True)
-
-    axes[1, 0].plot(scope.iteration, scope.delta_energy, 'b.', markersize=1)
-    axes[1, 0].set_title(ScopeParams.delta_energy.value)
-    axes[1, 0].set_xlabel(ScopeParams.iteration.value)
-    axes[1, 0].set_ylabel(ScopeParams.delta_energy.value)
-    axes[1, 0].grid(True)
-
-    axes[1, 1].plot(scope.iteration, scope.probability_of_transition, 'b.', markersize=1)
-    axes[1, 1].set_title(ScopeParams.probability_of_transition.value)
-    axes[1, 1].set_xlabel(ScopeParams.iteration.value)
-    axes[1, 1].set_ylabel(ScopeParams.probability_of_transition.value)
-    axes[1, 1].grid(True)
-
-    axes[0, 1].plot(scope.iteration, scope.cost_function)
-    axes[0, 1].set_title(ScopeParams.cost_function.value)
-    axes[0, 1].set_xlabel(ScopeParams.iteration.value)
-    axes[0, 1].set_ylabel(ScopeParams.cost_function.value)
-    axes[0, 1].grid(True)
-    axes[0, 1].set_ylim([min([0, min(scope.cost_function)]), max(scope.cost_function) + 0.1])
-
-    show()
-
-
-def generate_sa_algorithm(Solution: Any) -> Callable:
-    def simulated_annealing(cost: Callable[[Solution], RealNumber],
-                            init_sol: Solution,
-                            sol_gen: Callable[[Solution], Solution],
+def generate_sa_algorithm(SolutionTemplateType: Any) -> Callable:
+    def simulated_annealing(cost: Callable[[SolutionTemplateType], RealNumber],
+                            init_sol: SolutionTemplateType,
+                            sol_gen: Callable[[SolutionTemplateType], SolutionTemplateType],
                             init_temp: PositiveNumber,
                             cool: Callable[[PositiveNumber, int], PositiveNumber],
                             probability: Callable[[RealNumber, PositiveNumber], RealNumber],
-                            max_iterations: NonNegativeInt = 1000) -> Tuple[Solution, Scope]:
+                            max_iterations: NonNegativeInt = 1000) -> Tuple[SolutionTemplateType, Scope]:
         """
         Function takes all the arguments that simulated annealing method requires and returns the best possible
         minimal visited_solution.
@@ -68,9 +28,9 @@ def generate_sa_algorithm(Solution: Any) -> Callable:
         :param cost: Objective function that is being optimized
         :type cost: Callable returning real value
         :param init_sol: Starting visited_solution for the algorithm
-        :type init_sol: Solution
+        :type init_sol: SolutionTemplateType
         :param sol_gen: Function that returns next visited_solution, randomly different from provided
-        :type sol_gen: Solution
+        :type sol_gen: Callable returning SolutionTemplateType
         :param init_temp: Starting temperature
         :type init_temp: Real value
         :param cool: Function that cools the temperature
@@ -80,8 +40,10 @@ def generate_sa_algorithm(Solution: Any) -> Callable:
         :param max_iterations: Max iterations of the main loop
         :type max_iterations: int
         :return: Most optimal visited_solution that has been found during search, runtime simulation values
-        :rtype: Solution, Scope
+        :rtype: SolutionTemplateType, Scope
         """
+
+        # TODO add validation for SolutionTemplateType Type, can be performed within solution generator function
 
         if not callable(cost):
             raise SimulatedAnnealingValidationError(message="cost is not callable")
@@ -111,19 +73,19 @@ def generate_sa_algorithm(Solution: Any) -> Callable:
             ScopeParams.visited_solution: list()
         }
 
-        def update_scope(scope, i, temp, delta_en, prob, cost_val, sol):
-            scope[ScopeParams.iteration].append(i)
-            scope[ScopeParams.temperature].append(temp)
-            scope[ScopeParams.delta_energy].append(delta_en)
-            scope[ScopeParams.probability_of_transition].append(prob)
-            scope[ScopeParams.cost_function].append(cost_val)
-            scope[ScopeParams.visited_solution].append(sol)
+        def update_scope_data(scope_data, i, temp, delta_en, prob, cost_val, sol):
+            scope_data[ScopeParams.iteration].append(i)
+            scope_data[ScopeParams.temperature].append(temp)
+            scope_data[ScopeParams.delta_energy].append(delta_en)
+            scope_data[ScopeParams.probability_of_transition].append(prob)
+            scope_data[ScopeParams.cost_function].append(cost_val)
+            scope_data[ScopeParams.visited_solution].append(sol)
 
-        solution: Solution = init_sol
+        solution: SolutionTemplateType = init_sol
         temperature: PositiveNumber = init_temp
 
         for it in range(0, max_iterations):
-            neighbour: Solution = sol_gen(solution)
+            neighbour: SolutionTemplateType = sol_gen(solution)
 
             solution_cost = cost(solution)
             neighbour_cost = cost(neighbour)
@@ -132,23 +94,23 @@ def generate_sa_algorithm(Solution: Any) -> Callable:
             prob_of_transition: RealNumber = probability(delta_energy, temperature)
 
             if neighbour_cost < solution_cost:
-                solution: Solution = neighbour
+                solution: SolutionTemplateType = neighbour
             else:
                 if random(1) < prob_of_transition:
-                    solution: Solution = neighbour
+                    solution: SolutionTemplateType = neighbour
 
-            update_scope(scope=simulation_scope_data,
-                         i=it,
-                         temp=temperature,
-                         delta_en=delta_energy,
-                         prob=prob_of_transition,
-                         cost_val=cost(solution),
-                         sol=solution)
+            update_scope_data(scope_data=simulation_scope_data,
+                              i=it,
+                              temp=temperature,
+                              delta_en=delta_energy,
+                              prob=prob_of_transition,
+                              cost_val=cost(solution),
+                              sol=solution)
 
             temperature: PositiveNumber = cool(temperature, it)
 
-        # create Scope only after the algorithm has ended, validations take too long if reassignments were to be
-        # performed within the main loop
+        # create Scope only after the algorithm has ended, validations take too long if validation of reassignments
+        # were to be performed in the main loop
         simulation_scope = Scope()
 
         simulation_scope.iteration = simulation_scope_data[ScopeParams.iteration]
@@ -167,6 +129,7 @@ def main():
     from typing import Tuple, Union
     from numpy.random import randint
     from numpy import exp
+    from SimulatedAnnealing.Visualisation import plot_scope
     import matplotlib.pyplot as plt
 
     def cost_fun(vec):
@@ -215,7 +178,7 @@ def main():
     solution_type = Tuple[Union[int, float], Union[int, float]]
     sim_an = generate_sa_algorithm(solution_type)
 
-    max_iter = 10**3
+    max_iter = 10 ** 3
     start_temp = 0.1
     init_sol_tup = (2, -2)
 
