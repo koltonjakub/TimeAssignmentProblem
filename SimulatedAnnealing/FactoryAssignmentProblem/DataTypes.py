@@ -1,7 +1,7 @@
 """This file contains all data types used in project"""
 
-from pydantic import BaseModel, Field, BaseConfig, conint
-from typing import Union, Dict, List, Any, Annotated
+from pydantic import BaseModel, conint
+from typing import Union, Dict, List, Any
 from collections import defaultdict
 from enum import Enum
 
@@ -10,36 +10,6 @@ import numpy as np
 NonNegativeInt = Union[int, np.int32, np.int64]
 RealNumber = Union[float, np.float32, np.float64, int, np.int32, np.int64]
 PositiveNumber = Union[float, np.float32, np.float64, int, np.int32, np.int64]
-
-
-# TODO move to Visualisation.py
-class Scope(BaseModel):
-    """BaseModel that stores all runtime data of simulation"""
-
-    class Config(BaseConfig):
-        """Config sets crucial BaseModel settings"""
-        arbitrary_types_allowed = True  # Allows for validation of numpy numeric types
-        validate_assignment = True  # Allows the model to validate data every time_span field is assigned/changed
-        smart_union = True  # Prevents unnecessary rounding to int
-
-    iteration: Annotated[List[NonNegativeInt], Field(ge=0)] = []
-    temperature: Annotated[List[PositiveNumber], Field(ge=0)] = []
-    delta_energy: Annotated[List[RealNumber], Field()] = []
-    probability_of_transition: Annotated[List[RealNumber], Field(ge=0, le=1)] = []
-    cost_function: Annotated[List[RealNumber], Field()] = []
-    visited_solution: Annotated[List[Any], Any] = []
-
-
-# TODO move to Visualisation.py
-class ScopeParams(Enum):
-    """Enum type of all data available within Scope type"""
-
-    iteration: str = 'encounter'
-    temperature: str = 'temperature'
-    delta_energy: str = "delta_energy"
-    probability_of_transition: str = "prob_of_trans"
-    cost_function: str = 'objective_value'
-    visited_solution: str = 'visited_solution'
 
 
 class Resource(BaseModel):
@@ -352,23 +322,6 @@ def validation_errors_example():
                                 resource_type=AvailableResources.EMPLOYEE)
 
 
-def scope_usage_example():
-    scp = Scope()
-    scp.iteration = [1, 0, 2.0]  # Type coercion is always ON, probably due to
-    scp.iteration += [1]  # The only proper way to append to list, .append() method omits the pydantic validation
-
-    scp.probability_of_transition = [1.2]
-    scp.probability_of_transition += [1.2]
-    scp.delta_energy = [-1]
-    scp.delta_energy += [-1]
-
-    scp.visited_solution += [(1, 1)]
-
-    print('Scope:')
-    print(scp)
-    print()
-
-
 def solution_usage_example():
     res_manager = ResourceManager()
     machines = [res_manager.create_resource(data={'hourly_cost': 1, 'hourly_gain': 1, 'inventory_nr': 11},
@@ -414,7 +367,6 @@ def solution_usage_example():
 
 if __name__ == "__main__":
     # solution_usage_example()
-    # scope_usage_example()
     # resources_creation_example()
     # validation_errors_example()
     pass

@@ -3,7 +3,7 @@
 from typing import Callable, Any, Dict, List, Tuple
 from numpy import int32, int64, float32, float64
 from numpy.random import random
-from SimulatedAnnealing.Utils.DataTypes import ScopeParams, Scope, PositiveNumber, RealNumber, NonNegativeInt
+from SimulatedAnnealing.Visualisation.Visualisation import ScopeParams, Scope, PositiveNumber, RealNumber, NonNegativeInt
 
 
 class SimulatedAnnealingValidationError(Exception):
@@ -44,6 +44,7 @@ def generate_sa_algorithm(SolutionTemplateType: Any) -> Callable:
         """
 
         # TODO add validation for SolutionTemplateType Type, can be performed within solution generator function
+        # TODO add remembering of the best encountered solution
 
         if not callable(cost):
             raise SimulatedAnnealingValidationError(message="objective_value is not callable")
@@ -129,7 +130,7 @@ def main():
     from typing import Tuple, Union
     from numpy.random import randint
     from numpy import exp
-    from SimulatedAnnealing.Visualisation import plot_scope
+    from Visualisation.Visualisation import plot_scope
     import matplotlib.pyplot as plt
 
     def cost_fun(vec):
