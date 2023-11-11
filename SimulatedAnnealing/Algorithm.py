@@ -3,7 +3,7 @@
 from typing import Callable, Any, Dict, List, Tuple
 from numpy import int32, int64, float32, float64
 from numpy.random import random
-from SimulatedAnnealing.FactoryAssignmentProblem.DataTypes import ScopeParams, Scope, PositiveNumber, RealNumber, NonNegativeInt
+from SimulatedAnnealing.Utils.DataTypes import ScopeParams, Scope, PositiveNumber, RealNumber, NonNegativeInt
 
 
 class SimulatedAnnealingValidationError(Exception):

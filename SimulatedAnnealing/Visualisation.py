@@ -3,7 +3,7 @@
 
 from matplotlib.pyplot import subplots, show
 from numpy import min, max
-from SimulatedAnnealing.FactoryAssignmentProblem.DataTypes import Scope, ScopeParams
+from SimulatedAnnealing.Utils.DataTypes import Scope, ScopeParams
 
 
 def plot_scope(scope: Scope) -> None:
