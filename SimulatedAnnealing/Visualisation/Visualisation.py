@@ -19,13 +19,17 @@ class Scope(BaseModel):
     class Config(BaseConfig):
         """Config sets crucial BaseModel settings"""
         arbitrary_types_allowed = True  # Allows for validation of numpy numeric types
-        validate_assignment = True  # Allows the model to validate data every time_span field is assigned/changed
-        smart_union = True  # Prevents unnecessary rounding to int
+        validate_assignment = True  # Allows the model to validate data every time field is assigned/changed
+        smart_union = True  # Prevents unnecessary casts to not matching data types
 
-    # TODO add best solution encountered cost function field
+    # TODO add best solution encountered cost function field, chatGPT suggests:
+    # 1: Class Variables
+    # 2: extra field: Dict[str: str] - maps attribute name to its label
+    # 3: Custom Metaclass or Decorator(probably overkill)
+
     iteration: Annotated[List[NonNegativeInt], Field(ge=0)] = []
     temperature: Annotated[List[PositiveNumber], Field(ge=0)] = []
-    delta_energy: Annotated[List[RealNumber], Field()] = []
+    delta_energy: Annotated[List[RealNumber], Field()] = []  # probably useless
     probability_of_transition: Annotated[List[RealNumber], Field(ge=0, le=1)] = []
     cost_function: Annotated[List[RealNumber], Field()] = []
     visited_solution: Annotated[List[Any], Any] = []
@@ -34,7 +38,7 @@ class Scope(BaseModel):
 class ScopeParams(Enum):
     """Enum type of all data available within Scope type"""
 
-    # TODO add best solution encountered cost function param
+    # TODO add best solution encountered cost function param or delete class at all
     iteration: str = 'encounter'
     temperature: str = 'temperature'
     delta_energy: str = "delta_energy"
@@ -46,7 +50,7 @@ class ScopeParams(Enum):
 def plot_scope(scope: Scope) -> None:
     """
     Function that plots runtime values of simulation from Scope type.
-    @param scope: Scope of simulated annealing algorithm
+    @param scope: Scope of simulated annealing algorithm runtime values
     @type scope: Scope
     """
 

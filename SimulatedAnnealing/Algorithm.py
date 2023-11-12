@@ -65,6 +65,8 @@ def generate_sa_algorithm(SolutionTemplateType: Any) -> Callable:
         if not isinstance(max_iterations, (int, int32, int64)):
             raise SimulatedAnnealingValidationError(message='max_iterations must be int', value=max_iterations)
 
+        # TODO instead of dict create instance of Scope with validation after every input turned off, perform validation
+        # TODO by manually triggering it with Scope.validate() within try statement
         simulation_scope_data: Dict[ScopeParams.name: List] = {
             ScopeParams.iteration: list(),
             ScopeParams.temperature: list(),
@@ -74,6 +76,7 @@ def generate_sa_algorithm(SolutionTemplateType: Any) -> Callable:
             ScopeParams.visited_solution: list()
         }
 
+        # TODO delete this function after manual validation od Scope is implemented
         def update_scope_data(scope_data, i, temp, delta_en, prob, cost_val, sol):
             scope_data[ScopeParams.iteration].append(i)
             scope_data[ScopeParams.temperature].append(temp)
@@ -112,6 +115,7 @@ def generate_sa_algorithm(SolutionTemplateType: Any) -> Callable:
 
         # create Scope only after the algorithm has ended, validations take too long if validation of reassignments
         # were to be performed in the main loop
+        # TODO create scope before main loop after manual validation is implemented, proceeding code will be useless
         simulation_scope = Scope()
 
         simulation_scope.iteration = simulation_scope_data[ScopeParams.iteration]
