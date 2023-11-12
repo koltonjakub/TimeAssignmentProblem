@@ -48,20 +48,28 @@ class ResourceManager:
     """Class that manages all types of resources within the project. Every Resource instance should be created using
     this class."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.used_ids: Dict[AvailableResources, int] = defaultdict(None)
 
-    def create_resource(self, data, resource_type: AvailableResources) -> Resource:
+    def create_resource(self, data=None, resource_type: AvailableResources=None, *args, **kwargs) -> Resource:
         # TODO make final decision on id problem, taken from database or assigned dynamically or both(third option
         #  makes least sense for project of this scale)
-        data['id']: int = self.__update_resource_ids(resource_type=resource_type)
+        # data['id']: int = self.__update_resource_ids(resource_type=resource_type)
+        kwargs['id']: int = self.__update_resource_ids(resource_type=resource_type)
 
         # TODO add try statement, if resource is not created, delete last inserted id
-        resource: Resource = self.map_resource_class(data=data, resource_type=resource_type)
+        resource: Resource = self.__map_resource_class(resource_type=resource_type, **kwargs)
 
         return resource
 
     def __update_resource_ids(self, resource_type: AvailableResources) -> int:
+        """
+        Function handles ids for different resource types.
+        @param resource_type: type of Resource to be created
+        @type resource_type: AvailableResources
+        @return: id of new Resource
+        @rtype: int
+        """
         if resource_type not in self.used_ids:  # assign first id of provided Resource type
             new_id = 0
             self.used_ids[resource_type]: List[int] = [new_id]
@@ -74,17 +82,28 @@ class ResourceManager:
 
             return new_id
 
-    @classmethod
-    def map_resource_class(cls, data, resource_type: AvailableResources) -> Resource:
+    @staticmethod
+    def __map_resource_class(resource_type: AvailableResources, **kwargs) -> Resource:
+        """
+        Function returns
+        @param data: data used by Resource.__init__(), parsed as dictionary
+        @type data: Dict[str: Any]
+        @param resource_type: type of Resource to be mapped
+        @type resource_type: AvailableResources
+        @return: Resource instance
+        @rtype: Resource
+        """
         if resource_type == AvailableResources.MACHINE:
-            return Machine(**data)
+            # return Machine(**data)
+            return Machine(**kwargs)
 
         if resource_type == AvailableResources.EMPLOYEE:
-            return Employee(**data)
+            # return Employee(**data)
+            return Employee(**kwargs)
 
 
 class FactoryAssignmentScheduleError(Exception):
-    def __init__(self, msg: str = None, value: Any = None):
+    def __init__(self, msg: str = None, value: Any = None) -> None:
         super().__init__(msg)
         self.msg: str = msg
         self.value: Any = value
@@ -133,7 +152,7 @@ class FactoryAssignmentSchedule(np.ndarray):
 
         return obj
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         """
         Function prevents assignment out of range provided in __new__.
         @param key:
@@ -259,10 +278,10 @@ class FactoryAssignmentSchedule(np.ndarray):
     @encountered_it.setter
     def encountered_it(self, value: int) -> None:
         if not isinstance(value, int):
-            raise ValueError('encountered_it must be of type int')
+            raise FactoryAssignmentScheduleError('encountered_it must be of type int')
 
         if value < 0:
-            raise ValueError('encountered_it must be non-negative')
+            raise FactoryAssignmentScheduleError('encountered_it must be non-negative')
 
         # noinspection PyAttributeOutsideInit
         self.__encountered_it: NonNegativeInt = value
@@ -280,23 +299,21 @@ class FactoryAssignmentSchedule(np.ndarray):
         return self.__allowed_values
 
     @allowed_values.setter
-    def allowed_values(self, value: List[Any]):
+    def allowed_values(self, value: List[Any]) -> None:
         raise FactoryAssignmentScheduleError(msg='allowed_values is a read-only property', value=value)
 
 
 def resources_creation_example():
-    manager = ResourceManager()  # call the manager
+    manager = ResourceManager()  # initialize the manager
 
-    employees = [manager.create_resource(data={'hourly_cost': 1, 'hourly_gain': 1,  # pass data
-                                               'name': 'John', 'surname': 'Smith'},  # pass data
-                                         resource_type=AvailableResources.EMPLOYEE),  # pass type
-                 manager.create_resource(data={'hourly_cost': 1, 'hourly_gain': 1,
-                                               'name': 'Adam', 'surname': 'Nash'},
+    employees = [manager.create_resource(hourly_cost=1, hourly_gain=1, name='John', surname='Smith',
+                                         resource_type=AvailableResources.EMPLOYEE),
+                 manager.create_resource(hourly_cost=2, hourly_gain=2, name='Adam', surname='Newman',
                                          resource_type=AvailableResources.EMPLOYEE)]
 
-    machines = [manager.create_resource(data={'hourly_cost': 1, 'hourly_gain': 1, 'inventory_nr': 11},
+    machines = [manager.create_resource(hourly_cost=1, hourly_gain=1, inventory_nr=11,
                                         resource_type=AvailableResources.MACHINE),
-                manager.create_resource(data={'hourly_cost': 1, 'hourly_gain': 1, 'inventory_nr': 12},
+                manager.create_resource(hourly_cost=1, hourly_gain=1, inventory_nr=12,
                                         resource_type=AvailableResources.MACHINE)]
 
     print('Generated employees:')
@@ -316,22 +333,23 @@ def validation_errors_example():
     manager = ResourceManager()
 
     # proper definition od machine instance
-    _ = manager.create_resource(data={'hourly_cost': 1, 'hourly_gain': 1, 'inventory_nr': 123},
-                                resource_type=AvailableResources.MACHINE)
+    _ = manager.create_resource(hourly_cost=1, hourly_gain=1, inventory_nr=12, resource_type=AvailableResources.MACHINE)
 
     # both non-optional fields not provided
-    _ = manager.create_resource(data={'name': 'John', 'surname': 'Smith'},
-                                resource_type=AvailableResources.EMPLOYEE)
+    _ = manager.create_resource(name='John', surname='Smith', resource_type=AvailableResources.EMPLOYEE)
 
 
 def solution_usage_example():
-    res_manager = ResourceManager()
-    machines = [res_manager.create_resource(data={'hourly_cost': 1, 'hourly_gain': 1, 'inventory_nr': 11},
-                                            resource_type=AvailableResources.MACHINE)]
-    employees = [res_manager.create_resource(data={'hourly_cost': 1, 'hourly_gain': 1, 'name': 'John',
-                                                   'surname': 'Smith'}, resource_type=AvailableResources.EMPLOYEE),
-                 res_manager.create_resource(data={'hourly_cost': 2, 'hourly_gain': 2, 'name': 'Andrew',
-                                                   'surname': 'Allen'}, resource_type=AvailableResources.EMPLOYEE)]
+    manager = ResourceManager()
+    employees = [manager.create_resource(hourly_cost=1, hourly_gain=1, name='John', surname='Smith',
+                                         resource_type=AvailableResources.EMPLOYEE),
+                 manager.create_resource(hourly_cost=2, hourly_gain=2, name='Adam', surname='Newman',
+                                         resource_type=AvailableResources.EMPLOYEE)]
+
+    machines = [manager.create_resource(hourly_cost=1, hourly_gain=1, inventory_nr=11,
+                                        resource_type=AvailableResources.MACHINE),
+                manager.create_resource(hourly_cost=1, hourly_gain=1, inventory_nr=12,
+                                        resource_type=AvailableResources.MACHINE)]
     time_span = [0, 1]
     sol: FactoryAssignmentSchedule = FactoryAssignmentSchedule(machines=machines, employees=employees,
                                                                time_span=time_span, encountered_it=2,
@@ -368,7 +386,7 @@ def solution_usage_example():
 
 
 if __name__ == "__main__":
-    # solution_usage_example()
-    # resources_creation_example()
-    # validation_errors_example()
+    solution_usage_example()
+    resources_creation_example()
+    validation_errors_example()
     pass
