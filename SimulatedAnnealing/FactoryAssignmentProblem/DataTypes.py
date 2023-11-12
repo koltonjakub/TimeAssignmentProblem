@@ -175,13 +175,14 @@ class FactoryAssignmentSchedule(np.ndarray):
             if employees is None:  # second dimension not provided
                 raise FactoryAssignmentScheduleError(msg='Both input_array and employees are None', value=employees)
 
-            if machines is None:  # third dimension not provided
+            if time_span is None:  # third dimension not provided
                 raise FactoryAssignmentScheduleError(msg='Both input_array and time_span are None', value=time_span)
 
             # obj has to be view type
             obj = np.ones((len(machines), len(employees), len(time_span)), dtype=dtype).view(cls)
             return obj
 
+        # TODO decide if this functionality should be implemented or delete code below
         # code below should be used and further implemented if creation by input_array be needed
         # else:  # create
         #     obj = np.asarray(input_array, dtype=dtype).view(cls)  # obj has to be view type
@@ -209,6 +210,7 @@ class FactoryAssignmentSchedule(np.ndarray):
         if obj is None:
             return
 
+        # TODO implement loss of dimension information when slice is created(mach/empl/time dim lost when slice called)
         self.__machines: List[Machine] = getattr(obj, 'machines', None)
         self.__employees: List[Employee] = getattr(obj, 'employees', None)
         self.__time_span: List[PositiveNumber] = getattr(obj, 'time_span', None)
