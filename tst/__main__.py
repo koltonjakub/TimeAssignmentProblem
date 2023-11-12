@@ -13,4 +13,4 @@ if __name__ == '__main__':
     print("Number of errors:", len(test_result.errors))
     print("Number of failures:", len(test_result.failures))
     print("Number of skipped tests:", len(test_result.skipped))
-    print("Number of successful tests:", test_result.wasSuccessful())
+    print("Test successful:", test_result.wasSuccessful())

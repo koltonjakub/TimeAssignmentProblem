@@ -13,15 +13,13 @@ class FactoryAssignmentScheduleTest(TestCase):
         self.resource_manager = ResourceManager()
         self.machines: List[Machine] = [
             self.resource_manager.create_resource(
-                data={'hourly_cost': 1, 'hourly_gain': 1, 'inventory_nr': 11}, resource_type=AvailableResources.MACHINE)
+                hourly_cost=1, hourly_gain=1, inventory_nr=11, resource_type=AvailableResources.MACHINE)
         ]
         self.employees: List[Employee] = [
             self.resource_manager.create_resource(
-                data={'hourly_cost': 1, 'hourly_gain': 1, 'name': 'John', 'surname': 'Smith'},
-                resource_type=AvailableResources.EMPLOYEE),
+                hourly_cost=1, hourly_gain=1, name='John', surname='Smith', resource_type=AvailableResources.EMPLOYEE),
             self.resource_manager.create_resource(
-                data={'hourly_cost': 2, 'hourly_gain': 2, 'name': 'Andrew', 'surname': 'Allen'},
-                resource_type=AvailableResources.EMPLOYEE)
+                hourly_cost=2, hourly_gain=2, name='Sam', surname='Allen', resource_type=AvailableResources.EMPLOYEE)
         ]
         self.time_span: List[int] = [0, 1, 2]
         self.encountered_it: int = 1
@@ -52,22 +50,20 @@ class FactoryAssignmentScheduleViewTest(TestCase):
         super(FactoryAssignmentScheduleViewTest, self).__init__(*args, **kwargs)
 
         self.resource_manager = ResourceManager()
-        self.machines: List[Machine] = [self.resource_manager.create_resource(data={'hourly_cost': 1, 'hourly_gain': 1,
-                                                                                    'inventory_nr': 11},
-                                                                              resource_type=AvailableResources.MACHINE),
-                                        self.resource_manager.create_resource(data={'hourly_cost': 2, 'hourly_gain': 2,
-                                                                                    'inventory_nr': 12},
-                                                                              resource_type=AvailableResources.MACHINE)]
+        self.machines: List[Machine] = [
+            self.resource_manager.create_resource(
+                hourly_cost=1, hourly_gain=1, inventory_nr=11, resource_type=AvailableResources.MACHINE),
+            self.resource_manager.create_resource(
+                hourly_cost=2, hourly_gain=2, inventory_nr=12, resource_type=AvailableResources.MACHINE)
+        ]
         self.employees: List[Employee] = [
-            self.resource_manager.create_resource(data={'hourly_cost': 1, 'hourly_gain': 1,
-                                                        'name': 'John', 'surname': 'Smith'},
-                                                  resource_type=AvailableResources.EMPLOYEE),
-            self.resource_manager.create_resource(data={'hourly_cost': 2, 'hourly_gain': 2,
-                                                        'name': 'Andrew', 'surname': 'Allen'},
-                                                  resource_type=AvailableResources.EMPLOYEE),
-            self.resource_manager.create_resource(data={'hourly_cost': 3, 'hourly_gain': 3,
-                                                        'name': 'Sam', 'surname': 'Albin'},
-                                                  resource_type=AvailableResources.EMPLOYEE)
+            self.resource_manager.create_resource(
+                hourly_cost=1, hourly_gain=1, name='John', surname='Smith', resource_type=AvailableResources.EMPLOYEE),
+            self.resource_manager.create_resource(
+                hourly_cost=2, hourly_gain=2, name='Andrew', surname='Allen',
+                resource_type=AvailableResources.EMPLOYEE),
+            self.resource_manager.create_resource(
+                hourly_cost=3, hourly_gain=3, name='Sam', surname='Albin', resource_type=AvailableResources.EMPLOYEE)
         ]
         self.time_span: List[int] = [0, 1, 2, 3]
         self.encountered_it: int = 1
@@ -125,12 +121,14 @@ class FactoryAssignmentScheduleExceptionTest(TestCase):
         super(FactoryAssignmentScheduleExceptionTest, self).__init__(*args, **kwargs)
 
         self.resource_manager = ResourceManager()
-        self.machines: List[Machine] = [self.resource_manager.create_resource(data={'hourly_cost': 1, 'hourly_gain': 1,
-                                                                                    'inventory_nr': 11},
-                                                                              resource_type=AvailableResources.MACHINE)]
-        self.employees: List[Employee] = [self.resource_manager.create_resource(
-            data={'hourly_cost': 1, 'hourly_gain': 1, 'name': 'John', 'surname': 'Smith'},
-            resource_type=AvailableResources.EMPLOYEE)]
+        self.machines: List[Machine] = [
+            self.resource_manager.create_resource(hourly_cost=1, hourly_gain=1, inventory_nr=11,
+                                                  resource_type=AvailableResources.MACHINE)
+        ]
+        self.employees: List[Employee] = [
+            self.resource_manager.create_resource(hourly_cost=1, hourly_gain=1, name='John', surname='Smith',
+                                                  resource_type=AvailableResources.EMPLOYEE)
+        ]
         self.time_span: List[int] = [0]
         self.allowed_values: List[int] = [0, 1]
         self.schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(machines=self.machines,
