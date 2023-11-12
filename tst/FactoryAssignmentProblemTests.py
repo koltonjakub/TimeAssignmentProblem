@@ -6,8 +6,49 @@ from SimulatedAnnealing.FactoryAssignmentProblem.DataTypes import (
     Machine, Employee, AvailableResources, ResourceManager, FactoryAssignmentSchedule, FactoryAssignmentScheduleError)
 
 
+class FactoryAssignmentScheduleTest(TestCase):
+    def __init__(self, *args, **kwargs) -> None:
+        super(FactoryAssignmentScheduleTest, self).__init__(*args, **kwargs)
+
+        self.resource_manager = ResourceManager()
+        self.machines: List[Machine] = [
+            self.resource_manager.create_resource(
+                data={'hourly_cost': 1, 'hourly_gain': 1, 'inventory_nr': 11}, resource_type=AvailableResources.MACHINE)
+        ]
+        self.employees: List[Employee] = [
+            self.resource_manager.create_resource(
+                data={'hourly_cost': 1, 'hourly_gain': 1, 'name': 'John', 'surname': 'Smith'},
+                resource_type=AvailableResources.EMPLOYEE),
+            self.resource_manager.create_resource(
+                data={'hourly_cost': 2, 'hourly_gain': 2, 'name': 'Andrew', 'surname': 'Allen'},
+                resource_type=AvailableResources.EMPLOYEE)
+        ]
+        self.time_span: List[int] = [0, 1, 2]
+        self.encountered_it: int = 1
+        self.allowed_values: List[int] = [0, 1]
+
+        self.schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
+            machines=self.machines, employees=self.employees, time_span=self.time_span,
+            encountered_it=self.encountered_it, allowed_values=self.allowed_values)
+
+    def test_new_instance_creation(self) -> None:
+        self.assertEqual(self.schedule.machines, self.machines, 'machines differ')
+        self.assertEqual(self.schedule.employees, self.employees, 'employees differ')
+        self.assertEqual(self.schedule.time_span, self.time_span, 'time_span differ')
+        self.assertEqual(self.schedule.encountered_it, self.encountered_it, 'encountered_it differs')
+        self.assertEqual(self.schedule.allowed_values, self.allowed_values, 'allowed_values differ')
+
+    def test___evaluate_cost(self) -> None:
+        # TODO implement proper evaluation in SimulatedAnnealing.FactoryAssignmentProblem.DataTypes.py
+        self.assertIsNone(None)
+
+    def test_shape(self) -> None:
+        self.assertEqual(self.schedule.shape, (len(self.machines), len(self.employees), len(self.time_span)),
+                         msg='shape differs')
+
+
 class FactoryAssignmentScheduleViewTest(TestCase):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super(FactoryAssignmentScheduleViewTest, self).__init__(*args, **kwargs)
 
         self.resource_manager = ResourceManager()
@@ -80,7 +121,7 @@ class FactoryAssignmentScheduleViewTest(TestCase):
 
 
 class FactoryAssignmentScheduleExceptionTest(TestCase):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super(FactoryAssignmentScheduleExceptionTest, self).__init__(*args, **kwargs)
 
         self.resource_manager = ResourceManager()
@@ -97,11 +138,11 @@ class FactoryAssignmentScheduleExceptionTest(TestCase):
                                                                              time_span=self.time_span,
                                                                              allowed_values=self.allowed_values)
 
-    def test___setitem__raising_error(self):
+    def test___setitem__raises_error(self) -> None:
         with self.assertRaises(FactoryAssignmentScheduleError):
             self.schedule[0, 0, 0] = max(self.allowed_values) + 1
 
-    def test___factory___raising_error(self):
+    def test___factory___raising_error(self) -> None:
         with self.assertRaises(FactoryAssignmentScheduleError):
             self.custom_array_instance = FactoryAssignmentSchedule(machines=self.machines, employees=self.employees)
 
@@ -111,4 +152,32 @@ class FactoryAssignmentScheduleExceptionTest(TestCase):
         with self.assertRaises(FactoryAssignmentScheduleError):
             self.custom_array_instance = FactoryAssignmentSchedule(employees=self.employees, time_span=self.time_span)
 
-    # TODO add read-only validation parameters
+    def test_machines_read_only(self) -> None:
+        with self.assertRaises(FactoryAssignmentScheduleError):
+            self.schedule.machines = self.machines
+
+    def test_employees_read_only(self) -> None:
+        with self.assertRaises(FactoryAssignmentScheduleError):
+            self.schedule.employees = self.employees
+
+    def test_time_span_read_only(self) -> None:
+        with self.assertRaises(FactoryAssignmentScheduleError):
+            self.schedule.time_span = self.time_span
+
+    def test_cost_read_only(self) -> None:
+        with self.assertRaises(FactoryAssignmentScheduleError):
+            self.schedule.cost = 0
+
+    def test_allowed_values_read_only(self) -> None:
+        with self.assertRaises(FactoryAssignmentScheduleError):
+            self.schedule.allowed_values = self.allowed_values
+
+    def test_encounter_it_setter(self) -> None:
+        with self.assertRaises(FactoryAssignmentScheduleError):
+            self.schedule.encountered_it = 0.1
+
+        with self.assertRaises(FactoryAssignmentScheduleError):
+            self.schedule.encountered_it = -1
+
+        with self.assertRaises(FactoryAssignmentScheduleError):
+            self.schedule.encountered_it = 'str'
