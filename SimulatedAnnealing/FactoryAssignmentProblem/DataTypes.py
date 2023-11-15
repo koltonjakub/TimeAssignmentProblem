@@ -1,105 +1,138 @@
 """This file contains all data types used in project"""
 
-from pydantic import BaseModel, conint
-from typing import Union, Dict, List, Any
-from collections import defaultdict
+from pydantic import BaseModel, conint, confloat, validator, ValidationError
+from typing import Union, Dict, List, Any, Tuple, Iterable
 from enum import Enum
+from datetime import datetime
+from json import load
 
 import numpy as np
-
-NonNegativeInt = Union[int, np.int32, np.int64]
-RealNumber = Union[float, np.float32, np.float64, int, np.int32, np.int64]
-PositiveNumber = Union[float, np.float32, np.float64, int, np.int32, np.int64]
 
 
 class Resource(BaseModel):
     """Informal interface for any type of resource_type that may be used in a factory"""
-
-    hourly_cost: Union[int, float]
-    hourly_gain: Union[int, float]
-
-    id: conint(ge=0)
-
-
-class Employee(Resource):
-    """Class representing an employee in factory"""
-
-    name: str
-    surname: str
-
-    # TODO add the rest of necessary fields
+    id: conint(ge=0, strict=True)  # corresponds with dimension in schedule matrix
 
 
 class Machine(Resource):
     """Class representing a machine in factory"""
+    hourly_cost: confloat(ge=0)
+    hourly_gain: confloat(ge=0)
+    inventory_nr: conint(ge=0, strict=True)
 
-    inventory_nr: str
 
-    # TODO add the rest of necessary fields
+# noinspection PyMethodParameters
+class Employee(Resource):
+    """Class representing an employee in factory"""
+    hourly_cost: confloat(ge=0)
+    hourly_gain: Dict[conint(ge=0, strict=True), confloat(ge=0)]
+    name: str
+    surname: str
+
+    @validator('hourly_gain', pre=True)
+    def convert_keys_to_int_if_possible(cls, v):
+        """
+        Function validates and converts keys of hourly_gain dictionary if conversion is possible. Conversion is
+        necessary due to the format in which .json stores int keys which is string.
+        @param v: hourly_gain structure that maps employee ti theirs extra production on certain machine
+        @type v: Dict[str: float]
+        @return: hourly_gain with keys converted to int
+        @rtype: Dict[int: int]
+        """
+        return {int(key) if isinstance(key, str) and key.isdigit() else key: value for key, value in v.items()}
+
+
+class TimeSpan(Resource):
+    """Class representing one hour of simulation"""
+    datetime: datetime
+
+    # noinspection PyMethodParameters
+    @validator('datetime')
+    def validate_some_datetime(cls, value):
+        """
+        Function validates that the provided datetime are within the working hours of the factory and every unit is
+        strictly one hour.
+        @param value: datetime of simulation unit
+        @type value: datetime
+        @return: valid datetime
+        @rtype: datetime
+        """
+        if not (6 <= value.hour <= 23) or value.minute != 0 or value.second != 0 or value.microsecond != 0:
+            raise ValidationError(f'invalid time: h={value.hour}, m={value.minute}, s={value.second}, '
+                                  f'ms={value.microsecond}')
+        return value
 
 
 class AvailableResources(Enum):
-    """Enum type, lists all available types of resources"""
+    """Enum type, lists of all available types of resources"""
     EMPLOYEE = Employee
     MACHINE = Machine
+    TIME = TimeSpan
+
+
+class ResourceContainer(BaseModel):
+    """Associative container for all types of Resource subclasses"""
+    machines: List[Machine] = None
+    employees: List[Employee] = None
+    time_span: List[TimeSpan] = None
+
+
+class ResourceImportError(Exception):
+    def __init__(self, msg: str = None, value: Any = None) -> None:
+        super().__init__(msg)
+        self.msg: str = msg
+        self.value: Any = value
 
 
 class ResourceManager:
-    """Class that manages all types of resources within the project. Every Resource instance should be created using
-    this class."""
-
-    def __init__(self) -> None:
-        self.used_ids: Dict[AvailableResources, int] = defaultdict(None)
-
-    def create_resource(self, data=None, resource_type: AvailableResources=None, *args, **kwargs) -> Resource:
-        # TODO make final decision on id problem, taken from database or assigned dynamically or both(third option
-        #  makes least sense for project of this scale)
-        # data['id']: int = self.__update_resource_ids(resource_type=resource_type)
-        kwargs['id']: int = self.__update_resource_ids(resource_type=resource_type)
-
-        # TODO add try statement, if resource is not created, delete last inserted id
-        resource: Resource = self.__map_resource_class(resource_type=resource_type, **kwargs)
-
-        return resource
-
-    def __update_resource_ids(self, resource_type: AvailableResources) -> int:
-        """
-        Function handles ids for different resource types.
-        @param resource_type: type of Resource to be created
-        @type resource_type: AvailableResources
-        @return: id of new Resource
-        @rtype: int
-        """
-        if resource_type not in self.used_ids:  # assign first id of provided Resource type
-            new_id = 0
-            self.used_ids[resource_type]: List[int] = [new_id]
-
-            return new_id
-
-        else:  # increment id of provided type
-            new_id = np.max(self.used_ids[resource_type]) + 1
-            self.used_ids[resource_type].append(new_id)
-
-            return new_id
+    """This class provides a user with utilities for importing and validating project databases."""
 
     @staticmethod
-    def __map_resource_class(resource_type: AvailableResources, **kwargs) -> Resource:
+    def import_resources_from_json(file_path: str) -> ResourceContainer | None:
+        """Method imports resources from .json file and returns them as ResourceContainer.
+        @param file_path: path to .json file
+        @type file_path: str
         """
-        Function returns
-        @param data: data used by Resource.__init__(), parsed as dictionary
-        @type data: Dict[str: Any]
-        @param resource_type: type of Resource to be mapped
-        @type resource_type: AvailableResources
-        @return: Resource instance
-        @rtype: Resource
-        """
-        if resource_type == AvailableResources.MACHINE:
-            # return Machine(**data)
-            return Machine(**kwargs)
+        try:
+            with open(file_path, "r") as file:
+                data = load(file)
+        except FileNotFoundError as e:
+            print(f"Error: {e}")
+            return None
 
-        if resource_type == AvailableResources.EMPLOYEE:
-            # return Employee(**data)
-            return Employee(**kwargs)
+        try:
+            machines = [Machine(**machine) for machine in data.get("machines", [])]
+            employees = [Employee(**employee) for employee in data.get("employees", [])]
+            time_span = [TimeSpan(**ts) for ts in data.get("time_span", [])]
+
+            resources: ResourceContainer = ResourceContainer(machines=machines, employees=employees,
+                                                             time_span=time_span)
+        except ValidationError as e:
+            print(f'Error: {e}')
+            return None
+
+        try:
+            ResourceManager.validate_ids(resources)
+        except ValueError as e:
+            print(f"Error: {e}")
+            return None
+
+        return resources
+
+    @staticmethod
+    def validate_ids(imp_resources: ResourceContainer) -> None:
+        """Method validates that all ids meet the required standard(ints from 0 to N, distinct for each resource type)
+        @param imp_resources: imported resources
+        @type imp_resources: ResourceContainer
+        """
+        if list(set([mach.id for mach in imp_resources.machines])) != [mach.id for mach in imp_resources.machines]:
+            raise ResourceImportError(msg='machines ids are not distinct')
+
+        if list(set([empl.id for empl in imp_resources.employees])) != [empl.id for empl in imp_resources.employees]:
+            raise ResourceImportError(msg='employees ids are not distinct')
+
+        if list(set([time.id for time in imp_resources.time_span])) != [time.id for time in imp_resources.time_span]:
+            raise ResourceImportError(msg='time_span ids are not distinct')
 
 
 class FactoryAssignmentScheduleError(Exception):
@@ -115,9 +148,9 @@ class FactoryAssignmentSchedule(np.ndarray):
     Documentation: https://numpy.org/doc/stable/user/basics.subclassing.html#
     """
 
-    def __new__(cls, input_array=None, machines: List[Machine] = None, employees: List[Employee] = None,
-                time_span: List[PositiveNumber] = None, encountered_it: NonNegativeInt = None,
-                allowed_values: List[Any] = None, dtype=None) -> object:
+    def __new__(cls, machines: List[Machine], employees: List[Employee], time_span: List[TimeSpan],
+                input_array: object = None, allowed_values: List[Any] = None, encountered_it: int = None,
+                dtype: object = None) -> 'FactoryAssignmentSchedule':
         """
         Function creates new instance of class, assigns extra properties and returns created obj.
         @param input_array: input data, any form convertable to an array
@@ -127,118 +160,176 @@ class FactoryAssignmentSchedule(np.ndarray):
         @param employees: employees in schedule
         @type employees: List[Employee]
         @param time_span: time period as vector in schedule
-        @type time_span: List[PositiveNumber]
+        @type time_span: List[TimeSpan]
         @param encountered_it: iteration of main loop of algorithm at which this solution was encountered
-        @type encountered_it: NonNegativeInt
+        @type encountered_it: int
         @param allowed_values: list of values allowed within the matrix
         @type allowed_values: List[Any]
         @param dtype: data type of elements of schedule assignment
         @type dtype: data-type
-        @return obj: new instance of FactoryAssignmentSchedule
-        @rtype obj: object
+        @return obj: newly created instance
+        @rtype obj: FactoryAssignmentSchedule
         """
+
+        # read-only params need to be validated explicitly here, because of the read-only functionality, that forces
+        # assignment to self.__attribute_name
+        params: List[List[Union[Machine, Employee]]] = [machines, employees, time_span]
+        param_types: List[object] = [Machine, Employee, TimeSpan]
+        labels: List[str] = ['machines', 'employees', 'time_span']
+        for param, param_type, label in zip(params, param_types, labels):
+            if np.any([not isinstance(elem, param_type) for elem in param]):
+                raise FactoryAssignmentScheduleError(msg=f'{label}: {param} is not {param_type}', value=param)
 
         obj = cls.__factory__(input_array=input_array, machines=machines, employees=employees, time_span=time_span,
                               dtype=dtype)
         obj.__machines = machines
         obj.__employees = employees
         obj.__time_span = time_span
+        obj.allowed_values = allowed_values
 
         if encountered_it is not None:
             obj.__encountered_it = encountered_it
 
-        if allowed_values is not None:
-            obj.__allowed_values = allowed_values
+        return obj
+
+    def __getitem__(self, item) -> Any:
+        """
+        Function handles standard __getitem__ utilities, performs reshape is a slice of FactoryAssignmentSchedule is
+        taken and then slices the corresponding ResourceList attributes.
+        @param item:
+        @type item:
+        @return:
+        @rtype:
+        """
+        obj = super().__getitem__(item)
+
+        if np.isscalar(obj):
+            return obj
+
+        if obj.ndim == 0:
+            return obj.item()
+
+        machine_sl, employees_sl, time_span_sl = item
+
+        def calculate_dim(dimension_list: List[Union[Machine, Employee, TimeSpan]], dimension_slice: slice) -> int:
+            """
+            Function returns the length of sliced dimension_list as int based on the params.
+            @param dimension_list: List to be sliced
+            @type dimension_list: List[Union[Machine, Employee, TimeSpan]]
+            @param dimension_slice: slice of dimension_list
+            @type dimension_slice: slice
+            @return: calculated dimension
+            @rtype: int
+            """
+            if isinstance(dimension_slice, int):
+                return 1
+            elif isinstance(dimension_slice, slice):
+                if dimension_slice.start is None and dimension_slice.stop is None and dimension_slice.step is None:
+                    return len(dimension_list)
+                elif (dimension_slice.start is None and dimension_slice.stop is not None and
+                      dimension_slice.step is None):
+                    return dimension_slice.stop
+                elif (dimension_slice.start is not None and dimension_slice.stop is not None and
+                      dimension_slice.step is None):
+                    return dimension_slice.stop - dimension_slice.start
+                elif (dimension_slice.start is not None and dimension_slice.stop is not None and
+                      dimension_slice.step is not None):
+                    return (dimension_slice.stop - dimension_slice.start) // 2
+                else:
+                    raise FactoryAssignmentScheduleError(msg='dim could not be calculated', value=dimension_slice)
+
+        preserved_shape = (
+            calculate_dim(dimension_list=self.machines, dimension_slice=machine_sl),
+            calculate_dim(dimension_list=self.employees, dimension_slice=employees_sl),
+            calculate_dim(dimension_list=self.time_span, dimension_slice=time_span_sl)
+        )
+
+        obj = obj.reshape(preserved_shape)
+        obj.__machines = self.machines[machine_sl]
+        obj.__employees = self.employees[employees_sl]
+        obj.__time_span = self.time_span[time_span_sl]
+
+        if obj.ndim != 3:  # check if 3d shape is preserved
+            raise FactoryAssignmentScheduleError(msg=f'obj.ndim invalid: {obj.ndim} != 3', value=obj)
 
         return obj
 
     def __setitem__(self, key, value) -> None:
         """
-        Function prevents assignment out of range provided in __new__.
+        Function prevents assignment out of range provided in __new__ on top of standard utility of __setitem__.
         @param key:
         @type key: Iterable
         @param value: value to be assigned to matrix
         @type value: Any
         """
         if value not in self.allowed_values:
-            raise FactoryAssignmentScheduleError(msg='tried to assign value not allowed by allowed_values', value=value)
+            raise FactoryAssignmentScheduleError(msg='tried to assign not allowed value', value=value)
 
         super().__setitem__(key, value)
 
     @classmethod
     def __factory__(cls, input_array, machines: List[Machine], employees: List[Employee],
-                    time_span: List[PositiveNumber], dtype) -> object:
+                    time_span: List[TimeSpan], dtype) -> 'FactoryAssignmentSchedule':
         """
         Function validates the input parameters and returns numpy array_like obj.
         If input_array is provided, validate the dimensions along according axis and return obj(functionality not
         implemented yet).
         If input_array is not provided, create 3-dimensional matrix of ones(every assignment possible) and return obj.
-        @param input_array: input data, any form convertable to an array
+        @param input_array: input data, any form convertable to a numpy array
         @type input_array: array_like
         @param machines: machines in schedule
         @type machines: List[Machine]
         @param employees: employees in schedule
         @type employees: List[Employee]
-        @param time_span: time period as vector in schedule
-        @type time_span: List[PositiveNumber]
+        @param time_span: vector of simulation time in schedule
+        @type time_span: List[TimeSpan]
         @param dtype: data type of elements of schedule assignment
         @type dtype: data-type
-        @return: 3-dimensional array_like obj
-        @rtype: object
+        @return: 3-dimensional FactoryAssignmentSchedule instance
+        @rtype: FactoryAssignmentSchedule
         """
 
-        if input_array is None:  # if input_array is not provided, create 3-dimensional matrix of ones and return
-            if machines is None:  # first dimension not provided
-                raise FactoryAssignmentScheduleError(msg='Both input_array and machines are None', value=machines)
-
-            if employees is None:  # second dimension not provided
-                raise FactoryAssignmentScheduleError(msg='Both input_array and employees are None', value=employees)
-
-            if time_span is None:  # third dimension not provided
-                raise FactoryAssignmentScheduleError(msg='Both input_array and time_span are None', value=time_span)
-
-            # obj has to be view type
-            obj = np.ones((len(machines), len(employees), len(time_span)), dtype=dtype).view(cls)
+        if input_array is None:  # Case: explicit constructor
+            enforced_shape: Tuple[int, int, int] = (len(machines), len(employees), len(time_span))
+            obj = np.ones(enforced_shape, dtype=dtype).view(cls)
             return obj
 
-        # TODO decide if this functionality should be implemented or delete code below
-        # code below should be used and further implemented if creation by input_array be needed
-        # else:  # create
-        #     obj = np.asarray(input_array, dtype=dtype).view(cls)  # obj has to be view type
-        #
-        #     if np.any((obj != 0) & (obj != 1)):
-        #         raise FactoryAssignmentScheduleError(msg='input_array must contain only 0 or 1', value=input_array)
-        #
-        #     if len(obj.shape) != 3:
-        #         raise FactoryAssignmentScheduleError(msg='input_array must be 3-dimensional', value=input_array)
-        #
-        #     return obj
+        try:  # Case: array_like input
+            obj = np.asarray(input_array, dtype=dtype).view(cls)
+        except (TypeError, ValueError):
+            raise FactoryAssignmentScheduleError(msg=f'input_array of type {type(input_array)} could not be converted '
+                                                     f'to FactoryAssignmentSchedule', value=input_array)
+        else:
+            enforced_shape: Tuple[int, int, int] = (len(machines), len(employees), len(time_span))
 
-        raise FactoryAssignmentScheduleError(msg='FactoryAssignmentSchedule.__instance_factory() end reached without '
-                                                 'returning a new instance')
+            if obj.shape != enforced_shape:
+                raise FactoryAssignmentScheduleError(msg=f'shape invalid: input_array.shape={obj.shape} != '
+                                                         f'{enforced_shape}=enforced_shape', value=obj)
+            return obj
 
     def __array_finalize__(self, obj) -> None:
         # noinspection GrazieInspection
         """
-        Function performed by numpy on array after assignment has been finished.
+        Function performed by numpy on array after all assignments had been finished.
         @param obj: right side of assignment operator
         @type obj: object
         @return: None
         @rtype: None
         """
-        if obj is None:
+        if obj is None:  # Case: Explicit constructor called
             return
 
-        # TODO implement loss of dimension information when slice is created(mach/empl/time dim lost when slice called)
+        # Case: view() or slice called
         self.__machines: List[Machine] = getattr(obj, 'machines', None)
         self.__employees: List[Employee] = getattr(obj, 'employees', None)
-        self.__time_span: List[PositiveNumber] = getattr(obj, 'time_span', None)
-        self.__encountered_it: NonNegativeInt = getattr(obj, 'encountered_it', None)
+        self.__time_span: List[TimeSpan] = getattr(obj, 'time_span', None)
+        self.__encountered_it: int = getattr(obj, 'encountered_it', None)
         self.__allowed_values: List[Any] = getattr(obj, 'allowed_values', None)
+        self.__cost: float = self.__evaluate_cost__()
 
-        self.__cost: PositiveNumber = self.__evaluate_cost__()
+    # TODO implement __array_ufunc__ method if numpy will have to handle FactoryAssignmentSchedule type arrays
 
-    def __evaluate_cost__(self) -> PositiveNumber:
+    def __evaluate_cost__(self) -> float:
         """
         Function evaluates cost of schedule.
         Called only after all the changed elements within the matrix had been assigned.
@@ -264,15 +355,15 @@ class FactoryAssignmentSchedule(np.ndarray):
         raise FactoryAssignmentScheduleError(msg='employees is a read-only property')
 
     @property
-    def time_span(self) -> List[PositiveNumber]:
+    def time_span(self) -> List[TimeSpan]:
         return self.__time_span
 
     @time_span.setter
-    def time_span(self, value: List[PositiveNumber]) -> None:
+    def time_span(self, value: List[float]) -> None:
         raise FactoryAssignmentScheduleError(msg='time_span is a read-only property')
 
     @property
-    def encountered_it(self) -> NonNegativeInt:
+    def encountered_it(self) -> int:
         return self.__encountered_it
 
     @encountered_it.setter
@@ -284,10 +375,10 @@ class FactoryAssignmentSchedule(np.ndarray):
             raise FactoryAssignmentScheduleError('encountered_it must be non-negative')
 
         # noinspection PyAttributeOutsideInit
-        self.__encountered_it: NonNegativeInt = value
+        self.__encountered_it: int = value
 
     @property
-    def cost(self) -> PositiveNumber:
+    def cost(self) -> float:
         return self.__cost
 
     @cost.setter
@@ -295,98 +386,21 @@ class FactoryAssignmentSchedule(np.ndarray):
         raise FactoryAssignmentScheduleError('cost is read-only parameter')
 
     @property
-    def allowed_values(self) -> List[Any]:
+    def allowed_values(self) -> Iterable[Any]:
         return self.__allowed_values
 
     @allowed_values.setter
-    def allowed_values(self, value: List[Any]) -> None:
-        raise FactoryAssignmentScheduleError(msg='allowed_values is a read-only property', value=value)
+    def allowed_values(self, value: Iterable[Any]) -> None:
+        if not isinstance(value, Iterable) or isinstance(value, str):
+            raise FactoryAssignmentScheduleError(msg='allowed_values must be an iterable', value=value)
 
-
-def resources_creation_example():
-    manager = ResourceManager()  # initialize the manager
-
-    employees = [manager.create_resource(hourly_cost=1, hourly_gain=1, name='John', surname='Smith',
-                                         resource_type=AvailableResources.EMPLOYEE),
-                 manager.create_resource(hourly_cost=2, hourly_gain=2, name='Adam', surname='Newman',
-                                         resource_type=AvailableResources.EMPLOYEE)]
-
-    machines = [manager.create_resource(hourly_cost=1, hourly_gain=1, inventory_nr=11,
-                                        resource_type=AvailableResources.MACHINE),
-                manager.create_resource(hourly_cost=1, hourly_gain=1, inventory_nr=12,
-                                        resource_type=AvailableResources.MACHINE)]
-
-    print('Generated employees:')
-    for empl in employees:
-        print(empl)
-
-    print()
-
-    print('Generated machines:')
-    for mach in machines:
-        print(mach)
-
-    print()
-
-
-def validation_errors_example():
-    manager = ResourceManager()
-
-    # proper definition od machine instance
-    _ = manager.create_resource(hourly_cost=1, hourly_gain=1, inventory_nr=12, resource_type=AvailableResources.MACHINE)
-
-    # both non-optional fields not provided
-    _ = manager.create_resource(name='John', surname='Smith', resource_type=AvailableResources.EMPLOYEE)
-
-
-def solution_usage_example():
-    manager = ResourceManager()
-    employees = [manager.create_resource(hourly_cost=1, hourly_gain=1, name='John', surname='Smith',
-                                         resource_type=AvailableResources.EMPLOYEE),
-                 manager.create_resource(hourly_cost=2, hourly_gain=2, name='Adam', surname='Newman',
-                                         resource_type=AvailableResources.EMPLOYEE)]
-
-    machines = [manager.create_resource(hourly_cost=1, hourly_gain=1, inventory_nr=11,
-                                        resource_type=AvailableResources.MACHINE),
-                manager.create_resource(hourly_cost=1, hourly_gain=1, inventory_nr=12,
-                                        resource_type=AvailableResources.MACHINE)]
-    time_span = [0, 1]
-    sol: FactoryAssignmentSchedule = FactoryAssignmentSchedule(machines=machines, employees=employees,
-                                                               time_span=time_span, encountered_it=2,
-                                                               allowed_values=[0, 1], dtype='int32')
-
-    sol_view: FactoryAssignmentSchedule = sol[:, :, 0]  # take assignments of first time period
-
-    print(sol)
-    print(sol_view)
-    print()
-    print(sol.shape)
-    print(sol_view.shape)
-    print()
-    print(sol.machines)
-    print(sol_view.machines)
-    print()
-    print(sol.employees)
-    print(sol_view.employees)
-    print()
-    print(sol.time_span)
-    print(sol_view.time_span)
-    print()
-    print(sol.encountered_it)
-    print(sol_view.encountered_it)
-    print()
-    print(sol.allowed_values)
-    print(sol_view.allowed_values)
-    print()
-    print(sol.cost)
-    print(sol_view.cost)
-    print()
-    print(sol.dtype)
-    print(sol_view.dtype)
+        # noinspection PyAttributeOutsideInit
+        self.__allowed_values: Iterable[Any] = value
 
 
 if __name__ == "__main__":
-    solution_usage_example()
-    resources_creation_example()
-    validation_errors_example()
+    # slice_implementation()
+    # solution_usage_example()
+    # resources_creation_example()
+    # validation_errors_example()
     pass
