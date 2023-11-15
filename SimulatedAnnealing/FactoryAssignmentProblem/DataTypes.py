@@ -171,15 +171,6 @@ class FactoryAssignmentSchedule(np.ndarray):
         @rtype obj: FactoryAssignmentSchedule
         """
 
-        # read-only params need to be validated explicitly here, because of the read-only functionality, that forces
-        # assignment to self.__attribute_name
-        params: List[List[Union[Machine, Employee]]] = [machines, employees, time_span]
-        param_types: List[object] = [Machine, Employee, TimeSpan]
-        labels: List[str] = ['machines', 'employees', 'time_span']
-        for param, param_type, label in zip(params, param_types, labels):
-            if np.any([not isinstance(elem, param_type) for elem in param]):
-                raise FactoryAssignmentScheduleError(msg=f'{label}: {param} is not {param_type}', value=param)
-
         obj = cls.__factory__(input_array=input_array, machines=machines, employees=employees, time_span=time_span,
                               dtype=dtype)
         obj.__machines = machines
@@ -288,6 +279,15 @@ class FactoryAssignmentSchedule(np.ndarray):
         @return: 3-dimensional FactoryAssignmentSchedule instance
         @rtype: FactoryAssignmentSchedule
         """
+
+        # read-only params need to be validated explicitly here, because of the read-only functionality, that forces
+        # assignment to self.__attribute_name
+        params: List[List[Union[Machine, Employee]]] = [machines, employees, time_span]
+        param_types: List[object] = [Machine, Employee, TimeSpan]
+        labels: List[str] = ['machines', 'employees', 'time_span']
+        for param, param_type, label in zip(params, param_types, labels):
+            if np.any([not isinstance(elem, param_type) for elem in param]):
+                raise FactoryAssignmentScheduleError(msg=f'{label}: {param} is not {param_type}', value=param)
 
         if input_array is None:  # Case: explicit constructor
             enforced_shape: Tuple[int, int, int] = (len(machines), len(employees), len(time_span))

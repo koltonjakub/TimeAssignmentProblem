@@ -314,6 +314,20 @@ class FactoryAssignmentScheduleTest(TestCase):
         self.assertEqual(schedule_default.shape, schedule_template.shape)
         self.assertEqual(schedule_default.dtype, schedule_template.dtype)
 
+    # noinspection PyTypeChecker
+    def test___factory___raising_error(self) -> None:
+        with self.assertRaises(FactoryAssignmentScheduleError):
+            FactoryAssignmentSchedule(machines=[1], employees=self.res.employees, time_span=self.res.time_span,
+                                      allowed_values=[0, 1])
+
+        with self.assertRaises(FactoryAssignmentScheduleError):
+            FactoryAssignmentSchedule(machines=self.res.machines, employees=['str'], time_span=self.res.time_span,
+                                      allowed_values=[0, 1])
+
+        with self.assertRaises(FactoryAssignmentScheduleError):
+            FactoryAssignmentSchedule(machines=self.res.machines, employees=self.res.employees, time_span=[1.1],
+                                      allowed_values=[0, 1])
+
     def test_slice(self) -> None:
         schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
             machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span,
