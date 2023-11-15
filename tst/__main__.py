@@ -1,10 +1,16 @@
 import unittest
-from FactoryAssignmentProblemTests import FactoryAssignmentScheduleViewTest, FactoryAssignmentScheduleExceptionTest
+from FactoryAssignmentProblemTests import (ResourceTest, MachineTest, EmployeeTest, TimeSpanTest,
+                                           ResourceContainerTest, ResourceManagerTest, FactoryAssignmentScheduleTest)
 
 if __name__ == '__main__':
     test_suite = unittest.TestSuite()
-    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(FactoryAssignmentScheduleViewTest))
-    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(FactoryAssignmentScheduleExceptionTest))
+    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ResourceTest))
+    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(MachineTest))
+    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(EmployeeTest))
+    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TimeSpanTest))
+    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ResourceContainerTest))
+    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ResourceManagerTest))
+    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(FactoryAssignmentScheduleTest))
 
     test_result = unittest.TestResult()
     test_suite.run(result=test_result)

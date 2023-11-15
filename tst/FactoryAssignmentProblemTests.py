@@ -1,181 +1,460 @@
 """This file contains all test designed for FactoryAssignmentProblem module from SimulatedAnnealing package."""
-
-from unittest import TestCase
-from typing import List, Tuple, Dict
+from typing import List, Union
+from unittest import TestCase, main
+from pydantic import ValidationError
+from datetime import datetime
+from json import load
+from os import getcwd, path
 from SimulatedAnnealing.FactoryAssignmentProblem.DataTypes import (
-    Machine, Employee, AvailableResources, ResourceManager, FactoryAssignmentSchedule, FactoryAssignmentScheduleError)
+    Resource, Machine, Employee, TimeSpan, ResourceContainer, ResourceImportError, ResourceManager,
+    FactoryAssignmentSchedule, FactoryAssignmentScheduleError)
+
+import numpy as np
+
+current_directory = getcwd()
+parent_directory = path.dirname(current_directory)
+test_database_path = path.join(parent_directory, "data", "test_database.json")
+
+
+class ResourceTest(TestCase):
+    def __init__(self, *args, **kwargs) -> None:
+        super(ResourceTest, self).__init__(*args, **kwargs)
+
+    def test_fields(self) -> None:
+        resource = Resource(id=1)
+        self.assertEqual(resource.id, 1)
+
+    def test_id(self) -> None:
+        valid_inputs = [0, 1, 2]
+        for vld_inp in valid_inputs:
+            self.assertEqual(Resource(id=vld_inp).id, vld_inp)
+
+        invalid_inputs = [-1, -1.1, 1.1, 0.0]
+        for inv_inp in invalid_inputs:
+            with self.assertRaises(ValidationError):
+                Resource(id=inv_inp)
+
+
+class MachineTest(TestCase):
+    def __init__(self, *args, **kwargs) -> None:
+        super(MachineTest, self).__init__(*args, **kwargs)
+
+    def test_fields(self) -> None:
+        machine = Machine(id=1, hourly_cost=0, hourly_gain=1.1, inventory_nr=123)
+
+        self.assertEqual(machine.id, 1)
+        self.assertEqual(machine.hourly_cost, 0)
+        self.assertEqual(machine.hourly_gain, 1.1)
+        self.assertEqual(machine.inventory_nr, 123)
+
+    def test_id(self) -> None:
+        valid_inputs = [0, 1, 2]
+        for vld_inp in valid_inputs:
+            self.assertEqual(Machine(id=vld_inp, hourly_cost=1.0, hourly_gain=1.0, inventory_nr=123).id, vld_inp)
+
+        invalid_inputs = [-1, -1.1, 1.1, 0.0]
+        for inv_inp in invalid_inputs:
+            with self.assertRaises(ValidationError):
+                Machine(id=inv_inp, hourly_cost=1.0, hourly_gain=1.0, inventory_nr=123)
+
+    def test_hourly_cost(self) -> None:
+        valid_inputs = [0, 0.0, 1, 1.1]
+        for vld_inp in valid_inputs:
+            self.assertEqual(Machine(id=1, hourly_cost=vld_inp, hourly_gain=1.0, inventory_nr=123).hourly_cost, vld_inp)
+
+        invalid_inputs = [-1, -1.1]
+        for inv_inp in invalid_inputs:
+            with self.assertRaises(ValidationError):
+                Machine(id=1, hourly_cost=inv_inp, hourly_gain=1.0, inventory_nr=123)
+
+    def test_hourly_gain(self) -> None:
+        valid_inputs = [0, 0.0, 1, 1.1]
+        for vld_inp in valid_inputs:
+            self.assertEqual(Machine(id=1, hourly_cost=1, hourly_gain=vld_inp, inventory_nr=123).hourly_gain, vld_inp)
+
+        invalid_inputs = [-1, -1.1]
+        for inv_inp in invalid_inputs:
+            with self.assertRaises(ValidationError):
+                Machine(id=1, hourly_cost=1.0, hourly_gain=inv_inp, inventory_nr=123)
+
+    def test_inventory_id(self) -> None:
+        valid_inputs = [0, 1]
+        for vld_inp in valid_inputs:
+            self.assertEqual(Machine(id=1, hourly_cost=vld_inp, hourly_gain=1.0, inventory_nr=vld_inp).inventory_nr,
+                             vld_inp)
+
+        invalid_inputs = [-1, -1.1, 0.0, 1.1]
+        for inv_inp in invalid_inputs:
+            with self.assertRaises(ValidationError):
+                Machine(id=1, hourly_cost=1.0, hourly_gain=1.0, inventory_nr=inv_inp)
+
+
+class EmployeeTest(TestCase):
+    def __init__(self, *args, **kwargs) -> None:
+        super(EmployeeTest, self).__init__(*args, **kwargs)
+
+    def test_fields(self) -> None:
+        employee = Employee(id=1, hourly_cost=0, hourly_gain={1: 1}, name='John', surname='Ally')
+
+        self.assertEqual(employee.id, 1)
+        self.assertEqual(employee.hourly_cost, 0)
+        self.assertEqual(employee.hourly_gain, {1: 1})
+        self.assertEqual(employee.name, 'John')
+        self.assertEqual(employee.surname, 'Ally')
+
+    def test_id(self) -> None:
+        valid_inputs = [0, 1, 2]
+        for vld_inp in valid_inputs:
+            self.assertEqual(Employee(id=vld_inp, hourly_cost=1.0, hourly_gain={1: 1.0}, name='John',
+                                      surname='Ally').id, vld_inp)
+
+        invalid_inputs = [-1, -1.1, 1.1, 0.0]
+        for inv_inp in invalid_inputs:
+            with self.assertRaises(ValidationError):
+                Employee(id=inv_inp, hourly_cost=1.0, hourly_gain={1: 1.0}, name='John', surname='Ally')
+
+    def test_hourly_cost(self) -> None:
+        valid_inputs = [0, 0.0, 1, 1.1]
+        for vld_inp in valid_inputs:
+            self.assertEqual(Employee(id=1, hourly_cost=vld_inp, hourly_gain={1: 1.0}, name='John',
+                                      surname='Ally').hourly_cost, vld_inp)
+
+        invalid_inputs = [-1, -1.1]
+        for inv_inp in invalid_inputs:
+            with self.assertRaises(ValidationError):
+                Employee(id=1, hourly_cost=inv_inp, hourly_gain={1: 1.0}, name='John', surname='Ally')
+
+    def test_hourly_gain(self) -> None:
+        valid_inputs = [{0: 1}, {0: 1.1}, {1: 1}, {1: 1.1}]
+        for vld_inp in valid_inputs:
+            self.assertEqual(Employee(id=1, hourly_cost=1, hourly_gain=vld_inp, name='John',
+                                      surname='Ally').hourly_gain, vld_inp)
+
+        invalid_inputs = [{0: -1}, {0: -1.1}, {-1: 1}, {-1: 1.1}, {0.1: 1}, {0.1: 1.1}, {"_": 1.0}, {None: 1.0}]
+        for inv_inp in invalid_inputs:
+            with self.assertRaises(ValidationError):
+                Employee(id=1, hourly_cost=1.0, hourly_gain=inv_inp, name='John', surname='Ally')
+
+
+class TimeSpanTest(TestCase):
+    def __init__(self, *args, **kwargs) -> None:
+        super(TimeSpanTest, self).__init__(*args, **kwargs)
+
+    def test_fields(self) -> None:
+        time_span = TimeSpan(id=1, datetime=datetime(2023, 11, 1, 12, 0, 0))
+
+        self.assertEqual(time_span.id, 1)
+        self.assertEqual(time_span.datetime, datetime(2023, 11, 1, 12, 0, 0))
+
+    def test_id(self) -> None:
+        valid_inputs = [0, 1, 2]
+        for vld_inp in valid_inputs:
+            self.assertEqual(TimeSpan(id=vld_inp, datetime="2023-11-01T10:00:00").id, vld_inp)
+
+        invalid_inputs = [-1, -1.1, 1.1, 0.0]
+        for inv_inp in invalid_inputs:
+            with self.assertRaises(ValidationError):
+                TimeSpan(id=inv_inp, datetime="2023-11-01T10:00:00")
+
+    def test_datetime(self) -> None:
+        valid_inputs = [datetime(2023, 11, 1, 8, 0, 0),
+                        datetime(2023, 11, 1, 12, 0, 0),
+                        datetime(2023, 11, 1, 16, 0, 0),
+                        datetime(2023, 11, 1, 23, 0, 0)]
+        for vld_inp in valid_inputs:
+            self.assertEqual(TimeSpan(id=1, datetime=vld_inp).datetime, vld_inp)
+
+        invalid_inputs = [datetime(2023, 11, 1, 6, 1, 0),
+                          datetime(2023, 11, 1, 6, 0, 1),
+                          datetime(2023, 11, 1, 6, 1, 1),
+                          datetime(2023, 11, 1, 1, 0, 0),
+                          datetime(2023, 11, 1, 2, 2, 0),
+                          datetime(2023, 11, 1, 3, 0, 3),
+                          datetime(2023, 11, 1, 4, 4, 4)]
+        for inv_inp in invalid_inputs:
+            with self.assertRaises(ValidationError):
+                TimeSpan(id=1, datetime=inv_inp)
+
+
+class ResourceContainerTest(TestCase):
+    def test_fields(self):
+        data = {
+            "machines": [
+                {"id": 0, "hourly_cost": 50.0, "hourly_gain": 120.0, "inventory_nr": 100},
+                {"id": 1, "hourly_cost": 45.0, "hourly_gain": 110.0, "inventory_nr": 101}
+            ],
+            "employees": [
+                {"id": 0, "hourly_cost": 20.0, "hourly_gain": {"0": 5.0, "1": 6.0}, "name": "John", "surname": "Doe"},
+                {"id": 1, "hourly_cost": 18.0, "hourly_gain": {"0": 4.0, "1": 5.0}, "name": "Jane", "surname": "Smith"}
+            ],
+            "time_span": [
+                {"id": 0, "datetime": "2023-11-01T06:00:00"},
+                {"id": 1, "datetime": "2023-11-01T07:00:00"}
+            ]
+        }
+
+        container = ResourceContainer(**data)
+        self.assertEqual(container.machines, [Machine(**machine_data) for machine_data in data["machines"]])
+        self.assertEqual(container.employees, [Employee(**employee_data) for employee_data in data["employees"]])
+        self.assertEqual(container.time_span, [TimeSpan(**time_span_data) for time_span_data in data["time_span"]])
+
+    def test_raises_validation_error(self):
+        invalid_data = {
+            "machines": [
+                {"id": 0, "hourly_cost": 50.0, "hourly_gain": 120.0, "inventory_nr": -1},
+            ]
+        }
+
+        with self.assertRaises(ValidationError):
+            ResourceContainer(**invalid_data)
+
+
+class ResourceManagerTest(TestCase):
+    def __init__(self, *args, **kwargs) -> None:
+        super(ResourceManagerTest, self).__init__(*args, **kwargs)
+
+    def test_import(self) -> None:
+        imp_res = ResourceManager().import_resources_from_json(test_database_path)
+
+        with open(test_database_path, 'r') as file:
+            test_data = load(file)
+        test_machines = test_data['machines']
+        test_employees = test_data['employees']
+        test_time_span = test_data['time_span']
+
+        for machine, test_machine_data in zip(imp_res.machines, test_machines):
+            self.assertEqual(machine, Machine(id=test_machine_data['id'], hourly_cost=test_machine_data['hourly_cost'],
+                                              hourly_gain=test_machine_data['hourly_gain'],
+                                              inventory_nr=test_machine_data['inventory_nr']))
+
+        for employee, test_employee_data in zip(imp_res.employees, test_employees):
+            self.assertEqual(employee, Employee(id=test_employee_data['id'],
+                                                hourly_cost=test_employee_data['hourly_cost'],
+                                                hourly_gain=test_employee_data['hourly_gain'],
+                                                name=test_employee_data['name'], surname=test_employee_data['surname']))
+
+        for time_span, test_time_span_data in zip(imp_res.time_span, test_time_span):
+            self.assertEqual(time_span, TimeSpan(id=test_time_span_data['id'],
+                                                 datetime=test_time_span_data['datetime']))
+
+    def test_validate_ids(self) -> None:
+        imp_res = ResourceManager().import_resources_from_json(test_database_path)
+        imp_res.machines[0].id = 7
+        with self.assertRaises(ResourceImportError):
+            ResourceManager().validate_ids(imp_res)
+
+        imp_res = ResourceManager().import_resources_from_json(test_database_path)
+        imp_res.employees[0].id = 7
+        with self.assertRaises(ResourceImportError):
+            ResourceManager().validate_ids(imp_res)
+
+        imp_res = ResourceManager().import_resources_from_json(test_database_path)
+        imp_res.time_span[0].id = 7
+        with self.assertRaises(ResourceImportError):
+            ResourceManager().validate_ids(imp_res)
 
 
 class FactoryAssignmentScheduleTest(TestCase):
     def __init__(self, *args, **kwargs) -> None:
         super(FactoryAssignmentScheduleTest, self).__init__(*args, **kwargs)
 
-        self.resource_manager = ResourceManager()
-        self.machines: List[Machine] = [
-            self.resource_manager.create_resource(
-                hourly_cost=1, hourly_gain=1, inventory_nr=11, resource_type=AvailableResources.MACHINE)
-        ]
-        self.employees: List[Employee] = [
-            self.resource_manager.create_resource(
-                hourly_cost=1, hourly_gain=1, name='John', surname='Smith', resource_type=AvailableResources.EMPLOYEE),
-            self.resource_manager.create_resource(
-                hourly_cost=2, hourly_gain=2, name='Sam', surname='Allen', resource_type=AvailableResources.EMPLOYEE)
-        ]
-        self.time_span: List[int] = [0, 1, 2]
-        self.encountered_it: int = 1
-        self.allowed_values: List[int] = [0, 1]
+        self.res: ResourceContainer = ResourceManager().import_resources_from_json(test_database_path)
 
-        self.schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
-            machines=self.machines, employees=self.employees, time_span=self.time_span,
-            encountered_it=self.encountered_it, allowed_values=self.allowed_values)
+    def test___new___default(self) -> None:
+        schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
+            machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span,
+            encountered_it=1, allowed_values=[0, 1], dtype='int32'
+        )
 
-    def test_new_instance_creation(self) -> None:
-        self.assertEqual(self.schedule.machines, self.machines, 'machines differ')
-        self.assertEqual(self.schedule.employees, self.employees, 'employees differ')
-        self.assertEqual(self.schedule.time_span, self.time_span, 'time_span differ')
-        self.assertEqual(self.schedule.encountered_it, self.encountered_it, 'encountered_it differs')
-        self.assertEqual(self.schedule.allowed_values, self.allowed_values, 'allowed_values differ')
+        with open(test_database_path, 'r') as file:
+            test_data = load(file)
+        test_machines = test_data['machines']
+        test_employees = test_data['employees']
+        test_time_span = test_data['time_span']
 
-    def test___evaluate_cost(self) -> None:
-        # TODO implement proper evaluation in SimulatedAnnealing.FactoryAssignmentProblem.DataTypes.py
-        self.assertIsNone(None)
+        for machine, test_machine_data in zip(schedule.machines, test_machines):
+            self.assertEqual(machine, Machine(id=test_machine_data['id'], hourly_cost=test_machine_data['hourly_cost'],
+                                              hourly_gain=test_machine_data['hourly_gain'],
+                                              inventory_nr=test_machine_data['inventory_nr']))
 
-    def test_shape(self) -> None:
-        self.assertEqual(self.schedule.shape, (len(self.machines), len(self.employees), len(self.time_span)),
-                         msg='shape differs')
+        for employee, test_employee_data in zip(schedule.employees, test_employees):
+            self.assertEqual(employee, Employee(id=test_employee_data['id'],
+                                                hourly_cost=test_employee_data['hourly_cost'],
+                                                hourly_gain=test_employee_data['hourly_gain'],
+                                                name=test_employee_data['name'], surname=test_employee_data['surname']))
 
+        for time_span, test_time_span_data in zip(schedule.time_span, test_time_span):
+            self.assertEqual(time_span, TimeSpan(id=test_time_span_data['id'],
+                                                 datetime=test_time_span_data['datetime']))
+        self.assertTrue(np.all(np.ones((5, 5, 5)) == schedule))
+        self.assertEqual(schedule.encountered_it, 1)
+        self.assertEqual(schedule.allowed_values, [0, 1])
+        self.assertEqual(schedule.dtype, 'int32')
 
-class FactoryAssignmentScheduleViewTest(TestCase):
-    def __init__(self, *args, **kwargs) -> None:
-        super(FactoryAssignmentScheduleViewTest, self).__init__(*args, **kwargs)
+    def test___new___input_array(self) -> None:
+        schedule_default: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
+            machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span,
+            encountered_it=1, allowed_values=[0, 1], dtype='int32'
+        )
 
-        self.resource_manager = ResourceManager()
-        self.machines: List[Machine] = [
-            self.resource_manager.create_resource(
-                hourly_cost=1, hourly_gain=1, inventory_nr=11, resource_type=AvailableResources.MACHINE),
-            self.resource_manager.create_resource(
-                hourly_cost=2, hourly_gain=2, inventory_nr=12, resource_type=AvailableResources.MACHINE)
-        ]
-        self.employees: List[Employee] = [
-            self.resource_manager.create_resource(
-                hourly_cost=1, hourly_gain=1, name='John', surname='Smith', resource_type=AvailableResources.EMPLOYEE),
-            self.resource_manager.create_resource(
-                hourly_cost=2, hourly_gain=2, name='Andrew', surname='Allen',
-                resource_type=AvailableResources.EMPLOYEE),
-            self.resource_manager.create_resource(
-                hourly_cost=3, hourly_gain=3, name='Sam', surname='Albin', resource_type=AvailableResources.EMPLOYEE)
-        ]
-        self.time_span: List[int] = [0, 1, 2, 3]
-        self.encountered_it: int = 1
+        zero_matrix: np.ndarray = np.zeros(shape=(5, 5, 5))
+        schedule_template: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
+                    input_array=zero_matrix,
+                    machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span,
+                    encountered_it=1, allowed_values=[0, 1], dtype='int32'
+                )
 
-        self.schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
-            machines=self.machines, employees=self.employees, time_span=self.time_span,
-            encountered_it=self.encountered_it)
+        self.assertIsInstance(schedule_template, FactoryAssignmentSchedule)
+        self.assertTrue(np.all(zero_matrix == schedule_template))
+        self.assertEqual(schedule_default.machines, schedule_template.machines)
+        self.assertEqual(schedule_default.employees, schedule_template.employees)
+        self.assertEqual(schedule_default.time_span, schedule_template.time_span)
+        self.assertEqual(schedule_default.encountered_it, schedule_template.encountered_it)
+        self.assertEqual(schedule_default.allowed_values, schedule_template.allowed_values)
+        self.assertEqual(schedule_default.shape, schedule_template.shape)
+        self.assertEqual(schedule_default.dtype, schedule_template.dtype)
 
-        self.slices_ids: Dict[str: int] = {'machine': 0, 'employee': 0, 'time_span': 0}
+    def test_slice(self) -> None:
+        schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
+            machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span,
+            encountered_it=1, allowed_values=[0, 1], dtype='int32'
+        )
 
-        self.slice_machine: FactoryAssignmentSchedule = self.schedule[self.slices_ids['machine'], :, :]
-        self.slice_employee: FactoryAssignmentSchedule = self.schedule[:, self.slices_ids['employee'], :]
-        self.slice_time: FactoryAssignmentSchedule = self.schedule[:, :, self.slices_ids['time_span']]
-
-        self.slices: List[FactoryAssignmentSchedule] = [self.slice_machine, self.slice_employee, self.slice_time]
-
-    def test_machines_from_slice(self) -> None:
-        # TODO add loss of dimension information test
-        expected: List[List[Machine]] = [self.schedule.machines, self.schedule.machines, self.schedule.machines]
-
-        for checked_slice, exp_res in zip(self.slices, expected):
-            self.assertEqual(checked_slice.machines, exp_res, msg='machines differ')
-
-    def test_employees_from_slice(self) -> None:
-        # TODO add loss of dimension information test
-        expected: List[List[Machine]] = [self.schedule.employees, self.schedule.employees, self.schedule.employees]
-
-        for checked_slice, exp_res in zip(self.slices, expected):
-            self.assertEqual(checked_slice.employees, exp_res, msg='employees differ')
-
-    def test_time_span_from_slice(self) -> None:
-        # TODO add loss of dimension information test
-        expected: List[List[Machine]] = [self.schedule.time_span, self.schedule.time_span, self.schedule.time_span]
-
-        for checked_slice, exp_res in zip(self.slices, expected):
-            self.assertEqual(checked_slice.time_span, exp_res, msg='time_span differ')
-
-    def test_encountered_it_from_slice(self) -> None:
-        for checked_slice in self.slices:
-            self.assertEqual(checked_slice.encountered_it, self.schedule.encountered_it, msg='encountered_it differs')
-
-    def test_slice_shape(self) -> None:
-        expected: List[Tuple[int, int,]] = [
-            (len(self.employees), len(self.time_span),),
-            (len(self.machines), len(self.time_span),),
-            (len(self.machines), len(self.employees),)
+        test_slices = [
+            (slice(1, 4), slice(1, 4), slice(1, 4)),  # Core region of the array
+            (slice(1, 3), slice(1, 3), slice(1, 3)),  # Core region of the array
+            (slice(2, 3), slice(0, 2), slice(1, 4)),  # Simple slice along each dimension
+            (slice(0, 1), slice(3, 4), slice(2, 5)),  # Another simple slice
+            (slice(0, 2), slice(1, 3), slice(2, 4)),  # Custom slice 1
+            (slice(3, 5), slice(2, 5), slice(0, 2)),  # Custom slice 2
+            (slice(0, 1), slice(0, 1), slice(0, 1)),  # Single element slice
+            (slice(0, 5), slice(0, 5), slice(0, 5)),  # Entire array
         ]
 
-        for checked_slice, exp_shape in zip(self.slices, expected):
-            self.assertEqual(checked_slice.shape, exp_shape, msg='invalid shape of slice')
+        def calculate_dim(dimension_list: List[Union[Machine, Employee, TimeSpan]], dimension_slice: slice) -> int:
+            """
+            Function returns the dimension as int based on the params.
+            @param dimension_list: List to be sliced
+            @type dimension_list: List[Union[Machine, Employee, TimeSpan]]
+            @param dimension_slice: slice of dimension_list
+            @type dimension_slice: slice
+            @return: calculated dimension
+            @rtype: int
+            """
+            if isinstance(dimension_slice, int):
+                return 1
+            elif isinstance(dimension_slice, slice):
+                if dimension_slice.start is None and dimension_slice.stop is None and dimension_slice.step is None:
+                    return len(dimension_list)
+                elif (dimension_slice.start is None and dimension_slice.stop is not None and
+                      dimension_slice.step is None):
+                    return dimension_slice.stop
+                elif (dimension_slice.start is not None and dimension_slice.stop is not None and
+                      dimension_slice.step is None):
+                    return dimension_slice.stop - dimension_slice.start
+                elif (dimension_slice.start is not None and dimension_slice.stop is not None and
+                      dimension_slice.step is not None):
+                    return (dimension_slice.stop - dimension_slice.start) // 2
+                else:
+                    raise FactoryAssignmentScheduleError(msg='dim could not be calculated', value=dimension_slice)
 
+        for m_sl, e_sl, t_sl in test_slices:
+            schedule_slice: FactoryAssignmentSchedule = schedule[m_sl, e_sl, t_sl]
+            self.assertEqual(schedule_slice.machines, self.res.machines[m_sl])
+            self.assertEqual(schedule_slice.employees, self.res.employees[e_sl])
+            self.assertEqual(schedule_slice.time_span, self.res.time_span[t_sl])
+            self.assertEqual(schedule_slice.encountered_it, schedule.encountered_it)
+            self.assertEqual(schedule_slice.allowed_values, schedule.allowed_values)
+            self.assertEqual(schedule_slice.dtype, schedule.dtype)
 
-class FactoryAssignmentScheduleExceptionTest(TestCase):
-    def __init__(self, *args, **kwargs) -> None:
-        super(FactoryAssignmentScheduleExceptionTest, self).__init__(*args, **kwargs)
+            valid_shape = (
+                calculate_dim(dimension_list=self.res.machines, dimension_slice=m_sl),
+                calculate_dim(dimension_list=self.res.employees, dimension_slice=e_sl),
+                calculate_dim(dimension_list=self.res.time_span, dimension_slice=t_sl)
+            )
+            self.assertEqual(schedule_slice.shape, valid_shape)
 
-        self.resource_manager = ResourceManager()
-        self.machines: List[Machine] = [
-            self.resource_manager.create_resource(hourly_cost=1, hourly_gain=1, inventory_nr=11,
-                                                  resource_type=AvailableResources.MACHINE)
-        ]
-        self.employees: List[Employee] = [
-            self.resource_manager.create_resource(hourly_cost=1, hourly_gain=1, name='John', surname='Smith',
-                                                  resource_type=AvailableResources.EMPLOYEE)
-        ]
-        self.time_span: List[int] = [0]
-        self.allowed_values: List[int] = [0, 1]
-        self.schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(machines=self.machines,
-                                                                             employees=self.employees,
-                                                                             time_span=self.time_span,
-                                                                             allowed_values=self.allowed_values)
+    def test_view(self) -> None:
+        schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
+            machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span,
+            encountered_it=1, allowed_values=[0, 1], dtype='int32'
+        )
 
-    def test___setitem__raises_error(self) -> None:
+        schedule_view = schedule.view(FactoryAssignmentSchedule)
+
+        self.assertTrue(np.all(schedule_view == schedule))
+        self.assertEqual(schedule_view.machines, schedule.machines)
+        self.assertEqual(schedule_view.employees, schedule.employees)
+        self.assertEqual(schedule_view.time_span, schedule.time_span)
+        self.assertEqual(schedule_view.encountered_it, schedule.encountered_it)
+        self.assertEqual(schedule_view.allowed_values, schedule.allowed_values)
+        self.assertEqual(schedule_view.dtype, schedule.dtype)
+        self.assertEqual(schedule_view.shape, schedule.shape)
+
+    # noinspection PyArgumentList
+    def test_missing_constructor_params(self) -> None:
+        with self.assertRaises(TypeError):
+            FactoryAssignmentSchedule(
+                employees=self.res.employees, time_span=self.res.time_span,
+                encountered_it=1, allowed_values=[0, 1], dtype='int32'
+            )
+
+        with self.assertRaises(TypeError):
+            FactoryAssignmentSchedule(
+                employees=self.res.employees, time_span=self.res.time_span,
+                encountered_it=1, allowed_values=[0, 1], dtype='int32'
+            )
+
+        with self.assertRaises(TypeError):
+            FactoryAssignmentSchedule(
+                machines=self.res.machines, employees=self.res.employees,
+                encountered_it=1, allowed_values=[0, 1], dtype='int32'
+            )
+
+    def test_property_setters(self) -> None:
+        schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
+            machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span,
+            encountered_it=1, allowed_values=[0, 1], dtype='int32'
+        )
+
         with self.assertRaises(FactoryAssignmentScheduleError):
-            self.schedule[0, 0, 0] = max(self.allowed_values) + 1
-
-    def test___factory___raising_error(self) -> None:
-        with self.assertRaises(FactoryAssignmentScheduleError):
-            self.custom_array_instance = FactoryAssignmentSchedule(machines=self.machines, employees=self.employees)
+            schedule.machines = []
 
         with self.assertRaises(FactoryAssignmentScheduleError):
-            self.custom_array_instance = FactoryAssignmentSchedule(machines=self.machines, time_span=self.time_span)
+            schedule.employees = []
 
         with self.assertRaises(FactoryAssignmentScheduleError):
-            self.custom_array_instance = FactoryAssignmentSchedule(employees=self.employees, time_span=self.time_span)
-
-    def test_machines_read_only(self) -> None:
-        with self.assertRaises(FactoryAssignmentScheduleError):
-            self.schedule.machines = self.machines
-
-    def test_employees_read_only(self) -> None:
-        with self.assertRaises(FactoryAssignmentScheduleError):
-            self.schedule.employees = self.employees
-
-    def test_time_span_read_only(self) -> None:
-        with self.assertRaises(FactoryAssignmentScheduleError):
-            self.schedule.time_span = self.time_span
-
-    def test_cost_read_only(self) -> None:
-        with self.assertRaises(FactoryAssignmentScheduleError):
-            self.schedule.cost = 0
-
-    def test_allowed_values_read_only(self) -> None:
-        with self.assertRaises(FactoryAssignmentScheduleError):
-            self.schedule.allowed_values = self.allowed_values
-
-    def test_encounter_it_setter(self) -> None:
-        with self.assertRaises(FactoryAssignmentScheduleError):
-            self.schedule.encountered_it = 0.1
+            schedule.time_span = []
 
         with self.assertRaises(FactoryAssignmentScheduleError):
-            self.schedule.encountered_it = -1
+            schedule.cost = 1
 
-        with self.assertRaises(FactoryAssignmentScheduleError):
-            self.schedule.encountered_it = 'str'
+        for inv_inp in [0.0, 1.0, -1, -1.1]:
+            with self.assertRaises(FactoryAssignmentScheduleError):
+                schedule.encountered_it = inv_inp
+
+        for inv_inp in [0.0, 'str', 1]:
+            with self.assertRaises(FactoryAssignmentScheduleError):
+                schedule.allowed_values = inv_inp
+
+    def test_allowed_values(self) -> None:
+        schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
+            machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span,
+            encountered_it=1, allowed_values=[0, 1], dtype='int32'
+        )
+
+        for inv_val in [-1.1, -1, 0.1, 1.2, 'str', {1: 2}]:
+            with self.assertRaises(FactoryAssignmentScheduleError):
+                schedule[0, 0, 0] = inv_val
+
+    # def test_cost(self) -> None:
+    #     # TODO implement proper evaluation in SimulatedAnnealing.FactoryAssignmentProblem.DataTypes.py
+    #     self.assertIsNone(None)
+    #
+    # def test_shape(self) -> None:
+    #     self.assertEqual(self.schedule.shape, (len(self.machines), len(self.employees), len(self.time_span)),
+    #                      msg='shape differs')
+
+
+if __name__ == "__main__":
+    main()
