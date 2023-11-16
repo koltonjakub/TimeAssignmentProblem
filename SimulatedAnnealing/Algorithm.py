@@ -1,26 +1,29 @@
 """Algorithm that performs simulated annealing method."""
 
-from typing import Callable, Any, Dict, List, Tuple
+from typing import Callable, Any, Tuple
 from numpy import int32, int64, float32, float64
 from numpy.random import random
-from SimulatedAnnealing.Visualisation.Visualisation import ScopeParams, Scope, PositiveNumber, RealNumber, NonNegativeInt
+from pydantic import ValidationError
+import logging as log
+import time
+from SimulatedAnnealing.Visualisation.Visualisation import UnvalidatedScope, ValidatedScope
 
 
 class SimulatedAnnealingValidationError(Exception):
-    def __init__(self, message, value=None) -> Exception:
+    def __init__(self, message, value=None) -> None:
         self.value = value
         self.message = message
         super().__init__(self.message)
 
 
-def generate_sa_algorithm(SolutionTemplateType: Any) -> Callable:
-    def simulated_annealing(cost: Callable[[SolutionTemplateType], RealNumber],
-                            init_sol: SolutionTemplateType,
-                            sol_gen: Callable[[SolutionTemplateType], SolutionTemplateType],
-                            init_temp: PositiveNumber,
-                            cool: Callable[[PositiveNumber, int], PositiveNumber],
-                            probability: Callable[[RealNumber, PositiveNumber], RealNumber],
-                            max_iterations: NonNegativeInt = 1000) -> Tuple[SolutionTemplateType, Scope]:
+def generate_sa_algorithm(SolutionTemplate: Any) -> Callable:
+    def simulated_annealing(cost: Callable[[SolutionTemplate], float],
+                            init_sol: SolutionTemplate,
+                            sol_gen: Callable[[SolutionTemplate], SolutionTemplate],
+                            init_temp: float,
+                            cool: Callable[[float, int], float],
+                            probability: Callable[[float, float], float],
+                            max_iterations: int = 1000) -> Tuple[SolutionTemplate, ValidatedScope]:
         """
         Function takes all the arguments that simulated annealing method requires and returns the best possible
         minimal visited_solution.
@@ -28,9 +31,9 @@ def generate_sa_algorithm(SolutionTemplateType: Any) -> Callable:
         :param cost: Objective function that is being optimized
         :type cost: Callable returning real value
         :param init_sol: Starting visited_solution for the algorithm
-        :type init_sol: SolutionTemplateType
+        :type init_sol: SolutionTemplate
         :param sol_gen: Function that returns next visited_solution, randomly different from provided
-        :type sol_gen: Callable returning SolutionTemplateType
+        :type sol_gen: Callable returning SolutionTemplate
         :param init_temp: Starting temperature
         :type init_temp: Real value
         :param cool: Function that cools the temperature
@@ -40,10 +43,10 @@ def generate_sa_algorithm(SolutionTemplateType: Any) -> Callable:
         :param max_iterations: Max iterations of the main loop
         :type max_iterations: int
         :return: Most optimal visited_solution that has been found during search, runtime simulation values
-        :rtype: SolutionTemplateType, Scope
+        :rtype: SolutionTemplate, UnvalidatedScope
         """
 
-        # TODO add validation for SolutionTemplateType Type, can be performed within solution generator function
+        # TODO add validation for SolutionTemplate Type, can be performed within solution generator function
         # TODO add remembering of the best encountered solution
 
         if not callable(cost):
@@ -65,67 +68,53 @@ def generate_sa_algorithm(SolutionTemplateType: Any) -> Callable:
         if not isinstance(max_iterations, (int, int32, int64)):
             raise SimulatedAnnealingValidationError(message='max_iterations must be int', value=max_iterations)
 
-        # TODO instead of dict create instance of Scope with validation after every input turned off, perform validation
-        # TODO by manually triggering it with Scope.validate() within try statement
-        simulation_scope_data: Dict[ScopeParams.name: List] = {
-            ScopeParams.iteration: list(),
-            ScopeParams.temperature: list(),
-            ScopeParams.delta_energy: list(),
-            ScopeParams.probability_of_transition: list(),
-            ScopeParams.cost_function: list(),
-            ScopeParams.visited_solution: list()
-        }
+        invalid_simul_scope: UnvalidatedScope = UnvalidatedScope()
 
-        # TODO delete this function after manual validation od Scope is implemented
-        def update_scope_data(scope_data, i, temp, delta_en, prob, cost_val, sol):
-            scope_data[ScopeParams.iteration].append(i)
-            scope_data[ScopeParams.temperature].append(temp)
-            scope_data[ScopeParams.delta_energy].append(delta_en)
-            scope_data[ScopeParams.probability_of_transition].append(prob)
-            scope_data[ScopeParams.cost_function].append(cost_val)
-            scope_data[ScopeParams.visited_solution].append(sol)
-
-        solution: SolutionTemplateType = init_sol
-        temperature: PositiveNumber = init_temp
+        solution: SolutionTemplate = init_sol
+        best_solution: SolutionTemplate = init_sol
+        best_cost = cost(init_sol)
+        temperature: float = init_temp
 
         for it in range(0, max_iterations):
-            neighbour: SolutionTemplateType = sol_gen(solution)
+            neighbour: SolutionTemplate = sol_gen(solution)
 
             solution_cost = cost(solution)
             neighbour_cost = cost(neighbour)
 
-            delta_energy: RealNumber = solution_cost - neighbour_cost
-            prob_of_transition: RealNumber = probability(delta_energy, temperature)
+            delta_energy: float = solution_cost - neighbour_cost
+            prob_of_transition: float = probability(delta_energy, temperature)
 
             if neighbour_cost < solution_cost:
-                solution: SolutionTemplateType = neighbour
+                solution: SolutionTemplate = neighbour
             else:
                 if random(1) < prob_of_transition:
-                    solution: SolutionTemplateType = neighbour
+                    solution: SolutionTemplate = neighbour
 
-            update_scope_data(scope_data=simulation_scope_data,
-                              i=it,
-                              temp=temperature,
-                              delta_en=delta_energy,
-                              prob=prob_of_transition,
-                              cost_val=cost(solution),
-                              sol=solution)
+            if neighbour_cost < best_cost:
+                best_solution: SolutionTemplate = neighbour
+                best_cost = cost(neighbour)
 
-            temperature: PositiveNumber = cool(temperature, it)
+            invalid_simul_scope.iteration += [it]
+            invalid_simul_scope.temperature += [temperature]
+            invalid_simul_scope.probability_of_transition += [prob_of_transition]
+            invalid_simul_scope.cost_function += [cost(solution)]
+            invalid_simul_scope.best_cost_function += [cost(best_solution)]
+            invalid_simul_scope.visited_solution += [solution]
 
-        # create Scope only after the algorithm has ended, validations take too long if validation of reassignments
-        # were to be performed in the main loop
-        # TODO create scope before main loop after manual validation is implemented, proceeding code will be useless
-        simulation_scope = Scope()
+            temperature: float = cool(temperature, it)
 
-        simulation_scope.iteration = simulation_scope_data[ScopeParams.iteration]
-        simulation_scope.temperature = simulation_scope_data[ScopeParams.temperature]
-        simulation_scope.delta_energy = simulation_scope_data[ScopeParams.delta_energy]
-        simulation_scope.probability_of_transition = simulation_scope_data[ScopeParams.probability_of_transition]
-        simulation_scope.cost_function = simulation_scope_data[ScopeParams.cost_function]
-        simulation_scope.visited_solution = simulation_scope_data[ScopeParams.visited_solution]
-
-        return solution, simulation_scope
+        try:
+            simul_scope: ValidatedScope = ValidatedScope()
+            simul_scope.iteration = invalid_simul_scope.iteration
+            simul_scope.temperature = invalid_simul_scope.temperature
+            simul_scope.probability_of_transition = invalid_simul_scope.probability_of_transition
+            simul_scope.cost_function = invalid_simul_scope.cost_function
+            simul_scope.best_cost_function = invalid_simul_scope.best_cost_function
+            simul_scope.visited_solution = invalid_simul_scope.visited_solution
+        except ValidationError as e:
+            print(e)
+        else:
+            return best_solution, simul_scope
 
     return simulated_annealing
 
@@ -209,4 +198,7 @@ def main():
 
 
 if __name__ == "__main__":
+    start_time = time.time()
     main()
+    stop_time = time.time()
+    print('Execution time: ' + str(stop_time - start_time))
