@@ -1,12 +1,13 @@
 """Algorithm that performs simulated annealing method."""
 
 from typing import Callable, Any, Tuple
-from numpy import int32, int64, float32, float64
 from numpy.random import random
 from pydantic import ValidationError
-import logging as log
-import time
 from SimulatedAnnealing.Visualisation.Visualisation import UnvalidatedScope, ValidatedScope
+
+import logging as log
+import numpy as np
+import time
 
 
 class SimulatedAnnealingValidationError(Exception):
@@ -17,13 +18,19 @@ class SimulatedAnnealingValidationError(Exception):
 
 
 def generate_sa_algorithm(SolutionTemplate: Any) -> Callable:
+    # TODO move param validation and setup_logger here
+    def setup_logger(log_file: str) -> None:
+        log.basicConfig(filename=log_file, level=log.INFO)
+
     def simulated_annealing(cost: Callable[[SolutionTemplate], float],
                             init_sol: SolutionTemplate,
                             sol_gen: Callable[[SolutionTemplate], SolutionTemplate],
                             init_temp: float,
                             cool: Callable[[float, int], float],
                             probability: Callable[[float, float], float],
-                            max_iterations: int = 1000) -> Tuple[SolutionTemplate, ValidatedScope]:
+                            max_iterations: int = 1000,
+                            log_file_path: str = '../logs/simulated_annealing.log',
+                            experiment_name: str = 'SimulatedAnnealing') -> Tuple[SolutionTemplate, ValidatedScope]:
         """
         Function takes all the arguments that simulated annealing method requires and returns the best possible
         minimal visited_solution.
@@ -42,6 +49,10 @@ def generate_sa_algorithm(SolutionTemplate: Any) -> Callable:
         :type probability: Callable returning real value between 0 and 1
         :param max_iterations: Max iterations of the main loop
         :type max_iterations: int
+        :param log_file_path: path of the log file
+        :type log_file_path: str
+        :param experiment_name: name of the experiment
+        :type experiment_name: str
         :return: Most optimal visited_solution that has been found during search, runtime simulation values
         :rtype: SolutionTemplate, UnvalidatedScope
         """
@@ -49,15 +60,17 @@ def generate_sa_algorithm(SolutionTemplate: Any) -> Callable:
         # TODO add validation for SolutionTemplate Type, can be performed within solution generator function
         # TODO add remembering of the best encountered solution
 
+        # TODO implement logger
+
         if not callable(cost):
             raise SimulatedAnnealingValidationError(message="objective_value is not callable")
 
         if not callable(sol_gen):
             raise SimulatedAnnealingValidationError(message="sol_gen is not callable")
 
-        if not isinstance(init_temp, (int, float, int32, int64, float32, float64)):
-            raise SimulatedAnnealingValidationError(message="init_temp must be int or float or int32 or int64 or "
-                                                            "float32 or float64")
+        if not isinstance(init_temp, (int, float, np.int32, np.int64, np.float32, np.float64)):
+            raise SimulatedAnnealingValidationError(message="init_temp must be int or float or np.int32 or np.int64 or "
+                                                            "np.float32 or np.float64")
 
         if not callable(cool):
             raise SimulatedAnnealingValidationError(message="cool is not callable")
@@ -65,8 +78,10 @@ def generate_sa_algorithm(SolutionTemplate: Any) -> Callable:
         if not callable(probability):
             raise SimulatedAnnealingValidationError(message="probability is not callable")
 
-        if not isinstance(max_iterations, (int, int32, int64)):
+        if not isinstance(max_iterations, (int, np.int32, np.int64)):
             raise SimulatedAnnealingValidationError(message='max_iterations must be int', value=max_iterations)
+
+        setup_logger(log_file=log_file_path)
 
         invalid_simul_scope: UnvalidatedScope = UnvalidatedScope()
 
@@ -74,6 +89,8 @@ def generate_sa_algorithm(SolutionTemplate: Any) -> Callable:
         best_solution: SolutionTemplate = init_sol
         best_cost = cost(init_sol)
         temperature: float = init_temp
+
+        stopping_criterion: str = 'max iterations reached'
 
         for it in range(0, max_iterations):
             neighbour: SolutionTemplate = sol_gen(solution)
@@ -94,6 +111,8 @@ def generate_sa_algorithm(SolutionTemplate: Any) -> Callable:
                 best_solution: SolutionTemplate = neighbour
                 best_cost = cost(neighbour)
 
+            temperature: float = cool(temperature, it)
+
             invalid_simul_scope.iteration += [it]
             invalid_simul_scope.temperature += [temperature]
             invalid_simul_scope.probability_of_transition += [prob_of_transition]
@@ -101,10 +120,8 @@ def generate_sa_algorithm(SolutionTemplate: Any) -> Callable:
             invalid_simul_scope.best_cost_function += [cost(best_solution)]
             invalid_simul_scope.visited_solution += [solution]
 
-            temperature: float = cool(temperature, it)
-
+        simul_scope: ValidatedScope = ValidatedScope()
         try:
-            simul_scope: ValidatedScope = ValidatedScope()
             simul_scope.iteration = invalid_simul_scope.iteration
             simul_scope.temperature = invalid_simul_scope.temperature
             simul_scope.probability_of_transition = invalid_simul_scope.probability_of_transition
@@ -112,9 +129,19 @@ def generate_sa_algorithm(SolutionTemplate: Any) -> Callable:
             simul_scope.best_cost_function = invalid_simul_scope.best_cost_function
             simul_scope.visited_solution = invalid_simul_scope.visited_solution
         except ValidationError as e:
-            print(e)
-        else:
-            return best_solution, simul_scope
+            log.error(f"ExpName: {experiment_name} resulted in Pydantic validation error: {e}")
+            for error in e.errors():
+                log.error(f"Field: {error['loc']}, Error: {error['msg']}")
+
+        init_cost = cost(init_sol)
+        absolute_improvement = init_cost - best_cost
+        relative_improvement = (init_cost - best_cost) / init_cost * 100 if best_cost != 0 else 100
+
+        log.info(f"|Exp Name: {experiment_name} | {stopping_criterion} in {np.max(simul_scope.iteration)} iterations |\n"
+                 f"| abs_improvement = {absolute_improvement} | rel_improvement = {relative_improvement} | "
+                 f"cost = {best_cost} |")
+
+        return best_solution, simul_scope
 
     return simulated_annealing
 
