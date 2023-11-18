@@ -1,11 +1,11 @@
 """This file contains all tests designed for Solver module from SimulatedAnnealing package."""
 
-
 from SimulatedAnnealing.Solver import Solver
 from unittest import TestCase, main
 from pydantic import ValidationError
 
 import os
+import time
 import numpy as np
 import logging as log
 
@@ -16,6 +16,7 @@ class SolverTests(TestCase):
 
         class Dummy:
             pass
+
         self.solver = Solver(SolutionType=Dummy)
 
     def test_proper_assignment(self) -> None:
@@ -152,6 +153,7 @@ class SolverTests(TestCase):
 
         class Dummy:
             pass
+
         mock_init_sol = Dummy()
         mock_sol_gen = lambda x: Dummy()
         self.solver.sol_gen = None
@@ -161,6 +163,7 @@ class SolverTests(TestCase):
 
         class OtherDummy:
             pass
+
         mock_sol_gen = lambda x: OtherDummy()
         with self.assertRaises(ValidationError):
             self.solver.sol_gen = mock_sol_gen
@@ -175,7 +178,7 @@ class SolverTests(TestCase):
         with self.assertRaises(ValidationError):
             self.solver.cool = mock_cool
 
-        mock_cool = lambda t: 0.5*t
+        mock_cool = lambda t: 0.5 * t
         with self.assertRaises(ValidationError):
             self.solver.cool = mock_cool
 
@@ -334,7 +337,7 @@ class SolverTests(TestCase):
         pass
 
     def test_csv_dump(self) -> None:
-        solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: 0, cool=lambda t, k: t*0.5**k,
+        solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: 0, cool=lambda t, k: t * 0.5 ** k,
                         probability=lambda de, t: 0.5, init_sol=1, init_temp=10, max_iterations=100,
                         experiment_name="test_simulate_annealing", log_results=True)
 
@@ -359,7 +362,8 @@ class SolverTests(TestCase):
             self.assertEqual(float(dumped_data['Absolute Improvement']), 1)
             self.assertEqual(float(dumped_data['Relative Improvement']), 1)
 
-        solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: sol+1, cool=lambda t, k: t*0.5**k,
+        solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: sol + 1,
+                        cool=lambda t, k: t * 0.5 ** k,
                         probability=lambda de, t: 0.5, init_sol=0, init_temp=10, max_iterations=100,
                         experiment_name="test_simulate_annealing", log_results=True)
         solver.csv_file_path = test_csv_dump_path
@@ -380,19 +384,51 @@ class SolverTests(TestCase):
             self.assertEqual(float(dumped_data['Relative Improvement']), 1)
 
     def test_simulate_annealing(self) -> None:
-        solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: 0, cool=lambda t, k: t*0.5**k,
+        solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: 0, cool=lambda t, k: t * 0.5 ** k,
                         probability=lambda de, t: 0.5, init_sol=1, init_temp=10, max_iterations=100,
                         experiment_name="test_simulate_annealing")
 
         best_sol, _ = solver.simulate_annealing()
         self.assertEqual(best_sol, 0)
 
-        solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: sol+1, cool=lambda t, k: t*0.5**k,
+        solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: sol + 1,
+                        cool=lambda t, k: t * 0.5 ** k,
                         probability=lambda de, t: 0.5, init_sol=1, init_temp=10, max_iterations=100,
                         experiment_name="test_simulate_annealing")
 
         best_sol, _ = solver.simulate_annealing()
         self.assertEqual(best_sol, 1)
+
+
+class SolverExecutionTimeTests(TestCase):
+    def __init__(self, *args, **kwargs) -> None:
+        super(SolverExecutionTimeTests, self).__init__(*args, **kwargs)
+
+    def test_simulate_annealing_execution_time(self) -> None:
+        solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: 0, cool=lambda t, k: 0.1,
+                        probability=lambda de, t: 0.5, init_sol=1, init_temp=10,
+                        experiment_name="test_simulate_annealing")
+        max_iterations = [10 ** power for power in range(0, 5 + 1)]
+        time_profiler = {}
+
+        for max_it in max_iterations:
+            solver.max_iterations = max_it
+            start_time = time.perf_counter()
+            best_sol, _ = solver.simulate_annealing()
+            stop_time = time.perf_counter()
+            time_profiler[max_it] = stop_time - start_time
+            self.assertEqual(best_sol, 0)
+
+        times = np.array([value for value in time_profiler.values()])
+        higher_order = times[1::]
+        lower_order = times[:-1]
+        difference = higher_order / 10 - lower_order
+
+        # print(time_profiler)
+
+        for diff in difference:
+            self.assertAlmostEqual(diff, 0, places=1, msg='Execution time rises more than 10 percent per one '
+                                                          'order of magnitude increase in max_iterations.')
 
 
 if __name__ == "__main__":
