@@ -5,6 +5,7 @@ from SimulatedAnnealing.Solver import Solver
 from unittest import TestCase, main
 from pydantic import ValidationError
 
+import os
 import numpy as np
 import logging as log
 
@@ -29,13 +30,16 @@ class SolverTests(TestCase):
         init_sol = Dummy()
         init_temp = 10
         max_iterations = 1000
-        log_file_path = ('C://Users//xdkub//Documents//AGH//semestr_5//BO2//TimeAssignmentProblem//logs'
-                         '//simulated_annealing.log')
         experiment_name = 'dummy'
+        current_directory = os.getcwd()
+        parent_directory = os.path.dirname(current_directory)
+        logs_directory = os.path.join(parent_directory, "logs")
+        log_file_path = os.path.join(logs_directory, "simulated_annealing.log")
+        csv_file_path = os.path.join(logs_directory, "simulated_annealing.csv")
 
         solver = Solver(cost=cost, sol_gen=sol_gen, cool=cool, probability=probability, init_sol=init_sol,
                         SolutionType=Dummy, init_temp=init_temp, max_iterations=max_iterations,
-                        log_file_path=log_file_path, experiment_name=experiment_name)
+                        log_file_path=log_file_path, experiment_name=experiment_name, csv_file_path=csv_file_path)
         self.assertEqual(solver.cost, cost)
         self.assertEqual(solver.sol_gen, sol_gen)
         self.assertEqual(solver.cool, cool)
@@ -44,6 +48,7 @@ class SolverTests(TestCase):
         self.assertEqual(solver.init_sol, init_sol)
         self.assertEqual(solver.init_temp, init_temp)
         self.assertEqual(solver.log_file_path, log_file_path)
+        self.assertEqual(solver.csv_file_path, csv_file_path)
         self.assertEqual(solver.max_iterations, max_iterations)
         self.assertEqual(solver.experiment_name, experiment_name)
 
@@ -325,14 +330,19 @@ class SolverTests(TestCase):
 
     def test_log(self) -> None:
         # TODO force validation error on simul_scope, so that error log is logged
+        # TODO refactor scope at first
         pass
 
     def test_csv_dump(self) -> None:
         solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: 0, cool=lambda t, k: t*0.5**k,
                         probability=lambda de, t: 0.5, init_sol=1, init_temp=10, max_iterations=100,
                         experiment_name="test_simulate_annealing", log_results=True)
-        solver.csv_file_path = ('C://Users//xdkub//Documents//AGH//semestr_5//BO2//TimeAssignmentProblem'
-                                '//logs//test_csv_dump.csv')
+
+        current_directory = os.getcwd()
+        parent_directory = os.path.dirname(current_directory)
+        test_csv_dump_path = os.path.join(parent_directory, "logs", "test_csv_dump.csv")
+
+        solver.csv_file_path = test_csv_dump_path
 
         best_sol, _ = solver.simulate_annealing()
 
@@ -352,8 +362,7 @@ class SolverTests(TestCase):
         solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: sol+1, cool=lambda t, k: t*0.5**k,
                         probability=lambda de, t: 0.5, init_sol=0, init_temp=10, max_iterations=100,
                         experiment_name="test_simulate_annealing", log_results=True)
-        solver.csv_file_path = ('C://Users//xdkub//Documents//AGH//semestr_5//BO2//TimeAssignmentProblem'
-                                '//logs//test_csv_dump.csv')
+        solver.csv_file_path = test_csv_dump_path
 
         best_sol, _ = solver.simulate_annealing()
 
