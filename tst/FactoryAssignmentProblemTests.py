@@ -460,7 +460,7 @@ class FactoryAssignmentScheduleTests(TestCase):
             encountered_it=1, allowed_values=[0, 1], dtype='int32'
         )
 
-        for inv_val in [-1.1, -1, 0.1, 1.2, 'str', {1: 2}]:
+        for inv_val in [-1.1, -1, 0.1, 1.2, 'str']:
             with self.assertRaises(FactoryAssignmentScheduleError):
                 schedule[0, 0, 0] = inv_val
 

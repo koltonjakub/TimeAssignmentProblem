@@ -253,8 +253,13 @@ class FactoryAssignmentSchedule(np.ndarray):
         @param value: value to be assigned to matrix
         @type value: Any
         """
-        # if np.any([elem not in self.allowed_values for elem in value]):
+
+        # if isinstance(value, Iterable) and np.any([elem not in self.allowed_values for elem in value]):
         #     raise FactoryAssignmentScheduleError(msg='tried to assign not allowed value', value=value)
+
+        if np.isscalar(value):
+            if value not in self.allowed_values:
+                raise FactoryAssignmentScheduleError(msg=f'{value} is not in allowed_values', value=value)
 
         super().__setitem__(key, value)
 
@@ -375,7 +380,7 @@ class FactoryAssignmentSchedule(np.ndarray):
             raise FactoryAssignmentScheduleError('encountered_it must be non-negative')
 
         # noinspection PyAttributeOutsideInit
-        self.__encountered_it: int = value
+        self.__encountered_it = value
 
     @property
     def cost(self) -> float:
@@ -396,11 +401,3 @@ class FactoryAssignmentSchedule(np.ndarray):
 
         # noinspection PyAttributeOutsideInit
         self.__allowed_values: Iterable[Any] = value
-
-
-if __name__ == "__main__":
-    # slice_implementation()
-    # solution_usage_example()
-    # resources_creation_example()
-    # validation_errors_example()
-    pass
