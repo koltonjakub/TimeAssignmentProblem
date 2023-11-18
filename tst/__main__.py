@@ -1,16 +1,19 @@
 import unittest
-from FactoryAssignmentProblemTests import (ResourceTest, MachineTest, EmployeeTest, TimeSpanTest,
-                                           ResourceContainerTest, ResourceManagerTest, FactoryAssignmentScheduleTest)
+from FactoryAssignmentProblemTests import (MachineTests, EmployeeTests, TimeSpanTests,
+                                           ResourceContainerTests, ResourceManagerTests, FactoryAssignmentScheduleTests)
+from SolverTests import SolverTests
 
 if __name__ == '__main__':
     test_suite = unittest.TestSuite()
-    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ResourceTest))
-    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(MachineTest))
-    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(EmployeeTest))
-    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TimeSpanTest))
-    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ResourceContainerTest))
-    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ResourceManagerTest))
-    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(FactoryAssignmentScheduleTest))
+
+    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(MachineTests))
+    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(EmployeeTests))
+    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TimeSpanTests))
+    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ResourceContainerTests))
+    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ResourceManagerTests))
+    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(FactoryAssignmentScheduleTests))
+
+    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(SolverTests))
 
     test_result = unittest.TestResult()
     test_suite.run(result=test_result)

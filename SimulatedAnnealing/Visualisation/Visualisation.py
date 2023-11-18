@@ -7,7 +7,7 @@ from pydantic import BaseModel, BaseConfig, Field, conint, confloat
 from typing import List, Any, Dict
 
 
-class UnvalidatedScope(BaseModel):
+class ScopeNoValid(BaseModel):
     """BaseModel that stores all runtime data of simulation"""
 
     class Config(BaseConfig):
@@ -37,7 +37,7 @@ class UnvalidatedScope(BaseModel):
     # TODO value is assigned
 
 
-class ValidatedScope(UnvalidatedScope):
+class ScopeValid(ScopeNoValid):
     class Config(BaseConfig):
         """Config sets crucial BaseModel settings"""
         arbitrary_types_allowed = True  # Allows for validation of numpy numeric types
@@ -45,11 +45,11 @@ class ValidatedScope(UnvalidatedScope):
         smart_union = True  # Prevents unnecessary casts to not matching data types
 
 
-def plot_scope(scope: UnvalidatedScope) -> None:
+def plot_scope(scope: ScopeNoValid) -> None:
     """
     Function that plots runtime values of simulation from Scope type.
     @param scope: Scope of simulated annealing algorithm runtime values
-    @type scope: UnvalidatedScope
+    @type scope: ScopeNoValid
     """
 
     figure, axes = subplots(2, 2, figsize=(10, 10))
@@ -85,8 +85,8 @@ def plot_scope(scope: UnvalidatedScope) -> None:
 
 if __name__ == "__main__":
     def scope_usage_example():
-        scp = ValidatedScope()
-        scp.iteration = [1, 0]  # Type coercion is always ON, probably due to
+        scp = ScopeValid()
+        scp.iteration = [1, 0.1]  # Type coercion is always ON, probably due to
         scp.iteration += [1]  # The only proper way to append to list, .append() method omits the pydantic validation
 
         scp.delta_energy = [-1]
@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
         scp.visited_solution += [(1, 1)]
 
-        print('UnvalidatedScope:')
+        print('ScopeNoValid:')
         print(scp)
         print()
 

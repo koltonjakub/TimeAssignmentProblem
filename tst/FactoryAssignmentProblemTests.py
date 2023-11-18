@@ -1,4 +1,5 @@
-"""This file contains all test designed for FactoryAssignmentProblem module from SimulatedAnnealing package."""
+"""This file contains all tests designed for FactoryAssignmentProblem module from SimulatedAnnealing package."""
+
 from typing import List, Union
 from unittest import TestCase, main
 from pydantic import ValidationError
@@ -16,9 +17,9 @@ parent_directory = path.dirname(current_directory)
 test_database_path = path.join(parent_directory, "data", "test_database.json")
 
 
-class ResourceTest(TestCase):
+class ResourceTests(TestCase):
     def __init__(self, *args, **kwargs) -> None:
-        super(ResourceTest, self).__init__(*args, **kwargs)
+        super(ResourceTests, self).__init__(*args, **kwargs)
 
     def test_fields(self) -> None:
         resource = Resource(id=1)
@@ -35,9 +36,9 @@ class ResourceTest(TestCase):
                 Resource(id=inv_inp)
 
 
-class MachineTest(TestCase):
+class MachineTests(TestCase):
     def __init__(self, *args, **kwargs) -> None:
-        super(MachineTest, self).__init__(*args, **kwargs)
+        super(MachineTests, self).__init__(*args, **kwargs)
 
     def test_fields(self) -> None:
         machine = Machine(id=1, hourly_cost=0, hourly_gain=1.1, inventory_nr=123)
@@ -89,9 +90,9 @@ class MachineTest(TestCase):
                 Machine(id=1, hourly_cost=1.0, hourly_gain=1.0, inventory_nr=inv_inp)
 
 
-class EmployeeTest(TestCase):
+class EmployeeTests(TestCase):
     def __init__(self, *args, **kwargs) -> None:
-        super(EmployeeTest, self).__init__(*args, **kwargs)
+        super(EmployeeTests, self).__init__(*args, **kwargs)
 
     def test_fields(self) -> None:
         employee = Employee(id=1, hourly_cost=0, hourly_gain={1: 1}, name='John', surname='Ally')
@@ -136,9 +137,9 @@ class EmployeeTest(TestCase):
                 Employee(id=1, hourly_cost=1.0, hourly_gain=inv_inp, name='John', surname='Ally')
 
 
-class TimeSpanTest(TestCase):
+class TimeSpanTests(TestCase):
     def __init__(self, *args, **kwargs) -> None:
-        super(TimeSpanTest, self).__init__(*args, **kwargs)
+        super(TimeSpanTests, self).__init__(*args, **kwargs)
 
     def test_fields(self) -> None:
         time_span = TimeSpan(id=1, datetime=datetime(2023, 11, 1, 12, 0, 0))
@@ -176,7 +177,7 @@ class TimeSpanTest(TestCase):
                 TimeSpan(id=1, datetime=inv_inp)
 
 
-class ResourceContainerTest(TestCase):
+class ResourceContainerTests(TestCase):
     def test_fields(self):
         data = {
             "machines": [
@@ -209,9 +210,9 @@ class ResourceContainerTest(TestCase):
             ResourceContainer(**invalid_data)
 
 
-class ResourceManagerTest(TestCase):
+class ResourceManagerTests(TestCase):
     def __init__(self, *args, **kwargs) -> None:
-        super(ResourceManagerTest, self).__init__(*args, **kwargs)
+        super(ResourceManagerTests, self).__init__(*args, **kwargs)
 
     def test_import(self) -> None:
         imp_res = ResourceManager().import_resources_from_json(test_database_path)
@@ -254,9 +255,9 @@ class ResourceManagerTest(TestCase):
             ResourceManager().validate_ids(imp_res)
 
 
-class FactoryAssignmentScheduleTest(TestCase):
+class FactoryAssignmentScheduleTests(TestCase):
     def __init__(self, *args, **kwargs) -> None:
-        super(FactoryAssignmentScheduleTest, self).__init__(*args, **kwargs)
+        super(FactoryAssignmentScheduleTests, self).__init__(*args, **kwargs)
 
         self.res: ResourceContainer = ResourceManager().import_resources_from_json(test_database_path)
 
