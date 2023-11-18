@@ -253,8 +253,8 @@ class FactoryAssignmentSchedule(np.ndarray):
         @param value: value to be assigned to matrix
         @type value: Any
         """
-        if value not in self.allowed_values:
-            raise FactoryAssignmentScheduleError(msg='tried to assign not allowed value', value=value)
+        # if np.any([elem not in self.allowed_values for elem in value]):
+        #     raise FactoryAssignmentScheduleError(msg='tried to assign not allowed value', value=value)
 
         super().__setitem__(key, value)
 

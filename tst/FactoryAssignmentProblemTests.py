@@ -1,20 +1,22 @@
 """This file contains all tests designed for FactoryAssignmentProblem module from SimulatedAnnealing package."""
 
-from typing import List, Union
-from unittest import TestCase, main
 from pydantic import ValidationError
+from unittest import TestCase, main
+from typing import List, Union
+from itertools import product
 from datetime import datetime
 from json import load
-from os import getcwd, path
+
 from SimulatedAnnealing.FactoryAssignmentProblem.DataTypes import (
     Resource, Machine, Employee, TimeSpan, ResourceContainer, ResourceImportError, ResourceManager,
     FactoryAssignmentSchedule, FactoryAssignmentScheduleError)
 
 import numpy as np
+import os
 
-current_directory = getcwd()
-parent_directory = path.dirname(current_directory)
-test_database_path = path.join(parent_directory, "data", "test_database.json")
+current_directory = os.getcwd()
+parent_directory = os.path.dirname(current_directory)
+test_database_path = os.path.join(parent_directory, "data", "test_database.json")
 
 
 class ResourceTests(TestCase):
@@ -462,13 +464,51 @@ class FactoryAssignmentScheduleTests(TestCase):
             with self.assertRaises(FactoryAssignmentScheduleError):
                 schedule[0, 0, 0] = inv_val
 
-    # def test_cost(self) -> None:
-    #     # TODO implement proper evaluation in SimulatedAnnealing.FactoryAssignmentProblem.DataTypes.py
-    #     self.assertIsNone(None)
-    #
-    # def test_shape(self) -> None:
-    #     self.assertEqual(self.schedule.shape, (len(self.machines), len(self.employees), len(self.time_span)),
-    #                      msg='shape differs')
+    def test_cost(self) -> None:
+        # TODO implement proper evaluation in SimulatedAnnealing.FactoryAssignmentProblem.DataTypes.py
+        pass
+
+    def test_partial_assignment_not_changing_dim_list(self):
+        schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
+            machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span,
+            encountered_it=1, allowed_values=[0, 1], dtype='int32'
+        )
+
+        frac_machines = self.res.machines[0:2]
+        frac_employees = self.res.employees[0:2]
+        frac_time_span = self.res.time_span[0:2]
+
+        fraction: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
+            input_array=np.zeros((2, 2, 2)),
+            machines=frac_machines, employees=frac_employees,
+            time_span=frac_time_span, encountered_it=2, allowed_values=[0, 1, 2], dtype='int32'
+        )
+
+        slices = [slice(0, 2), slice(3, 5)]
+        for m, e, t in product(slices, slices, slices):
+            schedule[m, e, t] = fraction
+
+        comparison_template = np.zeros((5, 5, 5))
+        comparison_template[2, :, :] = np.ones((1, 1))
+        comparison_template[:, 2, :] = np.ones((1, 1))
+        comparison_template[:, :, 2] = np.ones((1, 1))
+
+        self.assertTrue(np.all(schedule == comparison_template))
+        self.assertEqual(schedule.shape, (5, 5, 5))
+        self.assertEqual(schedule.machines, self.res.machines)
+        self.assertEqual(schedule.employees, self.res.employees)
+        self.assertEqual(schedule.time_span, self.res.time_span)
+        self.assertEqual(schedule.encountered_it, 1)
+        self.assertEqual(schedule.allowed_values, [0, 1])
+        self.assertEqual(schedule.dtype, 'int32')
+
+        self.assertEqual(fraction.shape, (2, 2, 2))
+        self.assertEqual(fraction.machines, frac_machines)
+        self.assertEqual(fraction.employees, frac_employees)
+        self.assertEqual(fraction.time_span, frac_time_span)
+        self.assertEqual(fraction.encountered_it, 2)
+        self.assertEqual(fraction.allowed_values, [0, 1, 2])
+        self.assertEqual(fraction.dtype, 'int32')
 
 
 if __name__ == "__main__":
