@@ -1,9 +1,8 @@
 """Algorithm that performs simulated annealing method."""
 
 from typing import Callable, Any, Tuple, Union, Annotated, Type
-from inspect import signature
-from numpy.random import random
 from pydantic import ValidationError
+from inspect import signature
 
 import pydantic as pdt
 import logging as log
@@ -43,6 +42,10 @@ class Solver(pdt.BaseModel):
 
     :param log_file_path: path of the log file
     :type log_file_path: str
+    :param csv_file_path: path of the csv file
+    :type csv_file_path: str
+    :param log_results: flag weather to log results
+    :type log_results: bool
     """
 
     class Config(pdt.BaseConfig):
@@ -251,6 +254,21 @@ class Solver(pdt.BaseModel):
     def dump_csv(self, init_cost: Union[int, float], best_cost: Union[int, float],
                  absolute_improvement: Union[int, float], relative_improvement: float, iteration: int,
                  stopping_condition: str) -> None:
+        """
+        Function to dump the data to csv file
+        @param init_cost: starting cost value
+        @type init_cost: Union[int, float]
+        @param best_cost: cost of the best solution encountered
+        @type best_cost: Union[int, float]
+        @param absolute_improvement: absolute value of the difference between the best and the starting solution
+        @type absolute_improvement: Union[int, float], non-negative
+        @param relative_improvement: ratio of improvement between the best and the starting cost
+        @type relative_improvement: Union[int, float], between 0 and 1
+        @param iteration: number of iterations of the main loop of the simulate annealing method
+        @type iteration: int, non-negative
+        @param stopping_condition: stopping criteria that terminated the algorithm
+        @type stopping_condition: str
+        """
         with open(self.csv_file_path, mode='a', newline='') as csv_file:
             fieldnames = ['Experiment Name', 'Initial Cost', 'Best Cost', 'Absolute Improvement',
                           'Relative Improvement', 'Iteration', 'Stopping Condition']
@@ -272,8 +290,8 @@ class Solver(pdt.BaseModel):
     def simulate_annealing(self) -> Tuple[SolutionType, ScopeValid]:
         """
         Function to perform simulated annealing problem for given initial conditions of certain SolutionType.
-        @return:
-        @rtype:
+        @return: best solution encountered during runtime and scope of runtime annealing problem parameters
+        @rtype: SolutionType, ScopeValid
         """
 
         invalid_simul_scope: ScopeNoValid = ScopeNoValid()
@@ -297,7 +315,7 @@ class Solver(pdt.BaseModel):
             if neighbour_cost < solution_cost:
                 solution = neighbour
             else:
-                if random(1) < prob_of_transition:
+                if np.random.random(1) < prob_of_transition:
                     solution = neighbour
 
             temperature = self.cool(temperature, it)
@@ -335,89 +353,5 @@ class Solver(pdt.BaseModel):
             self.dump_csv(init_cost=init_cost, best_cost=best_cost, absolute_improvement=absolute_improvement,
                           relative_improvement=relative_improvement, iteration=iteration,
                           stopping_condition=stopping_criterion)
+
         return best_solution, simul_scope
-
-
-# def main():
-#     from typing import Tuple, Union
-#     from numpy.random import randint
-#     from numpy import exp
-#     from Visualisation.Visualisation import plot_scope
-#     import matplotlib.pyplot as plt
-#
-#     def cost_fun(vec):
-#         (x, y) = vec
-#
-#         return x ** 2 + y ** 2
-#
-#     def sol_gen_fun(vec):
-#         (x, y) = vec
-#         step = 0.01
-#
-#         if randint(2) == 0:
-#             if randint(2) == 0:
-#                 x += step
-#             else:
-#                 x -= step
-#         else:
-#             if randint(2) == 0:
-#                 y += step
-#             else:
-#                 y -= step
-#
-#         if x < -5:
-#             x = -5
-#         if x > 5:
-#             x = 5
-#         if y < -5:
-#             y = -5
-#         if y > 5:
-#             y = 5
-#
-#         return x, y
-#
-#     def colling_fun(_, k):
-#         temp = (1 - (k + 1) / max_iter) * start_temp
-#
-#         if temp <= 10 ** (-9):
-#             return 0.0001
-#         return temp
-#
-#     def prob_fun(delta_en, temp):
-#         if delta_en < 0:
-#             return 1
-#         return exp(-delta_en / (1.380649 * temp))
-#
-#     solution_type = Tuple[Union[int, float], Union[int, float]]
-#     sim_an = generate_sa_algorithm(solution_type)
-#
-#     max_iter = 10 ** 3
-#     start_temp = 0.1
-#     init_sol_tup = (2, -2)
-#
-#     sol, scope = sim_an(cost=cost_fun,
-#                         init_sol=init_sol_tup,
-#                         sol_gen=sol_gen_fun,
-#                         init_temp=start_temp,
-#                         cool=colling_fun,
-#                         probability=prob_fun,
-#                         max_iterations=max_iter)
-#
-#     plot_scope(scope)
-#     print(sol)
-#
-#     x_vec = [tup[0] for tup in scope.visited_solution]
-#     y_vec = [tup[1] for tup in scope.visited_solution]
-#
-#     plt.plot(x_vec, y_vec)
-#     plt.plot(0, 0, 'r.')
-#     plt.plot(sol[0], sol[1], 'g.')
-#     plt.title('solutions')
-#     plt.show()
-
-
-if __name__ == "__main__":
-    pass
-    # start_time = time.time()
-    # main()
-    # stop_time = time.time()

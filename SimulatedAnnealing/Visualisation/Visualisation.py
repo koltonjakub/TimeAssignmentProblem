@@ -4,7 +4,7 @@
 from matplotlib.pyplot import subplots, show
 from numpy import min, max
 from pydantic import BaseModel, BaseConfig, Field, conint, confloat
-from typing import List, Any, Dict
+from typing import List, Any, Dict, Annotated
 
 
 class ScopeNoValid(BaseModel):
@@ -43,6 +43,34 @@ class ScopeValid(ScopeNoValid):
         arbitrary_types_allowed = True  # Allows for validation of numpy numeric types
         validate_assignment = True  # Allows the model to validate data every time field is assigned/changed
         smart_union = True  # Prevents unnecessary casts to not matching data types
+
+
+class Scope(BaseModel):
+    """BaseModel that stores all runtime data of simulation"""
+
+    class Config(BaseConfig):
+        """Config sets crucial BaseModel settings"""
+        arbitrary_types_allowed = True  # Allows for validation of numpy numeric types
+        validate_assignment = True  # Allows the model to validate data every time field is assigned/changed
+        smart_union = True  # Prevents unnecessary casts to not matching data types
+        extra = 'forbid'
+
+    iteration: List[conint(ge=0, strict=True)] = []
+    temperature: List[confloat(ge=0)] = []
+    delta_energy: List[confloat()] = []
+    probability_of_transition: List[confloat(ge=0, le=1)] = []
+    cost_function: List[confloat(ge=0)] = []
+    best_cost_function: List[confloat(ge=0)] = []
+    visited_solution: List[Any] = []
+    label: Annotated[Dict[str, str], Field(frozen=True)] = {
+        'iteration': 'iteration',
+        'temperature': 'temperature',
+        'delta_energy': "delta_energy",
+        'probability_of_transition': "probability",
+        'cost_function': 'objective_value',
+        'best_cost_function': 'best_objective_value',
+        'visited_solution': 'visited_solution'
+    }
 
 
 def plot_scope(scope: ScopeNoValid) -> None:
