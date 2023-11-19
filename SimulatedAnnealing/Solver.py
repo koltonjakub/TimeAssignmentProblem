@@ -10,7 +10,7 @@ import numpy as np
 import csv
 import os
 
-from SimulatedAnnealing.Visualisation.Visualisation import ScopeNoValid, ScopeValid
+from SimulatedAnnealing.Visualisation.Visualisation import ScopeNoValid, ScopeValid, Scope
 
 
 class Solver(pdt.BaseModel):
@@ -227,7 +227,7 @@ class Solver(pdt.BaseModel):
             return value
 
         if not os.path.exists(value):
-            raise pdt.ValidationError('log_dir does not exist')
+            raise FileNotFoundError('log_file_path does not exist')
         return value
 
     # noinspection PyMethodParameters
@@ -355,3 +355,67 @@ class Solver(pdt.BaseModel):
                           stopping_condition=stopping_criterion)
 
         return best_solution, simul_scope
+
+    # def simulate_annealing(self) -> Tuple[SolutionType, Scope]:
+    #     """
+    #     Function to perform simulated annealing problem for given initial conditions of certain SolutionType.
+    #     @return: best solution encountered during runtime and scope of runtime annealing problem parameters
+    #     @rtype: SolutionType, ScopeValid
+    #     """
+    #
+    #     scope: Scope = Scope()
+    #
+    #     solution = self.init_sol
+    #     best_solution = self.init_sol
+    #     best_cost = self.cost(self.init_sol)
+    #     temperature = self.init_temp
+    #
+    #     stopping_criterion: str = 'max iterations reached'
+    #
+    #     for it in range(0, self.max_iterations):
+    #         neighbour = self.sol_gen(solution)
+    #
+    #         solution_cost = self.cost(solution)
+    #         neighbour_cost = self.cost(neighbour)
+    #
+    #         delta_energy: float = solution_cost - neighbour_cost
+    #         prob_of_transition: float = self.probability(delta_energy, temperature)
+    #
+    #         if neighbour_cost < solution_cost:
+    #             solution = neighbour
+    #         else:
+    #             if np.random.random(1) < prob_of_transition:
+    #                 solution = neighbour
+    #
+    #         temperature = self.cool(temperature, it)
+    #
+    #         if neighbour_cost < best_cost:
+    #             best_solution = neighbour
+    #             best_cost = self.cost(neighbour)
+    #
+    #         try:
+    #             TODO refactor scope so that every reassignment does not kill the performance
+    #             scope.iteration += [it]
+    #             scope.temperature += [temperature]
+    #             scope.probability_of_transition += [prob_of_transition]
+    #             scope.cost_function += [self.cost(solution)]
+    #             scope.best_cost_function += [self.cost(best_solution)]
+    #             scope.visited_solution += [solution]
+    #         except ValidationError as validation_error:
+    #             log.error(f"ExpName: {self.experiment_name} resulted in Pydantic.ValidationError: {validation_error}")
+    #             for error in validation_error.errors():
+    #                 log.error(f"Field: {error['loc']}, Error: {error['msg']}")
+    #         except TypeError as type_error:
+    #             log.error(f"ExpName: {self.experiment_name} resulted in TypeError: {type_error}")
+    #
+    #     init_cost = self.cost(self.init_sol)
+    #     absolute_improvement = init_cost - best_cost
+    #     relative_improvement = (init_cost - best_cost) / init_cost if best_cost != 0 else 1
+    #     iteration = np.max(scope.iteration)
+    #
+    #     if self.log_results:
+    #         self.dump_csv(init_cost=init_cost, best_cost=best_cost, absolute_improvement=absolute_improvement,
+    #                       relative_improvement=relative_improvement, iteration=iteration,
+    #                       stopping_condition=stopping_criterion)
+    #
+    #     return best_solution, scope

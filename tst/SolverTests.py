@@ -35,8 +35,8 @@ class SolverTests(TestCase):
         current_directory = os.getcwd()
         parent_directory = os.path.dirname(current_directory)
         logs_directory = os.path.join(parent_directory, "logs")
-        log_file_path = os.path.join(logs_directory, "simulated_annealing.log")
-        csv_file_path = os.path.join(logs_directory, "simulated_annealing.csv")
+        log_file_path = os.path.join(logs_directory, "test_setup_logger.log")
+        csv_file_path = os.path.join(logs_directory, "test_csv_dump.csv")
 
         solver = Solver(cost=cost, sol_gen=sol_gen, cool=cool, probability=probability, init_sol=init_sol,
                         SolutionType=Dummy, init_temp=init_temp, max_iterations=max_iterations,
@@ -297,8 +297,8 @@ class SolverTests(TestCase):
             self.solver.max_iterations = fixture
 
     def test_log_file_path_field_assignment_raising_error(self) -> None:
-        fixture = '_invalid_logger_'
-        with self.assertRaises(ValidationError):
+        fixture = 'invalid_logger.not-extension'
+        with self.assertRaises(FileNotFoundError):
             self.solver.log_file_path = fixture
 
     def test_csv_file_field_assignment_raising_error(self) -> None:
@@ -326,9 +326,16 @@ class SolverTests(TestCase):
             Solver(extra_fields_forbidden=[])
 
     def test_set_up_logger(self) -> None:
-        self.solver.log_file_path = ('C://Users//xdkub//Documents//AGH//semestr_5//BO2//TimeAssignmentProblem'
-                                     '//logs//simulated_annealing.log')
-        self.solver.setup_logger(log_file_path=self.solver.log_file_path)
+        current_directory = os.getcwd()
+        parent_directory = os.path.dirname(current_directory)
+        invalid_logger_directory = os.path.join(parent_directory, "invalid_logger_directory.not-extension")
+        valid_logger_directory = os.path.join(parent_directory, "logs", "test_setup_logger.log")
+        self.assertNotEqual(valid_logger_directory, invalid_logger_directory)
+
+        with self.assertRaises(FileNotFoundError):
+            self.solver.setup_logger(invalid_logger_directory)
+
+        self.solver.setup_logger(log_file_path=valid_logger_directory)
         self.assertTrue(len(log.root.handlers) > 0)
 
     def test_log(self) -> None:
