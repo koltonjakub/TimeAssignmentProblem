@@ -249,7 +249,7 @@ class Solver(pdt.BaseModel):
         if not os.path.exists(log_file_path):
             raise FileNotFoundError('log_file_path does not exist')
         self.log_file_path = log_file_path
-        log.basicConfig(filename=self.log_file_path, level=log.INFO)
+        log.basicConfig(filename=self.log_file_path, level=log.ERROR)
 
     def dump_csv(self, init_cost: Union[int, float], best_cost: Union[int, float],
                  absolute_improvement: Union[int, float], relative_improvement: float, iteration: int,
@@ -331,12 +331,9 @@ class Solver(pdt.BaseModel):
                 scope.cost_function += [self.cost(solution)]
                 scope.best_cost_function += [self.cost(best_solution)]
                 scope.visited_solution += [solution]
-            except ValidationError as validation_error:
-                log.error(f"ExpName: {self.experiment_name} resulted in Pydantic.ValidationError: {validation_error}")
-                for error in validation_error.errors():
-                    log.error(f"Field: {error['loc']}, Error: {error['msg']}")
-            except TypeError as type_error:
-                log.error(f"ExpName: {self.experiment_name} resulted in TypeError: {type_error}")
+            except ValueError as value_error:
+                log.error(f"ExpName: {self.experiment_name} resulted in TypeError: {value_error}")
+                break
 
         init_cost = self.cost(self.init_sol)
         absolute_improvement = init_cost - best_cost
