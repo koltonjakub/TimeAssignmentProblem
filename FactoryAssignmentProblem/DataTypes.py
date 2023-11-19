@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel, conint, confloat, validator, ValidationError
 from typing import Union, Dict, List, Any, Tuple, Iterable
+from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime
 from json import load
@@ -70,11 +71,59 @@ class AvailableResources(Enum):
     TIME = TimeSpan
 
 
-class ResourceContainer(BaseModel):
+@dataclass
+class ResourceContainer:
     """Associative container for all types of Resource subclasses"""
-    machines: List[Machine] = None
-    employees: List[Employee] = None
-    time_span: List[TimeSpan] = None
+    machines: List[Machine] = field(default_factory=list)
+    employees: List[Employee] = field(default_factory=list)
+    time_span: List[TimeSpan] = field(default_factory=list)
+
+    def __post_init__(self):
+        for field_name, field_value in self.__dict__.items():
+            type(self).validate_field(field_name, field_value)
+
+    def __setattr__(self, name, value):
+        type(self).validate_field(name, value)
+        super().__setattr__(name, value)
+
+    @classmethod
+    def validate_field(cls, field_name, field_value) -> None:
+        cls.validate_machines(field_name, field_value)
+        cls.validate_employees(field_name, field_value)
+        cls.validate_time_span(field_name, field_value)
+
+    @staticmethod
+    def validate_machines(field_name: str, field_value: List[Machine]) -> None:
+        if field_name != "machines":
+            return
+
+        if not isinstance(field_value, List):
+            raise TypeError('machines must be a List')
+
+        if not all(isinstance(value, Machine) for value in field_value):
+            raise ValueError(f"All values in {field_name} must be a Machine class")
+
+    @staticmethod
+    def validate_employees(field_name: str, field_value: List[Machine]) -> None:
+        if field_name != "employees":
+            return
+
+        if not isinstance(field_value, List):
+            raise TypeError('employees must be a List')
+
+        if not all(isinstance(value, Employee) for value in field_value):
+            raise ValueError(f"All values in {field_name} must be a Employee class")
+
+    @staticmethod
+    def validate_time_span(field_name: str, field_value: List[TimeSpan]) -> None:
+        if field_name != "time_span":
+            return
+
+        if not isinstance(field_value, List):
+            raise TypeError('time_span must be a List')
+
+        if not all(isinstance(value, TimeSpan) for value in field_value):
+            raise ValueError(f"All values in {field_name} must be a TimeSpan class")
 
 
 class ResourceImportError(Exception):
@@ -113,7 +162,7 @@ class ResourceManager:
 
         try:
             ResourceManager.validate_ids(resources)
-        except ValueError as e:
+        except ResourceImportError as e:
             print(f"Error: {e}")
             return None
 

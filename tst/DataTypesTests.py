@@ -180,7 +180,16 @@ class TimeSpanTests(TestCase):
 
 
 class ResourceContainerTests(TestCase):
-    def test_fields(self):
+    def __init__(self, *args, **kwargs) -> None:
+        super(ResourceContainerTests, self).__init__(*args, **kwargs)
+
+    def test_fields_defined(self) -> None:
+        container = ResourceContainer()
+        self.assertTrue(hasattr(container, 'machines'))
+        self.assertTrue(hasattr(container, 'employees'))
+        self.assertTrue(hasattr(container, 'time_span'))
+
+    def test_fields(self) -> None:
         data = {
             "machines": [
                 {"id": 0, "hourly_cost": 50.0, "hourly_gain": 120.0, "inventory_nr": 100},
@@ -196,20 +205,24 @@ class ResourceContainerTests(TestCase):
             ]
         }
 
-        container = ResourceContainer(**data)
-        self.assertEqual(container.machines, [Machine(**machine_data) for machine_data in data["machines"]])
-        self.assertEqual(container.employees, [Employee(**employee_data) for employee_data in data["employees"]])
-        self.assertEqual(container.time_span, [TimeSpan(**time_span_data) for time_span_data in data["time_span"]])
+        mach = [Machine(**machine_data) for machine_data in data["machines"]]
+        empl = [Employee(**employee_data) for employee_data in data["employees"]]
+        time = [TimeSpan(**time_span_data) for time_span_data in data["time_span"]]
 
-    def test_raises_validation_error(self):
+        container = ResourceContainer(machines=mach, employees=empl, time_span=time)
+        self.assertEqual(container.machines, mach)
+        self.assertEqual(container.employees, empl)
+        self.assertEqual(container.time_span, time)
+
+    def test_raises_validation_error(self) -> None:
         invalid_data = {
-            "machines": [
-                {"id": 0, "hourly_cost": 50.0, "hourly_gain": 120.0, "inventory_nr": -1},
-            ]
+            "machines": [1], "employees": ['str'], "time_span": [1, 'str']
         }
 
-        with self.assertRaises(ValidationError):
-            ResourceContainer(**invalid_data)
+        for key, value in invalid_data.items():
+            with self.assertRaises(ValueError):
+                print(value)
+                ResourceContainer(**{key: value})
 
 
 class ResourceManagerTests(TestCase):
@@ -217,7 +230,7 @@ class ResourceManagerTests(TestCase):
         super(ResourceManagerTests, self).__init__(*args, **kwargs)
 
     def test_import(self) -> None:
-        imp_res = ResourceManager().import_resources_from_json(test_database_path)
+        imp_res: ResourceContainer | None = ResourceManager().import_resources_from_json(test_database_path)
 
         with open(test_database_path, 'r') as file:
             test_data = load(file)

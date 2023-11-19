@@ -3,8 +3,8 @@ import time
 
 from SolverTests import SolverTests, SolverExecutionTimeTests
 from VisualisationTests import ScopeTests
-from FactoryAssignmentProblemTests import (MachineTests, EmployeeTests, TimeSpanTests,
-                                           ResourceContainerTests, ResourceManagerTests, FactoryAssignmentScheduleTests)
+from DataTypesTests import (MachineTests, EmployeeTests, TimeSpanTests,
+                            ResourceContainerTests, ResourceManagerTests, FactoryAssignmentScheduleTests)
 
 if __name__ == '__main__':
     start_time = time.time()
