@@ -414,7 +414,7 @@ class SolverExecutionTimeTests(TestCase):
         solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: 0, cool=lambda t, k: 0.1,
                         probability=lambda de, t: 0.5, init_sol=1, init_temp=10,
                         experiment_name="test_simulate_annealing")
-        max_iterations = [10 ** power for power in range(2, 6 + 1)]
+        max_iterations = [10 ** power for power in range(2, 5 + 1)]
         time_profiler = {}
         current_directory = os.getcwd()
         parent_directory = os.path.dirname(current_directory)

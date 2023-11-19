@@ -7,7 +7,7 @@ from itertools import product
 from datetime import datetime
 from json import load
 
-from SimulatedAnnealing.FactoryAssignmentProblem.DataTypes import (
+from FactoryAssignmentProblem.DataTypes import (
     Resource, Machine, Employee, TimeSpan, ResourceContainer, ResourceImportError, ResourceManager,
     FactoryAssignmentSchedule, FactoryAssignmentScheduleError)
 
