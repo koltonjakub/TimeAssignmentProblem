@@ -10,7 +10,7 @@ import numpy as np
 import csv
 import os
 
-from SimulatedAnnealing.Visualisation.Visualisation import ScopeNoValid, ScopeValid, Scope
+from SimulatedAnnealing.Visualisation.Visualisation import Scope
 
 
 class Solver(pdt.BaseModel):
@@ -287,76 +287,7 @@ class Solver(pdt.BaseModel):
                 'Stopping Condition': stopping_condition
             })
 
-    def simulate_annealing(self) -> Tuple[SolutionType, ScopeValid]:
-        """
-        Function to perform simulated annealing problem for given initial conditions of certain SolutionType.
-        @return: best solution encountered during runtime and scope of runtime annealing problem parameters
-        @rtype: SolutionType, ScopeValid
-        """
-
-        invalid_simul_scope: ScopeNoValid = ScopeNoValid()
-
-        solution = self.init_sol
-        best_solution = self.init_sol
-        best_cost = self.cost(self.init_sol)
-        temperature = self.init_temp
-
-        stopping_criterion: str = 'max iterations reached'
-
-        for it in range(0, self.max_iterations):
-            neighbour = self.sol_gen(solution)
-
-            solution_cost = self.cost(solution)
-            neighbour_cost = self.cost(neighbour)
-
-            delta_energy: float = solution_cost - neighbour_cost
-            prob_of_transition: float = self.probability(delta_energy, temperature)
-
-            if neighbour_cost < solution_cost:
-                solution = neighbour
-            else:
-                if np.random.random(1) < prob_of_transition:
-                    solution = neighbour
-
-            temperature = self.cool(temperature, it)
-
-            if neighbour_cost < best_cost:
-                best_solution = neighbour
-                best_cost = self.cost(neighbour)
-
-            invalid_simul_scope.iteration += [it]
-            invalid_simul_scope.temperature += [temperature]
-            invalid_simul_scope.probability_of_transition += [prob_of_transition]
-            invalid_simul_scope.cost_function += [self.cost(solution)]
-            invalid_simul_scope.best_cost_function += [self.cost(best_solution)]
-            invalid_simul_scope.visited_solution += [solution]
-
-        simul_scope: ScopeValid = ScopeValid()
-        try:
-            simul_scope.iteration = invalid_simul_scope.iteration
-            simul_scope.temperature = invalid_simul_scope.temperature
-            simul_scope.probability_of_transition = invalid_simul_scope.probability_of_transition
-            simul_scope.cost_function = invalid_simul_scope.cost_function
-            simul_scope.best_cost_function = invalid_simul_scope.best_cost_function
-            simul_scope.visited_solution = invalid_simul_scope.visited_solution
-        except ValidationError as e:
-            log.error(f"ExpName: {self.experiment_name} resulted in Pydantic validation error: {e}")
-            for error in e.errors():
-                log.error(f"Field: {error['loc']}, Error: {error['msg']}")
-
-        init_cost = self.cost(self.init_sol)
-        absolute_improvement = init_cost - best_cost
-        relative_improvement = (init_cost - best_cost) / init_cost if best_cost != 0 else 1
-        iteration = np.max(simul_scope.iteration)
-
-        if self.log_results:
-            self.dump_csv(init_cost=init_cost, best_cost=best_cost, absolute_improvement=absolute_improvement,
-                          relative_improvement=relative_improvement, iteration=iteration,
-                          stopping_condition=stopping_criterion)
-
-        return best_solution, simul_scope
-
-    def simulate_annealing_scope_tst(self) -> Tuple[SolutionType, Scope]:
+    def simulate_annealing(self) -> Tuple[SolutionType, Scope]:
         """
         Function to perform simulated annealing problem for given initial conditions of certain SolutionType.
         @return: best solution encountered during runtime and scope of runtime annealing problem parameters
@@ -394,7 +325,6 @@ class Solver(pdt.BaseModel):
                 best_cost = self.cost(neighbour)
 
             try:
-                # TODO refactor scope so that every reassignment does not kill the performance
                 scope.iteration += [it]
                 scope.temperature += [temperature]
                 scope.probability_of_transition += [prob_of_transition]

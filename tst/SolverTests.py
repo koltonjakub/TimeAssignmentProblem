@@ -4,10 +4,10 @@ from SimulatedAnnealing.Solver import Solver
 from unittest import TestCase, main
 from pydantic import ValidationError
 
-import os
-import time
-import numpy as np
 import logging as log
+import numpy as np
+import time
+import os
 
 
 class SolverTests(TestCase):
@@ -340,7 +340,6 @@ class SolverTests(TestCase):
 
     def test_log(self) -> None:
         # TODO force validation error on simul_scope, so that error log is logged
-        # TODO refactor scope at first
         pass
 
     def test_csv_dump(self) -> None:
@@ -434,47 +433,6 @@ class SolverExecutionTimeTests(TestCase):
         for diff in difference:
             self.assertAlmostEqual(diff, 0, places=1, msg="Execution time rises more than 10 percent per one "
                                                           "order of magnitude increase in max_iterations.")
-
-    def test_compare_scope_execution_time(self) -> None:
-        solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: 0, cool=lambda t, k: 0.1,
-                        probability=lambda de, t: 0.5, init_sol=1, init_temp=10,
-                        experiment_name="test_simulate_annealing")
-        max_iterations = [10 ** power for power in range(2, 5 + 1)]
-
-        time_profiler = {}
-        for max_it in max_iterations:
-            solver.max_iterations = max_it
-            start_time = time.perf_counter()
-            best_sol, _ = solver.simulate_annealing()
-            stop_time = time.perf_counter()
-            time_profiler[max_it] = stop_time - start_time
-            self.assertEqual(best_sol, 0)
-
-        times_different_classes = np.array([value for value in time_profiler.values()])
-
-        print()
-        print("Two different classes:")
-        print(time_profiler)
-
-        time_profiler = {}
-        for max_it in max_iterations:
-            solver.max_iterations = max_it
-            start_time = time.perf_counter()
-            best_sol, _ = solver.simulate_annealing_scope_tst()
-            stop_time = time.perf_counter()
-            time_profiler[max_it] = stop_time - start_time
-            self.assertEqual(best_sol, 0)
-
-        print()
-        print("Single class:")
-        print(time_profiler)
-
-        times_single_class = np.array([value for value in time_profiler.values()])
-
-        difference = times_single_class - times_different_classes
-
-        # for diff in difference:
-        #     self.assertAlmostEqual(diff, 0, places=0, msg="Execution time rises more than 10 percent.")
 
 
 if __name__ == "__main__":

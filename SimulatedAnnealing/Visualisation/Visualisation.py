@@ -1,73 +1,9 @@
 """This file contains all visual functionalities"""
 
-from pydantic import BaseModel, BaseConfig, Field, conint, confloat
-from dataclasses import dataclass, field
-from typing import List, Any, Dict, Union
 from matplotlib.pyplot import subplots, show
+from typing import List, Any, Dict, Union
+from dataclasses import dataclass, field
 from numpy import min, max
-
-
-class ScopeNoValid(BaseModel):
-    """BaseModel that stores all runtime data of simulation"""
-
-    class Config(BaseConfig):
-        """Config sets crucial BaseModel settings"""
-        arbitrary_types_allowed = True  # Allows for validation of numpy numeric types
-        validate_assignment = False  # Allows the model to validate data every time field is assigned/changed
-        smart_union = True  # Prevents unnecessary casts to not matching data types
-
-    iteration: List[conint(ge=0, strict=True)] = []
-    temperature: List[confloat(ge=0)] = []
-    delta_energy: List[confloat()] = []
-    probability_of_transition: List[confloat(ge=0, le=1)] = []
-    cost_function: List[confloat(ge=0)] = []
-    best_cost_function: List[confloat(ge=0)] = []
-    visited_solution: List[Any] = []
-    label: Dict[str, str] = Field({
-        'iteration': 'encounter',
-        'temperature': 'temperature',
-        'delta_energy': "delta_energy",
-        'probability_of_transition': "prob_of_trans",
-        'cost_function': 'objective_value',
-        'best_cost_function': 'best_cost_function',
-        'visited_solution': 'visited_solution'
-    }, frozen=True)
-
-
-class ScopeValid(ScopeNoValid):
-    class Config(BaseConfig):
-        """Config sets crucial BaseModel settings"""
-        arbitrary_types_allowed = True  # Allows for validation of numpy numeric types
-        validate_assignment = True  # Allows the model to validate data every time field is assigned/changed
-        smart_union = True  # Prevents unnecessary casts to not matching data types
-
-
-# class Scope(BaseModel):
-#     """BaseModel that stores all runtime data of simulation"""
-#
-#     class Config(BaseConfig):
-#         """Config sets crucial BaseModel settings"""
-#         arbitrary_types_allowed = True  # Allows for validation of numpy numeric types
-#         validate_assignment = True  # Allows the model to validate data every time field is assigned/changed
-#         smart_union = True  # Prevents unnecessary casts to not matching data types
-#         extra = 'forbid'
-#
-#     iteration: List[conint(ge=0, strict=True)] = []
-#     temperature: List[confloat(ge=0)] = []
-#     delta_energy: List[confloat()] = []
-#     probability_of_transition: List[confloat(ge=0, le=1)] = []
-#     cost_function: List[confloat(ge=0)] = []
-#     best_cost_function: List[confloat(ge=0)] = []
-#     visited_solution: List[Any] = []
-#     label: Annotated[Dict[str, str], Field(frozen=True)] = {
-#         'iteration': 'iteration',
-#         'temperature': 'temperature',
-#         'delta_energy': "delta_energy",
-#         'probability_of_transition': "probability",
-#         'cost_function': 'objective_value',
-#         'best_cost_function': 'best_objective_value',
-#         'visited_solution': 'visited_solution'
-#     }
 
 
 @dataclass
@@ -147,7 +83,7 @@ class Scope:
             raise ValueError(f"Values in {field_name} must be between non-negative int or float")
 
 
-def plot_scope(scope: ScopeNoValid) -> None:
+def plot_scope(scope: Scope) -> None:
     """
     Function that plots runtime values of simulation from Scope type.
     @param scope: Scope of simulated annealing algorithm runtime values
