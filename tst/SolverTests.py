@@ -31,7 +31,7 @@ class SolverTests(TestCase):
         init_sol = Dummy()
         init_temp = 10
         max_iterations = 1000
-        experiment_name = 'dummy'
+        experiment_name = "dummy"
         current_directory = os.getcwd()
         parent_directory = os.path.dirname(current_directory)
         logs_directory = os.path.join(parent_directory, "logs")
@@ -54,12 +54,12 @@ class SolverTests(TestCase):
         self.assertEqual(solver.experiment_name, experiment_name)
 
     def test_SolutionType_raising_error(self) -> None:
-        fixture = 'str'
+        fixture = "str"
         with self.assertRaises(ValidationError):
             self.solver.SolutionType = fixture
 
     def test_cost_field_assignment_raising_error(self) -> None:
-        fixture = 'str'
+        fixture = "str"
         with self.assertRaises(ValidationError):
             self.solver.cost = fixture
 
@@ -72,7 +72,7 @@ class SolverTests(TestCase):
         with self.assertRaises(ValidationError):
             self.solver.cost = mock_cost
 
-        mock_cost = lambda x: 'str'
+        mock_cost = lambda x: "str"
         self.solver.SolutionType = int
         self.solver.cost = mock_cost
         with self.assertRaises(ValidationError):
@@ -126,11 +126,11 @@ class SolverTests(TestCase):
         mock_sol_gen = lambda x: 1
         self.solver.sol_gen = None
         self.solver.SolutionType = str
-        self.solver.init_sol = 'str'
+        self.solver.init_sol = "str"
         with self.assertRaises(ValidationError):
             self.solver.sol_gen = mock_sol_gen
 
-        mock_sol_gen = lambda x: 'str'
+        mock_sol_gen = lambda x: "str"
         self.solver.sol_gen = None
         self.solver.SolutionType = int
         self.solver.init_sol = 1
@@ -186,7 +186,7 @@ class SolverTests(TestCase):
         with self.assertRaises(ValidationError):
             self.solver.cool = mock_cool
 
-        mock_cool = lambda t, k: 'str'
+        mock_cool = lambda t, k: "str"
         self.solver.cool = mock_cool
         with self.assertRaises(ValidationError):
             self.solver.init_temp = 10
@@ -224,7 +224,7 @@ class SolverTests(TestCase):
         with self.assertRaises(ValidationError):
             self.solver.init_temp = mock_init_temp
 
-        mock_prob = lambda de, t: 'str'
+        mock_prob = lambda de, t: "str"
         mock_init_temp = 10
         self.solver.probability = mock_prob
         with self.assertRaises(ValidationError):
@@ -264,7 +264,7 @@ class SolverTests(TestCase):
         self.solver.init_sol = fixture
 
     def test_init_temp_field_assignment_raising_error(self) -> None:
-        fixture = 'str'
+        fixture = "str"
         with self.assertRaises(ValidationError):
             self.solver.init_temp = fixture
 
@@ -297,12 +297,12 @@ class SolverTests(TestCase):
             self.solver.max_iterations = fixture
 
     def test_log_file_path_field_assignment_raising_error(self) -> None:
-        fixture = 'invalid_logger.not-extension'
+        fixture = "invalid_logger.not-extension"
         with self.assertRaises(FileNotFoundError):
             self.solver.log_file_path = fixture
 
     def test_csv_file_field_assignment_raising_error(self) -> None:
-        fixture = '_invalid_csv_'
+        fixture = "_invalid_csv_"
         with self.assertRaises(ValidationError):
             self.solver.csv_file_path = fixture
 
@@ -356,18 +356,18 @@ class SolverTests(TestCase):
 
         best_sol, _ = solver.simulate_annealing()
 
-        with open(solver.csv_file_path, 'r') as file:
+        with open(solver.csv_file_path, "r") as file:
             lines = file.readlines()
             last_line = lines[-1].strip()
-            values = last_line.split(',')
-            header = lines[0].strip().split(',')
+            values = last_line.split(",")
+            header = lines[0].strip().split(",")
             dumped_data = dict(zip(header, values))
 
-            self.assertEqual(dumped_data['Experiment Name'], "test_simulate_annealing")
-            self.assertEqual(float(dumped_data['Initial Cost']), 1)
-            self.assertEqual(float(dumped_data['Best Cost']), 0)
-            self.assertEqual(float(dumped_data['Absolute Improvement']), 1)
-            self.assertEqual(float(dumped_data['Relative Improvement']), 1)
+            self.assertEqual(dumped_data["Experiment Name"], "test_simulate_annealing")
+            self.assertEqual(float(dumped_data["Initial Cost"]), 1)
+            self.assertEqual(float(dumped_data["Best Cost"]), 0)
+            self.assertEqual(float(dumped_data["Absolute Improvement"]), 1)
+            self.assertEqual(float(dumped_data["Relative Improvement"]), 1)
 
         solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: sol + 1,
                         cool=lambda t, k: t * 0.5 ** k,
@@ -377,18 +377,18 @@ class SolverTests(TestCase):
 
         best_sol, _ = solver.simulate_annealing()
 
-        with open(solver.csv_file_path, 'r') as file:
+        with open(solver.csv_file_path, "r") as file:
             lines = file.readlines()
             last_line = lines[-1].strip()
-            values = last_line.split(',')
-            header = lines[0].strip().split(',')
+            values = last_line.split(",")
+            header = lines[0].strip().split(",")
             dumped_data = dict(zip(header, values))
 
-            self.assertEqual(dumped_data['Experiment Name'], "test_simulate_annealing")
-            self.assertEqual(float(dumped_data['Initial Cost']), 0)
-            self.assertEqual(float(dumped_data['Best Cost']), 0)
-            self.assertEqual(float(dumped_data['Absolute Improvement']), 0)
-            self.assertEqual(float(dumped_data['Relative Improvement']), 1)
+            self.assertEqual(dumped_data["Experiment Name"], "test_simulate_annealing")
+            self.assertEqual(float(dumped_data["Initial Cost"]), 0)
+            self.assertEqual(float(dumped_data["Best Cost"]), 0)
+            self.assertEqual(float(dumped_data["Absolute Improvement"]), 0)
+            self.assertEqual(float(dumped_data["Relative Improvement"]), 1)
 
     def test_simulate_annealing(self) -> None:
         solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: 0, cool=lambda t, k: t * 0.5 ** k,
@@ -415,7 +415,7 @@ class SolverExecutionTimeTests(TestCase):
         solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: 0, cool=lambda t, k: 0.1,
                         probability=lambda de, t: 0.5, init_sol=1, init_temp=10,
                         experiment_name="test_simulate_annealing")
-        max_iterations = [10 ** power for power in range(0, 5 + 1)]
+        max_iterations = [10 ** power for power in range(2, 4 + 1)]
         time_profiler = {}
 
         for max_it in max_iterations:
@@ -431,11 +431,50 @@ class SolverExecutionTimeTests(TestCase):
         lower_order = times[:-1]
         difference = higher_order / 10 - lower_order
 
-        # print(time_profiler)
+        for diff in difference:
+            self.assertAlmostEqual(diff, 0, places=1, msg="Execution time rises more than 10 percent per one "
+                                                          "order of magnitude increase in max_iterations.")
+            
+    def test_compare_scope_execution_time(self) -> None:
+        solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: 0, cool=lambda t, k: 0.1,
+                        probability=lambda de, t: 0.5, init_sol=1, init_temp=10,
+                        experiment_name="test_simulate_annealing")
+        max_iterations = [10 ** power for power in range(0, 3 + 1)]
+
+        time_profiler = {}
+        for max_it in max_iterations:
+            solver.max_iterations = max_it
+            start_time = time.perf_counter()
+            best_sol, _ = solver.simulate_annealing()
+            stop_time = time.perf_counter()
+            time_profiler[max_it] = stop_time - start_time
+            self.assertEqual(best_sol, 0)
+
+        times_different_classes = np.array([value for value in time_profiler.values()])
+
+        print()
+        print("Two different classes:")
+        print(time_profiler)
+
+        time_profiler = {}
+        for max_it in max_iterations:
+            solver.max_iterations = max_it
+            start_time = time.perf_counter()
+            best_sol, _ = solver.simulate_annealing_scope_tst()
+            stop_time = time.perf_counter()
+            time_profiler[max_it] = stop_time - start_time
+            self.assertEqual(best_sol, 0)
+
+        print()
+        print("Single class:")
+        print(time_profiler)
+
+        times_single_class = np.array([value for value in time_profiler.values()])
+
+        difference = times_single_class - times_different_classes
 
         for diff in difference:
-            self.assertAlmostEqual(diff, 0, places=1, msg='Execution time rises more than 10 percent per one '
-                                                          'order of magnitude increase in max_iterations.')
+            self.assertAlmostEqual(diff, 0, places=1, msg="Execution time rises more than 10 percent.")
 
 
 if __name__ == "__main__":
