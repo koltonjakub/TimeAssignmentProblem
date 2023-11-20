@@ -3,72 +3,240 @@
 from pydantic import BaseModel, conint, confloat, validator, ValidationError
 from typing import Union, Dict, List, Any, Tuple, Iterable
 from dataclasses import dataclass, field
-from enum import Enum
 from datetime import datetime
 from json import load
 
 import numpy as np
 
 
-class Resource(BaseModel):
-    """Informal interface for any type of resource_type that may be used in a factory"""
-    id: conint(ge=0, strict=True)  # corresponds with dimension in schedule matrix
+# class Resource(BaseModel):
+#     """Informal interface for any type of resource_type that may be used in a factory"""
+#     id: conint(ge=0, strict=True)  # corresponds with dimension in schedule matrix
+#
+#
+# class Machine(Resource):
+#     """Class representing a machine in factory"""
+#     hourly_cost: confloat(ge=0)
+#     hourly_gain: confloat(ge=0)
+#     inventory_nr: conint(ge=0, strict=True)
+#
+#
+# # noinspection PyMethodParameters
+# class Employee(Resource):
+#     """Class representing an employee in factory"""
+#     hourly_cost: confloat(ge=0)
+#     hourly_gain: Dict[conint(ge=0, strict=True), confloat(ge=0)]
+#     name: str
+#     surname: str
+#
+#     @validator('hourly_gain', pre=True)
+#     def convert_keys_to_int_if_possible(cls, v):
+#         """
+#         Function validates and converts keys of hourly_gain dictionary if conversion is possible. Conversion is
+#         necessary due to the format in which .json stores int keys which is string.
+#         @param v: hourly_gain structure that maps employee ti theirs extra production on certain machine
+#         @type v: Dict[str: float]
+#         @return: hourly_gain with keys converted to int
+#         @rtype: Dict[int: int]
+#         """
+#         return {int(key) if isinstance(key, str) and key.isdigit() else key: value for key, value in v.items()}
+#
+#
+# class TimeSpan(Resource):
+#     """Class representing one hour of simulation"""
+#     datetime: datetime
+#
+#     # noinspection PyMethodParameters
+#     @validator('datetime')
+#     def validate_some_datetime(cls, value):
+#         """
+#         Function validates that the provided datetime are within the working hours of the factory and every unit is
+#         strictly one hour.
+#         @param value: datetime of simulation unit
+#         @type value: datetime
+#         @return: valid datetime
+#         @rtype: datetime
+#         """
+#         if not (6 <= value.hour <= 23) or value.minute != 0 or value.second != 0 or value.microsecond != 0:
+#             raise ValidationError(f'invalid time: h={value.hour}, m={value.minute}, s={value.second}, '
+#                                   f'ms={value.microsecond}')
+#         return value
+@dataclass(frozen=True)
+class Resource:
+    id: int
+
+    def __post_init__(self):
+        for field_name, field_value in self.__dict__.items():
+            cls = type(self)
+            cls.validate_id(field_name, field_value)
+
+    @staticmethod
+    def validate_id(field_name, field_value) -> None:
+        if field_name != "id":
+            return
+        if not isinstance(field_value, int):
+            raise TypeError(f"Field must be of type int")
+        if field_value < 0:
+            raise ValueError(f"Field must be greater or equal to 0")
 
 
-class Machine(Resource):
+@dataclass(frozen=True)
+class Machine:
     """Class representing a machine in factory"""
-    hourly_cost: confloat(ge=0)
-    hourly_gain: confloat(ge=0)
-    inventory_nr: conint(ge=0, strict=True)
+    id: int
+    hourly_cost: float
+    hourly_gain: float
+    inventory_nr: Union[str, int]
+
+    def __post_init__(self):
+        for field_name, field_value in self.__dict__.items():
+            cls = type(self)
+            cls.validate_id(field_name, field_value)
+            cls.validate_hourly_cost(field_name, field_value)
+            cls.validate_hourly_gain(field_name, field_value)
+            cls.validate_inventory_nr(field_name, field_value)
+
+    @staticmethod
+    def validate_id(field_name, field_value) -> None:
+        if field_name != "id":
+            return
+        if not isinstance(field_value, int):
+            raise TypeError(f"Field must be of type int")
+        if field_value < 0:
+            raise ValueError(f"Field must be greater or equal to 0")
+
+    @staticmethod
+    def validate_hourly_cost(field_name, field_value) -> None:
+        if field_name != "hourly_cost":
+            return
+        if not isinstance(field_value, (float, int)):
+            raise TypeError(f"Field must be of type int or float")
+        if field_value < 0:
+            raise ValueError(f"Field must be greater or equal to 0")
+
+    @staticmethod
+    def validate_hourly_gain(field_name, field_value) -> None:
+        if field_name != "hourly_gain":
+            return
+        if not isinstance(field_value, (float, int)):
+            raise TypeError(f"Field must be of type int or float")
+        if field_value < 0:
+            raise ValueError(f"Field must be greater or equal to 0")
+
+    @staticmethod
+    def validate_inventory_nr(field_name, field_value) -> None:
+        if field_name != "inventory_nr":
+            return
+        if not isinstance(field_value, (str, int)):
+            raise TypeError(f"Field must be of type str or int")
 
 
-# noinspection PyMethodParameters
-class Employee(Resource):
+@dataclass(frozen=True)
+class Employee:
     """Class representing an employee in factory"""
-    hourly_cost: confloat(ge=0)
-    hourly_gain: Dict[conint(ge=0, strict=True), confloat(ge=0)]
+    id: int
+    hourly_cost: float
+    hourly_gain: Dict[int, float]
     name: str
     surname: str
 
-    @validator('hourly_gain', pre=True)
-    def convert_keys_to_int_if_possible(cls, v):
-        """
-        Function validates and converts keys of hourly_gain dictionary if conversion is possible. Conversion is
-        necessary due to the format in which .json stores int keys which is string.
-        @param v: hourly_gain structure that maps employee ti theirs extra production on certain machine
-        @type v: Dict[str: float]
-        @return: hourly_gain with keys converted to int
-        @rtype: Dict[int: int]
-        """
-        return {int(key) if isinstance(key, str) and key.isdigit() else key: value for key, value in v.items()}
+    def __post_init__(self):
+        for field_name, field_value in self.__dict__.items():
+            cls = type(self)
+            cls.validate_id(field_name, field_value)
+            cls.validate_hourly_cost(field_name, field_value)
+            self.validate_hourly_gain(field_name, field_value)
+            cls.validate_name(field_name, field_value)
+            cls.validate_surname(field_name, field_value)
+
+    @staticmethod
+    def validate_id(field_name, field_value) -> None:
+        if field_name != "id":
+            return
+        if not isinstance(field_value, int):
+            raise TypeError(f"Field must be of type int")
+        if field_value < 0:
+            raise ValueError(f"Field must be greater or equal to 0")
+
+    @staticmethod
+    def validate_hourly_cost(field_name, field_value) -> None:
+        if field_name != "hourly_cost":
+            return
+        if not isinstance(field_value, (float, int)):
+            raise TypeError(f"Field must be of type int or float")
+        if field_value < 0:
+            raise ValueError(f"Field must be greater or equal to 0")
+
+    @staticmethod
+    def validate_hourly_gain(field_name, field_value) -> None:
+        """Function validates key: value pair for hourly gain """
+        if field_name != "hourly_gain":
+            return
+        if not isinstance(field_value, Dict):
+            raise TypeError(f"Field must be of type Dict")
+
+        for key, value in field_value.items():
+            if not isinstance(key, int):
+                raise TypeError(f"hourly_gain.key {key} must be of type int")
+
+            if not isinstance(value, (float, int)):
+                raise TypeError(f"hourly_gain.value {value} must be of type int or float")
+
+            if int(key) < 0:
+                raise ValueError(f"hourly_gain.key {key} must be greater or equal to 0")
+
+            if value < 0:
+                raise ValueError(f"hourly_gain.value {value} must be greater or equal to 0")
+
+    @staticmethod
+    def validate_name(field_name, field_value) -> None:
+        if field_name != "name":
+            return
+        if not isinstance(field_value, str):
+            raise TypeError(f"Field must be of type str")
+
+    @staticmethod
+    def validate_surname(field_name, field_value) -> None:
+        if field_name != "surname":
+            return
+        if not isinstance(field_value, str):
+            raise TypeError(f"Field must be of type str")
 
 
-class TimeSpan(Resource):
-    """Class representing one hour of simulation"""
+@dataclass(frozen=True)
+class TimeSpan:
+    """Class representing an hour of simulation."""
+    id: int
     datetime: datetime
 
-    # noinspection PyMethodParameters
-    @validator('datetime')
-    def validate_some_datetime(cls, value):
-        """
-        Function validates that the provided datetime are within the working hours of the factory and every unit is
+    def __post_init__(self):
+        for field_name, field_value in self.__dict__.items():
+            cls = type(self)
+            cls.validate_id(field_name, field_value)
+            cls.validate_datetime(field_name, field_value)
+
+    @staticmethod
+    def validate_id(field_name, field_value) -> None:
+        if field_name != "id":
+            return
+        if not isinstance(field_value, int):
+            raise TypeError(f"Field must be of type int")
+        if field_value < 0:
+            raise ValueError(f"Field must be greater or equal to 0")
+
+    @staticmethod
+    def validate_datetime(field_name, field_value) -> None:
+        """Function validates that the provided datetime are within the working hours of the factory and every unit is
         strictly one hour.
-        @param value: datetime of simulation unit
-        @type value: datetime
-        @return: valid datetime
-        @rtype: datetime
         """
-        if not (6 <= value.hour <= 23) or value.minute != 0 or value.second != 0 or value.microsecond != 0:
-            raise ValidationError(f'invalid time: h={value.hour}, m={value.minute}, s={value.second}, '
-                                  f'ms={value.microsecond}')
-        return value
-
-
-class AvailableResources(Enum):
-    """Enum type, lists of all available types of resources"""
-    EMPLOYEE = Employee
-    MACHINE = Machine
-    TIME = TimeSpan
+        if field_name != "datetime":
+            return
+        if not isinstance(field_value, datetime):
+            raise TypeError(f"Field must be of type datetime")
+        if (not (6 <= field_value.hour <= 23) or field_value.minute != 0 or
+                field_value.second != 0 or field_value.microsecond != 0):
+            raise ValueError(f'invalid time: h={field_value.hour}, m={field_value.minute}, '
+                             f's={field_value.second}, ms={field_value.microsecond}')
 
 
 @dataclass
@@ -144,10 +312,17 @@ class ResourceManager:
         """
         try:
             with open(file_path, "r") as file:
-                data = load(file)
+                data: Dict = load(file)
         except FileNotFoundError as e:
-            print(f"Error: {e}")
-            return None
+            raise e
+
+        try:
+            for empl_data in data.get("employees", []):
+                empl_data["hourly_gain"] = ResourceManager.convert_keys(empl_data["hourly_gain"])
+            for time_span_data in data.get("time_span", []):
+                time_span_data["datetime"] = ResourceManager.convert_datetime(time_span_data["datetime"])
+        except ValueError as value_error:
+            raise value_error
 
         try:
             machines = [Machine(**machine) for machine in data.get("machines", [])]
@@ -162,11 +337,34 @@ class ResourceManager:
 
         try:
             ResourceManager.validate_ids(resources)
-        except ResourceImportError as e:
-            print(f"Error: {e}")
-            return None
+        except ResourceImportError as resource_import_error:
+            raise resource_import_error
 
         return resources
+
+    @staticmethod
+    def convert_keys(input_dict: Dict[Union[str, int], Union[int, float]]) -> Dict[int, Union[int, float]]:
+        result_dict = {}
+
+        for key, value in input_dict.items():
+            try:
+                casted_key = int(key)
+                if str(casted_key) == key:
+                    result_dict[casted_key] = value
+            except ValueError:
+                raise ValueError(f'hourly_gain.key: {key} cannot be cast to int')
+            else:
+                result_dict[casted_key] = value
+        return result_dict
+
+    @staticmethod
+    def convert_datetime(isoformat_string: str) -> datetime:
+        try:
+            converted_datetime: datetime = datetime.fromisoformat(isoformat_string)
+        except TypeError as type_error:
+            raise type_error
+        else:
+            return converted_datetime
 
     @staticmethod
     def validate_ids(imp_resources: ResourceContainer) -> None:
