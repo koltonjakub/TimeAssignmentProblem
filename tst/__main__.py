@@ -35,3 +35,7 @@ if __name__ == '__main__':
     print("Number of skipped tests:", len(test_result.skipped))
     print("Test successful:", test_result.wasSuccessful())
     print("Time taken for tests:", elapsed_time, "seconds")
+
+    print(f'Errors: {test_result.errors}')
+    print(f'Failures: {test_result.failures}')
+    print(f'Skipped: {test_result.skipped}')

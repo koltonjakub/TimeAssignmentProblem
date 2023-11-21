@@ -46,6 +46,21 @@ class Solver(pdt.BaseModel):
     :type csv_file_path: str
     :param log_results: flag weather to log results
     :type log_results: bool
+
+    :param remember_iteration: flag whether to remember the vector of iterations during runtime
+    :type remember_iteration: bool
+    :param remember_temperature: flag whether to remember vector of temperature during runtime
+    :type remember_temperature: bool
+    :param remember_delta_energy: flag whether to remember vector of delta_energy during runtime
+    :type remember_delta_energy: bool
+    :param remember_probability_of_transition: flag whether to remember vector of probability during runtime
+    :type remember_probability_of_transition: bool
+    :param remember_cost_function: flag whether to remember vector of cost function during runtime
+    :type remember_cost_function: bool
+    :param remember_best_cost_function: flag whether to remember vector of best cost function during runtime
+    :type remember_best_cost_function: bool
+    :param remember_visited_solution: flag whether to remember vector of visited solution during runtime
+    :type remember_visited_solution: bool
     """
 
     class Config(pdt.BaseConfig):
@@ -74,6 +89,15 @@ class Solver(pdt.BaseModel):
     log_file_path: str = None
     csv_file_path: str = None
     log_results: bool = False
+
+    # Samples to be collected
+    remember_iteration: bool = True
+    remember_temperature: bool = True
+    remember_delta_energy: bool = True
+    remember_probability_of_transition: bool = True
+    remember_cost_function: bool = True
+    remember_best_cost_function: bool = True
+    remember_visited_solution: bool = False
 
     # noinspection PyMethodParameters
     @pdt.validator('cost', pre=True, always=True)
@@ -325,12 +349,12 @@ class Solver(pdt.BaseModel):
                 best_cost = self.cost(neighbour)
 
             try:
-                scope.iteration += [it]
-                scope.temperature += [temperature]
-                scope.probability_of_transition += [prob_of_transition]
-                scope.cost_function += [self.cost(solution)]
-                scope.best_cost_function += [self.cost(best_solution)]
-                scope.visited_solution += [solution]
+                scope.iteration += [it] if self.remember_iteration else []
+                scope.temperature += [temperature] if self.remember_temperature else []
+                scope.probability_of_transition += [prob_of_transition] if self.remember_probability_of_transition else []
+                scope.cost_function += [self.cost(solution)] if self.remember_cost_function else []
+                scope.best_cost_function += [self.cost(best_solution)] if self.remember_best_cost_function else []
+                scope.visited_solution += [solution] if self.remember_visited_solution else []
             except ValueError as value_error:
                 log.error(f"ExpName: {self.experiment_name} resulted in TypeError: {value_error}")
                 break

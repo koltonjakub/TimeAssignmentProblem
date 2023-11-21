@@ -87,7 +87,7 @@ def plot_scope(scope: Scope) -> None:
     """
     Function that plots runtime values of simulation from Scope type.
     @param scope: Scope of simulated annealing algorithm runtime values
-    @type scope: ScopeNoValid
+    @type scope: Scope
     """
 
     figure, axes = subplots(2, 2, figsize=(10, 10))

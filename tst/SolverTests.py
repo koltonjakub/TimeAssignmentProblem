@@ -411,10 +411,13 @@ class SolverExecutionTimeTests(TestCase):
         super(SolverExecutionTimeTests, self).__init__(*args, **kwargs)
 
     def test_simulate_annealing_execution_time(self) -> None:
-        solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: 0, cool=lambda t, k: 0.1,
+        """
+        Function to test the execution time of
+        """
+        solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda _: 0, cool=lambda t, k: 0.1,
                         probability=lambda de, t: 0.5, init_sol=1, init_temp=10,
                         experiment_name="test_simulate_annealing")
-        max_iterations = [10 ** power for power in range(2, 5 + 1)]
+        max_iterations = [10 ** power for power in range(1, 5 + 1)]
         time_profiler = {}
         current_directory = os.getcwd()
         parent_directory = os.path.dirname(current_directory)
@@ -434,7 +437,8 @@ class SolverExecutionTimeTests(TestCase):
         lower_order = times[:-1]
         difference = higher_order / 10 - lower_order
 
-        print(f'\nDifference per max_it(order of magnitude): {difference}')
+        print(f'\n(iteration: sec) = {time_profiler}')
+        print(f'Difference per max_it(order of magnitude): {difference}\n')
         for diff in difference:
             self.assertAlmostEqual(diff, 0, places=1, msg="Execution time rises more than 10 percent per one "
                                                           "order of magnitude increase in max_iterations.")

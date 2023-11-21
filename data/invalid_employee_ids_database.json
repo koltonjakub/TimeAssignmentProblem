@@ -1,35 +1,40 @@
 {
   "machines": [
-    {
-      "id": 0,
-      "hourly_cost": 50.0,
-      "hourly_gain": 120.0,
-      "inventory_nr": 100
-    },
-    {
-      "id": 1,
-      "hourly_cost": 45.0,
-      "hourly_gain": 110.0,
-      "inventory_nr": 101
-    },
-    {
-      "id": 2,
-      "hourly_cost": 55.0,
-      "hourly_gain": 130.0,
-      "inventory_nr": 102
-    },
-    {
-      "id": 3,
-      "hourly_cost": 60.0,
-      "hourly_gain": 140.0,
-      "inventory_nr": 103
-    },
-    {
-      "id": 4,
-      "hourly_cost": 48.0,
-      "hourly_gain": 115.0,
-      "inventory_nr": 104
-    }
+         {
+             "id": 0,
+             "hourly_cost": 50.0,
+             "hourly_gain": 120.0,
+             "inventory_nr": 100,
+             "max_workers": 5
+         },
+         {
+             "id": 1,
+             "hourly_cost": 45.0,
+             "hourly_gain": 110.0,
+             "inventory_nr": 101,
+             "max_workers": 3
+         },
+         {
+             "id": 2,
+             "hourly_cost": 55.0,
+             "hourly_gain": 130.0,
+             "inventory_nr": 102,
+             "max_workers": 7
+         },
+         {
+             "id": 3,
+             "hourly_cost": 60.0,
+             "hourly_gain": 140.0,
+             "inventory_nr": 103,
+             "max_workers": 4
+         },
+         {
+             "id": 4,
+             "hourly_cost": 48.0,
+             "hourly_gain": 115.0,
+             "inventory_nr": 104,
+             "max_workers": 6
+         }
   ],
   "employees": [
     {

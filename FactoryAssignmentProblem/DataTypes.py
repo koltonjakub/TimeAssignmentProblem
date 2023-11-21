@@ -86,6 +86,7 @@ class Machine:
     id: int
     hourly_cost: float
     hourly_gain: float
+    max_workers: int
     inventory_nr: Union[str, int]
 
     def __post_init__(self):
@@ -94,6 +95,7 @@ class Machine:
             cls.validate_id(field_name, field_value)
             cls.validate_hourly_cost(field_name, field_value)
             cls.validate_hourly_gain(field_name, field_value)
+            cls.validate_max_workers(field_name, field_value)
             cls.validate_inventory_nr(field_name, field_value)
 
     @staticmethod
@@ -122,6 +124,15 @@ class Machine:
             raise TypeError(f"Field must be of type int or float")
         if field_value < 0:
             raise ValueError(f"Field must be greater or equal to 0")
+
+    @staticmethod
+    def validate_max_workers(field_name, field_value) -> None:
+        if field_name != "max_workers":
+            return
+        if not isinstance(field_value, int):
+            raise TypeError(f"Field must be of type int")
+        if field_value < 1:
+            raise ValueError(f"Field must be greater or equal to 1")
 
     @staticmethod
     def validate_inventory_nr(field_name, field_value) -> None:
