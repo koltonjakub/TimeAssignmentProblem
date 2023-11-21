@@ -1,6 +1,5 @@
 """This file contains all data types used in project"""
 
-from pydantic import BaseModel, conint, confloat, validator, ValidationError
 from typing import Union, Dict, List, Any, Tuple, Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -9,58 +8,6 @@ from json import load
 import numpy as np
 
 
-# class Resource(BaseModel):
-#     """Informal interface for any type of resource_type that may be used in a factory"""
-#     id: conint(ge=0, strict=True)  # corresponds with dimension in schedule matrix
-#
-#
-# class Machine(Resource):
-#     """Class representing a machine in factory"""
-#     hourly_cost: confloat(ge=0)
-#     hourly_gain: confloat(ge=0)
-#     inventory_nr: conint(ge=0, strict=True)
-#
-#
-# # noinspection PyMethodParameters
-# class Employee(Resource):
-#     """Class representing an employee in factory"""
-#     hourly_cost: confloat(ge=0)
-#     hourly_gain: Dict[conint(ge=0, strict=True), confloat(ge=0)]
-#     name: str
-#     surname: str
-#
-#     @validator('hourly_gain', pre=True)
-#     def convert_keys_to_int_if_possible(cls, v):
-#         """
-#         Function validates and converts keys of hourly_gain dictionary if conversion is possible. Conversion is
-#         necessary due to the format in which .json stores int keys which is string.
-#         @param v: hourly_gain structure that maps employee ti theirs extra production on certain machine
-#         @type v: Dict[str: float]
-#         @return: hourly_gain with keys converted to int
-#         @rtype: Dict[int: int]
-#         """
-#         return {int(key) if isinstance(key, str) and key.isdigit() else key: value for key, value in v.items()}
-#
-#
-# class TimeSpan(Resource):
-#     """Class representing one hour of simulation"""
-#     datetime: datetime
-#
-#     # noinspection PyMethodParameters
-#     @validator('datetime')
-#     def validate_some_datetime(cls, value):
-#         """
-#         Function validates that the provided datetime are within the working hours of the factory and every unit is
-#         strictly one hour.
-#         @param value: datetime of simulation unit
-#         @type value: datetime
-#         @return: valid datetime
-#         @rtype: datetime
-#         """
-#         if not (6 <= value.hour <= 23) or value.minute != 0 or value.second != 0 or value.microsecond != 0:
-#             raise ValidationError(f'invalid time: h={value.hour}, m={value.minute}, s={value.second}, '
-#                                   f'ms={value.microsecond}')
-#         return value
 @dataclass(frozen=True)
 class Resource:
     id: int
@@ -342,9 +289,10 @@ class ResourceManager:
 
             resources: ResourceContainer = ResourceContainer(machines=machines, employees=employees,
                                                              time_span=time_span)
-        except ValidationError as e:
-            print(f'Error: {e}')
-            return None
+        except TypeError as type_error:
+            raise type_error
+        except ValueError as value_error:
+            raise value_error
 
         try:
             ResourceManager.validate_ids(resources)
