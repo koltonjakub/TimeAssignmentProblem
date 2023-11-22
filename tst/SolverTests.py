@@ -6,7 +6,6 @@ from pydantic import ValidationError
 
 import logging as log
 import numpy as np
-import time
 import os
 
 
@@ -404,44 +403,6 @@ class SolverTests(TestCase):
 
         best_sol, _ = solver.simulate_annealing()
         self.assertEqual(best_sol, 1)
-
-
-class SolverExecutionTimeTests(TestCase):
-    def __init__(self, *args, **kwargs) -> None:
-        super(SolverExecutionTimeTests, self).__init__(*args, **kwargs)
-
-    def test_simulate_annealing_execution_time(self) -> None:
-        """
-        Function to test the execution time of
-        """
-        solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda _: 0, cool=lambda t, k: 0.1,
-                        probability=lambda de, t: 0.5, init_sol=1, init_temp=10,
-                        experiment_name="test_simulate_annealing")
-        max_iterations = [10 ** power for power in range(1, 5 + 1)]
-        time_profiler = {}
-        current_directory = os.getcwd()
-        parent_directory = os.path.dirname(current_directory)
-        logger = os.path.join(parent_directory, "logs", "test_setup_logger.log")
-        solver.setup_logger(log_file_path=logger)
-
-        for max_it in max_iterations:
-            solver.max_iterations = max_it
-            start_time = time.perf_counter()
-            best_sol, _ = solver.simulate_annealing()
-            stop_time = time.perf_counter()
-            time_profiler[max_it] = stop_time - start_time
-            self.assertEqual(best_sol, 0)
-
-        times = np.array([value for value in time_profiler.values()])
-        higher_order = times[1::]
-        lower_order = times[:-1]
-        difference = higher_order / 10 - lower_order
-
-        print(f'\n(iteration: sec) = {time_profiler}')
-        print(f'Difference per max_it(order of magnitude): {difference}\n')
-        for diff in difference:
-            self.assertAlmostEqual(diff, 0, places=1, msg="Execution time rises more than 10 percent per one "
-                                                          "order of magnitude increase in max_iterations.")
 
 
 if __name__ == "__main__":

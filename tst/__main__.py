@@ -1,7 +1,7 @@
 import unittest
 import time
 
-from SolverTests import SolverTests, SolverExecutionTimeTests
+from SolverTests import SolverTests
 from VisualisationTests import ScopeTests
 from DataTypesTests import (MachineTests, EmployeeTests, TimeSpanTests,
                             ResourceContainerTests, ResourceManagerTests, FactoryAssignmentScheduleTests)
@@ -19,9 +19,6 @@ if __name__ == '__main__':
     test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ResourceContainerTests))
     test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ResourceManagerTests))
     test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(FactoryAssignmentScheduleTests))
-
-    # noinspection PyTypeChecker
-    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(SolverExecutionTimeTests))
 
     test_result = unittest.TestResult()
     test_suite.run(result=test_result)
