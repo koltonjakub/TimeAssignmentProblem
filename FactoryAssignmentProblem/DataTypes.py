@@ -6,6 +6,7 @@ from datetime import datetime
 from json import load
 
 import numpy as np
+from numpy import ndarray
 
 
 @dataclass(frozen=True)
@@ -340,14 +341,14 @@ class FactoryAssignmentSchedule(np.ndarray):
                 dtype: object = None) -> 'FactoryAssignmentSchedule':
         """
         Function creates new instance of class, assigns extra properties and returns created obj.
-        @param input_array: input data, any form convertable to an array
-        @type input_array: array_like
         @param machines: machines in schedule
         @type machines: List[Machine]
         @param employees: employees in schedule
         @type employees: List[Employee]
         @param time_span: time period as vector in schedule
         @type time_span: List[TimeSpan]
+        @param input_array: input data, any form convertable to an array
+        @type input_array: array_like
         @param encountered_it: iteration of main loop of algorithm at which this solution was encountered
         @type encountered_it: int
         @param allowed_values: list of values allowed within the matrix
@@ -370,12 +371,12 @@ class FactoryAssignmentSchedule(np.ndarray):
 
         return obj
 
-    def __getitem__(self, item) -> Any:
+    def __getitem__(self, item) -> ndarray[Any, Any] | Any:
         """
         Function handles standard __getitem__ utilities, performs reshape is a slice of FactoryAssignmentSchedule is
         taken and then slices the corresponding ResourceList attributes.
-        @param item:
-        @type item:
+        @param item: slice of FactoryAssignmentSchedule object
+        @type item: Tuple
         @return:
         @rtype:
         """
@@ -440,9 +441,6 @@ class FactoryAssignmentSchedule(np.ndarray):
         @param value: value to be assigned to matrix
         @type value: Any
         """
-
-        # if isinstance(value, Iterable) and np.any([elem not in self.allowed_values for elem in value]):
-        #     raise FactoryAssignmentScheduleError(msg='tried to assign not allowed value', value=value)
 
         if np.isscalar(value):
             if value not in self.allowed_values:

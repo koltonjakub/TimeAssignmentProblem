@@ -1,14 +1,14 @@
 """Algorithm that performs simulated annealing method."""
 
-from typing import Callable, Any, Tuple, Union, Annotated, Type
-from pydantic import ValidationError
-from inspect import signature
-
-import pydantic as pdt
-import logging as log
-import numpy as np
 import csv
+import logging as log
 import os
+from inspect import signature
+from typing import Callable, Any, Tuple, Union, Annotated, Type
+
+import numpy as np
+import pydantic as pdt
+from pydantic import ValidationError
 
 from SimulatedAnnealing.Visualisation.Visualisation import Scope
 
@@ -311,7 +311,7 @@ class Solver(pdt.BaseModel):
                 'Stopping Condition': stopping_condition
             })
 
-    def simulate_annealing(self) -> Tuple[SolutionType, Scope]:
+    def simulate_annealing(self) -> Tuple[SolutionType, Scope] | None:
         """
         Function to perform simulated annealing problem for given initial conditions of certain SolutionType.
         @return: best solution encountered during runtime and scope of runtime annealing problem parameters
@@ -358,7 +358,7 @@ class Solver(pdt.BaseModel):
                 scope.visited_solution += [solution] if self.remember_visited_solution else []
             except ValueError as value_error:
                 log.error(f"ExpName: {self.experiment_name} resulted in TypeError: {value_error}")
-                break
+                return None
 
         init_cost = self.cost(self.init_sol)
         absolute_improvement = init_cost - best_cost
