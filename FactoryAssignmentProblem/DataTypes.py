@@ -8,26 +8,7 @@ from json import load
 import numpy as np
 
 
-# @dataclass(frozen=True)
-# class Resource:
-#     id: int
-#
-#     def __post_init__(self):
-#         for field_name, field_value in self.__dict__.items():
-#             cls = type(self)
-#             cls.validate_id(field_name, field_value)
-#
-#     @staticmethod
-#     def validate_id(field_name, field_value) -> None:
-#         if field_name != "id":
-#             return
-#         if not isinstance(field_value, int):
-#             raise TypeError(f"Field must be of type int")
-#         if field_value < 0:
-#             raise ValueError(f"Field must be greater or equal to 0")
-
-
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Machine:
     """Class representing a machine in factory"""
     id: int

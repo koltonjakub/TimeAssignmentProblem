@@ -16,7 +16,7 @@ class DataTypesPerformanceTimeTests(TestCase):
         super(DataTypesPerformanceTimeTests, self).__init__(*args, **kwargs)
 
     @staticmethod
-    def test_machine_performance(number: int = 10**5):
+    def test_read_performance(number: int = 10**5):
         def assign_read_machine():
             machine = Machine(id=1, hourly_cost=0, hourly_gain=1.1, max_workers=1, inventory_nr=123)
             _ = machine.id
@@ -59,11 +59,12 @@ class DataTypesPerformanceTimeTests(TestCase):
         for key, value in results.items():
             print(f'Average __init__/read time: {key} {value/number}')
 
-            # Example results
-            # Average __init__ / read time: Machine 3.72621499998786e-06
-            # Average __init__ / read time: Employee 4.4698090000019876e-06
-            # Average __init__ / read time: TimeSpan 1.8069290000130422e-06
-            # Average __init__ / read time: ResourceContainer 1.8833967999999003e-05
+        # Results without __slots__
+        # PASSED[100 %] DataTypes performance tests(100000 samples):
+        # Average __init__ / read time: Machine 3.9839739999979426e-06
+        # Average __init__ / read time: Employee 4.307616000000962e-06
+        # Average __init__ / read time: TimeSpan 1.7587679999996908e-06
+        # Average __init__ / read time: ResourceContainer 1.8110698999998933e-05
 
 
 class SolverExecutionTimeTests(TestCase):

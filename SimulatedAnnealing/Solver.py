@@ -351,7 +351,8 @@ class Solver(pdt.BaseModel):
             try:
                 scope.iteration += [it] if self.remember_iteration else []
                 scope.temperature += [temperature] if self.remember_temperature else []
-                scope.probability_of_transition += [prob_of_transition] if self.remember_probability_of_transition else []
+                scope.probability_of_transition += [prob_of_transition] if self.remember_probability_of_transition \
+                    else []
                 scope.cost_function += [self.cost(solution)] if self.remember_cost_function else []
                 scope.best_cost_function += [self.cost(best_solution)] if self.remember_best_cost_function else []
                 scope.visited_solution += [solution] if self.remember_visited_solution else []

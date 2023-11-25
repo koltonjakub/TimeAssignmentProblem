@@ -1,7 +1,6 @@
 """This file contains all the test cases for the Visualisation.py module of the Simulated Annealing Problem package."""
 
 from unittest import TestCase, main
-from pydantic import ValidationError
 from SimulatedAnnealing.Visualisation.Visualisation import Scope
 
 

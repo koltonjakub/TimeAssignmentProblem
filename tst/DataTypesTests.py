@@ -38,7 +38,8 @@ class MachineTests(TestCase):
     def test_id(self) -> None:
         valid_inputs = [0, 1, 2]
         for vld_inp in valid_inputs:
-            self.assertEqual(Machine(id=vld_inp, hourly_cost=1.0, hourly_gain=1.0, max_workers=1, inventory_nr=123).id, vld_inp)
+            self.assertEqual(Machine(id=vld_inp, hourly_cost=1.0, hourly_gain=1.0, max_workers=1, inventory_nr=123).id,
+                             vld_inp)
 
         invalid_inputs = [-1, -2]
         for inv_inp in invalid_inputs:
@@ -53,7 +54,9 @@ class MachineTests(TestCase):
     def test_hourly_cost(self) -> None:
         valid_inputs = [0, 0.0, 1, 1.1]
         for vld_inp in valid_inputs:
-            self.assertEqual(Machine(id=1, hourly_cost=vld_inp, hourly_gain=1.0, max_workers=1, inventory_nr=123).hourly_cost, vld_inp)
+            self.assertEqual(Machine(id=1,
+                                     hourly_cost=vld_inp, hourly_gain=1.0, max_workers=1, inventory_nr=123).hourly_cost,
+                             vld_inp)
 
         invalid_inputs = [-7, -1]
         for inv_inp in invalid_inputs:
@@ -68,7 +71,8 @@ class MachineTests(TestCase):
     def test_hourly_gain(self) -> None:
         valid_inputs = [0, 0.0, 1, 1.1]
         for vld_inp in valid_inputs:
-            self.assertEqual(Machine(id=1, hourly_cost=1, hourly_gain=vld_inp, max_workers=1, inventory_nr=123).hourly_gain, vld_inp)
+            self.assertEqual(Machine(id=1, hourly_cost=1, hourly_gain=vld_inp, max_workers=1,
+                                     inventory_nr=123).hourly_gain, vld_inp)
 
         invalid_inputs = [-7, -1]
         for inv_inp in invalid_inputs:
@@ -91,8 +95,8 @@ class MachineTests(TestCase):
     def test_inventory_nr(self) -> None:
         valid_inputs = [0, 1, '123', 'machine_1']
         for vld_inp in valid_inputs:
-            self.assertEqual(Machine(id=1, hourly_cost=1, hourly_gain=1.0, max_workers=1, inventory_nr=vld_inp).inventory_nr,
-                             vld_inp)
+            self.assertEqual(Machine(id=1, hourly_cost=1, hourly_gain=1.0, max_workers=1,
+                                     inventory_nr=vld_inp).inventory_nr, vld_inp)
 
         invalid_inputs = [lambda: 0, {1: 2}, [1, 2]]
         for inv_inp in invalid_inputs:
