@@ -245,7 +245,7 @@ class ResourceManager:
     """This class provides a user with utilities for importing and validating project databases."""
 
     @staticmethod
-    def import_resources_from_json(file_path: str) -> Union[ResourceContainer, None]: #ResourceContainer | None:
+    def import_resources_from_json(file_path: str) -> Union[ResourceContainer, None]:
         """Method imports resources from .json file and returns them as ResourceContainer.
         @param file_path: path to .json file
         @type file_path: str
@@ -371,7 +371,7 @@ class FactoryAssignmentSchedule(np.ndarray):
 
         return obj
 
-    def __getitem__(self, item) -> Union[ndarray[Any, Any], Any]: #ndarray[Any, Any] | Any:
+    def __getitem__(self, item) -> Union[ndarray[Any, Any], Any]:
         """
         Function handles standard __getitem__ utilities, performs reshape is a slice of FactoryAssignmentSchedule is
         taken and then slices the corresponding ResourceList attributes.
@@ -515,29 +515,22 @@ class FactoryAssignmentSchedule(np.ndarray):
         self.__time_span: List[TimeSpan] = getattr(obj, 'time_span', None)
         self.__encountered_it: int = getattr(obj, 'encountered_it', None)
         self.__allowed_values: List[Any] = getattr(obj, 'allowed_values', None)
-        #self.__cost: float = self.__evaluate_cost__()
 
     # TODO implement __array_ufunc__ method if numpy will have to handle FactoryAssignmentSchedule type arrays
 
-    def __evaluate_cost__(self) -> float:
+    def cost(self) -> float:
         """
         Function evaluates cost of schedule.
-        Called only after all the changed elements within the matrix had been assigned.
         """
+        ker = np.sum(self.view(np.ndarray), axis=2)
+        ker_bool = np.sum(self.view(np.ndarray), axis=1, dtype=bool)
+        ker_empls = np.sum(ker, axis=0)
+        ker_machs = np.sum(ker_bool, axis=1).transpose()
 
-        # TODO implement proper evaluation
+        costs_machs = np.multiply(ker_machs, [mach.hourly_cost for mach in self.machines])
+        costs_empls = np.multiply(ker_empls, [emp.hourly_cost for emp in self.employees])
 
-        ker = np.sum(self.view(np.ndarray), axis= 2)
-        ker_bool = np.sum(self.view(np.ndarray), axis=1, dtype= bool)
-        ker_emps = np.sum(ker, axis= 0)
-        ker_machs = np.sum(ker_bool, axis= 1).transpose()
-
-        costs_machs = np.multiply(ker_machs, [mach.hourly_cost for mach in self.__machines])
-        costs_emps = np.multiply(ker_emps, [emp.hourly_cost for emp in self.__employees])
-
-        return np.sum(np.add(costs_emps, costs_machs))
-
-        #return np.sum(self.view(np.ndarray))  # self.view(np.ndarray) necessary to avoid infinite recursion
+        return np.sum(np.add(costs_empls, costs_machs))
 
     @property
     def machines(self) -> List[Machine]:
@@ -577,18 +570,6 @@ class FactoryAssignmentSchedule(np.ndarray):
 
         # noinspection PyAttributeOutsideInit
         self.__encountered_it = value
-
-    def cost(self) -> float:
-        return self.__evaluate_cost__()
-    """
-    @property
-    def cost(self) -> float:
-        return self.__cost
-
-    @cost.setter
-    def cost(self, value) -> None:
-        raise FactoryAssignmentScheduleError('cost is read-only parameter')
-    """
 
     @property
     def allowed_values(self) -> Iterable[Any]:

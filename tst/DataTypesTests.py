@@ -6,7 +6,7 @@ from itertools import product
 from datetime import datetime
 from json import load
 
-from TimeAssignmentProblem.FactoryAssignmentProblem.DataTypes import (
+from FactoryAssignmentProblem.DataTypes import (
     Machine, Employee, TimeSpan, ResourceContainer, ResourceImportError, ResourceManager,
     FactoryAssignmentSchedule, FactoryAssignmentScheduleError)
 
@@ -375,10 +375,10 @@ class FactoryAssignmentScheduleTests(TestCase):
 
         zero_matrix: np.ndarray = np.zeros(shape=(5, 5, 5))
         schedule_template: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
-                    input_array=zero_matrix,
-                    machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span,
-                    encountered_it=1, allowed_values=[0, 1], dtype='int32'
-                )
+            input_array=zero_matrix,
+            machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span,
+            encountered_it=1, allowed_values=[0, 1], dtype='int32'
+        )
 
         self.assertIsInstance(schedule_template, FactoryAssignmentSchedule)
         self.assertTrue(np.all(zero_matrix == schedule_template))
@@ -516,9 +516,6 @@ class FactoryAssignmentScheduleTests(TestCase):
         with self.assertRaises(FactoryAssignmentScheduleError):
             schedule.time_span = []
 
-        with self.assertRaises(FactoryAssignmentScheduleError):
-            schedule.cost = 1
-
         for inv_inp in [0.0, 1.0, -1, -1.1]:
             with self.assertRaises(FactoryAssignmentScheduleError):
                 schedule.encountered_it = inv_inp
@@ -538,37 +535,45 @@ class FactoryAssignmentScheduleTests(TestCase):
                 schedule[0, 0, 0] = inv_val
 
     def test_cost(self) -> None:
-
-        arr1 = np.array([[[0],[0],[1],[0],[0]],[[0],[0],[0],[0],[0]],[[1],[0],[0],[1],[1]],[[0],[1],[0],[0],[0]],
-                         [[0],[0],[0],[0],[0]],])
-        arr2 = np.array([[[0,0],[0,0],[0,0],[1,0],[0,1]],[[0,0],[0,0],[1,0],[0,0],[0,0]],[[0,0],[0,0],[0,0],[0,0],[0,0]],
-                          [[0,1],[1,1],[0,0],[0,1],[1,0]], [[1,0],[0,0],[0,0],[0,0],[0,0]]])
-        arr3 = np.array([[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,1,1]],[[1,0,0],[0,0,1],[1,0,0],[0,1,0],[0,0,0]],
-                         [[0,1,1],[0,0,0],[0,0,1],[0,0,1],[1,0,0]],[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]],
-                         [[0,0,0],[0,0,0],[0,1,0],[1,0,0],[0,0,0]]])
+        arr1 = np.array(
+            [[[0], [0], [1], [0], [0]], [[0], [0], [0], [0], [0]], [[1], [0], [0], [1], [1]], [[0], [1], [0], [0], [0]],
+             [[0], [0], [0], [0], [0]], ])
+        arr2 = np.array([[[0, 0], [0, 0], [0, 0], [1, 0], [0, 1]], [[0, 0], [0, 0], [1, 0], [0, 0], [0, 0]],
+                         [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]],
+                         [[0, 1], [1, 1], [0, 0], [0, 1], [1, 0]], [[1, 0], [0, 0], [0, 0], [0, 0], [0, 0]]])
+        arr3 = np.array([[[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 1, 1]],
+                         [[1, 0, 0], [0, 0, 1], [1, 0, 0], [0, 1, 0], [0, 0, 0]],
+                         [[0, 1, 1], [0, 0, 0], [0, 0, 1], [0, 0, 1], [1, 0, 0]],
+                         [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+                         [[0, 0, 0], [0, 0, 0], [0, 1, 0], [1, 0, 0], [0, 0, 0]]])
 
         schedule1: FactoryAssignmentSchedule = FactoryAssignmentSchedule(input_array=arr1,
-            machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span[0:1],
-            encountered_it=1, allowed_values=[0, 1], dtype='int32'
-        )
+                                                                         machines=self.res.machines,
+                                                                         employees=self.res.employees,
+                                                                         time_span=self.res.time_span[0:1],
+                                                                         encountered_it=1, allowed_values=[0, 1],
+                                                                         dtype='int32'
+                                                                         )
 
         schedule2: FactoryAssignmentSchedule = FactoryAssignmentSchedule(input_array=arr2,
-            machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span[0:2],
-            encountered_it=1, allowed_values=[0, 1], dtype='int32'
-        )
+                                                                         machines=self.res.machines,
+                                                                         employees=self.res.employees,
+                                                                         time_span=self.res.time_span[0:2],
+                                                                         encountered_it=1, allowed_values=[0, 1],
+                                                                         dtype='int32'
+                                                                         )
 
         schedule3: FactoryAssignmentSchedule = FactoryAssignmentSchedule(input_array=arr3,
-            machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span[0:3],
-            encountered_it=1, allowed_values=[0, 1], dtype='int32'
-        )
+                                                                         machines=self.res.machines,
+                                                                         employees=self.res.employees,
+                                                                         time_span=self.res.time_span[0:3],
+                                                                         encountered_it=1, allowed_values=[0, 1],
+                                                                         dtype='int32'
+                                                                         )
 
-
-
-        self.assertEqual(schedule1.__evaluate_cost__(), 271)
-        self.assertEqual(schedule2.__evaluate_cost__(), 503)
-        self.assertEqual(schedule3.__evaluate_cost__(), 778)
-
-        #self.fail(msg='implement test_cost')
+        self.assertEqual(schedule1.cost(), 271)
+        self.assertEqual(schedule2.cost(), 503)
+        self.assertEqual(schedule3.cost(), 778)
 
     def test_partial_assignment_not_changing_dim_list(self):
         schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
