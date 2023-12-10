@@ -1,98 +1,103 @@
 {
   "machines": [
-      {
-          "id": 0,
-          "hourly_cost": 50.0,
-          "hourly_gain": 120.0,
-          "inventory_nr": 100,
-          "max_workers": 5
-      },
-      {
-          "id": 1,
-          "hourly_cost": 45.0,
-          "hourly_gain": 110.0,
-          "inventory_nr": 101,
-          "max_workers": 3
-      },
-      {
-          "id": 2,
-          "hourly_cost": 55.0,
-          "hourly_gain": 130.0,
-          "inventory_nr": 102,
-          "max_workers": 7
-      },
-      {
-          "id": 3,
-          "hourly_cost": 60.0,
-          "hourly_gain": 140.0,
-          "inventory_nr": 103,
-          "max_workers": 4
-      },
-      {
-          "id": 4,
-          "hourly_cost": 48.0,
-          "hourly_gain": 115.0,
-          "inventory_nr": 104,
-          "max_workers": 6
-      }
+    {
+      "id": 0,
+      "hourly_cost": 50.0,
+      "hourly_gain": 120.0,
+      "inventory_nr": 100,
+      "max_workers": 5
+    },
+    {
+      "id": 1,
+      "hourly_cost": 45.0,
+      "hourly_gain": 110.0,
+      "inventory_nr": 101,
+      "max_workers": 3
+    },
+    {
+      "id": 2,
+      "hourly_cost": 55.0,
+      "hourly_gain": 130.0,
+      "inventory_nr": 102,
+      "max_workers": 7
+    },
+    {
+      "id": 3,
+      "hourly_cost": 60.0,
+      "hourly_gain": 140.0,
+      "inventory_nr": 103,
+      "max_workers": 4
+    },
+    {
+      "id": 4,
+      "hourly_cost": 48.0,
+      "hourly_gain": 115.0,
+      "inventory_nr": 104,
+      "max_workers": 6
+    }
   ],
   "employees": [
-      {
-        "id": 0,
-        "hourly_cost": 20.0,
-        "hourly_gain": {"0": 5.0, "1": 6.0, "2": 7.0},
-        "name": "John",
-        "surname": "Doe"
-      },
-      {
-        "id": 1,
-        "hourly_cost": 18.0,
-        "hourly_gain": {"0": 4.0, "1": 5.0, "2": 6.0},
-        "name": "Jane",
-        "surname": "Smith"
-      },
-      {
-        "id": 2,
-        "hourly_cost": 22.0,
-        "hourly_gain": {"0": 6.0, "1": 7.0, "2": 8.0},
-        "name": "Bob",
-        "surname": "Johnson"
-      },
-      {
-        "id": 3,
-        "hourly_cost": 25.0,
-        "hourly_gain": {"0": 7.0, "1": 8.0, "2": 9.0},
-        "name": "Alice",
-        "surname": "Williams"
-      },
-      {
-        "id": 4,
-        "hourly_cost": 21.0,
-        "hourly_gain": {"0": 5.5, "1": 6.5, "2": 7.5},
-        "name": "Charlie",
-        "surname": "Brown"
-      }
+    {
+      "id": 0,
+      "hourly_cost": 20.0,
+      "hourly_gain": {"0": 5.0, "1": 6.0, "2": 7.0},
+      "name": "John",
+      "surname": "Doe",
+      "shift_duration": 4
+    },
+    {
+      "id": 1,
+      "hourly_cost": 18.0,
+      "hourly_gain": {"0": 4.0, "1": 5.0, "2": 6.0},
+      "name": "Jane",
+      "surname": "Smith",
+      "shift_duration": 8
+    },
+    {
+      "id": 2,
+      "hourly_cost": 22.0,
+      "hourly_gain": {"0": 6.0, "1": 7.0, "2": 8.0},
+      "name": "Bob",
+      "surname": "Johnson",
+      "shift_duration": 4
+    },
+    {
+      "id": 3,
+      "hourly_cost": 25.0,
+      "hourly_gain": {"0": 7.0, "1": 8.0, "2": 9.0},
+      "name": "Alice",
+      "surname": "Williams",
+      "shift_duration": 8
+    },
+    {
+      "id": 4,
+      "hourly_cost": 21.0,
+      "hourly_gain": {"0": 5.5, "1": 6.5, "2": 7.5},
+      "name": "Charlie",
+      "surname": "Brown",
+      "shift_duration": 4
+    }
   ],
   "time_span": [
-      {
-        "id": 0,
-        "datetime": "2023-11-01T06:00:00"
-      },
-      {
-        "id": 1,
-        "datetime": "2023-11-01T07:00:00"
-      },
-      {
-        "id": 2,
-        "datetime": "2023-11-01T08:00:00"
-      },
-      {
-        "id": 3,
-        "datetime": "2023-11-01T09:00:00"
-      },
-      {
-        "id": 4,
-        "datetime": "2023-11-01T10:00:00"
-      }
+    {
+      "id": 0,
+      "datetime": "2023-11-01T06:00:00"
+    },
+    {
+      "id": 1,
+      "datetime": "2023-11-01T07:00:00"
+    },
+    {
+      "id": 2,
+      "datetime": "2023-11-01T08:00:00"
+    },
+    {
+      "id": 3,
+      "datetime": "2023-11-01T09:00:00"
+    },
+    {
+      "id": 4,
+      "datetime": "2023-11-01T10:00:00"
+    }
   ]
 }

@@ -1,6 +1,7 @@
 """This file contains all tests designed for FactoryAssignmentProblem module from SimulatedAnnealing package."""
 
 from unittest import TestCase, main
+from unittest.mock import patch
 from typing import List, Union
 from itertools import product
 from datetime import datetime
@@ -8,7 +9,8 @@ from json import load
 
 from FactoryAssignmentProblem.DataTypes import (
     Machine, Employee, TimeSpan, ResourceContainer, ResourceImportError, ResourceManager,
-    FactoryAssignmentSchedule, FactoryAssignmentScheduleError)
+    FactoryAssignmentSchedule, FactoryAssignmentScheduleError,
+    random_neighbour, increase_workforce, decrease_workforce)
 
 import numpy as np
 import os
@@ -110,70 +112,73 @@ class EmployeeTests(TestCase):
         super(EmployeeTests, self).__init__(*args, **kwargs)
 
     def test_fields(self) -> None:
-        employee = Employee(id=1, hourly_cost=0, hourly_gain={1: 1}, name='John', surname='Ally')
+        employee = Employee(id=1, hourly_cost=0, hourly_gain={1: 1}, name='John', surname='Ally', shift_duration=4)
 
         self.assertEqual(employee.id, 1)
         self.assertEqual(employee.hourly_cost, 0)
         self.assertEqual(employee.hourly_gain, {1: 1})
         self.assertEqual(employee.name, 'John')
         self.assertEqual(employee.surname, 'Ally')
+        self.assertEqual(employee.shift_duration, 4)
 
     def test_id(self) -> None:
         valid_inputs = [0, 1, 2]
         for vld_inp in valid_inputs:
             self.assertEqual(Employee(id=vld_inp, hourly_cost=1.0, hourly_gain={1: 1.0}, name='John',
-                                      surname='Ally').id, vld_inp)
+                                      surname='Ally', shift_duration=8).id, vld_inp)
 
         invalid_inputs = [-1.1, 1.1, 0.0]
         for inv_inp in invalid_inputs:
             with self.assertRaises(TypeError):
-                Employee(id=inv_inp, hourly_cost=1.0, hourly_gain={1: 1.0}, name='John', surname='Ally')
+                Employee(id=inv_inp, hourly_cost=1.0, hourly_gain={1: 1.0}, name='John', surname='Ally',
+                         shift_duration=8)
 
         invalid_inputs = [-1, -2]
         for inv_inp in invalid_inputs:
             with self.assertRaises(ValueError):
-                Employee(id=inv_inp, hourly_cost=1.0, hourly_gain={1: 1.0}, name='John', surname='Ally')
+                Employee(id=inv_inp, hourly_cost=1.0, hourly_gain={1: 1.0}, name='John', surname='Ally',
+                         shift_duration=8)
 
     def test_hourly_cost(self) -> None:
         valid_inputs = [0, 0.0, 1, 1.1]
         for vld_inp in valid_inputs:
             self.assertEqual(Employee(id=1, hourly_cost=vld_inp, hourly_gain={1: 1.0}, name='John',
-                                      surname='Ally').hourly_cost, vld_inp)
+                                      surname='Ally', shift_duration=8).hourly_cost, vld_inp)
 
         invalid_inputs = ['str', lambda: 'str']
         for inv_inp in invalid_inputs:
             with self.assertRaises(TypeError):
-                Employee(id=1, hourly_cost=inv_inp, hourly_gain={1: 1.0}, name='John', surname='Ally')
+                Employee(id=1, hourly_cost=inv_inp, hourly_gain={1: 1.0}, name='John', surname='Ally', shift_duration=8)
 
         invalid_inputs = [-1, -1.1]
         for inv_inp in invalid_inputs:
             with self.assertRaises(ValueError):
-                Employee(id=1, hourly_cost=inv_inp, hourly_gain={1: 1.0}, name='John', surname='Ally')
+                Employee(id=1, hourly_cost=inv_inp, hourly_gain={1: 1.0}, name='John', surname='Ally', shift_duration=8)
 
     def test_hourly_gain(self) -> None:
         valid_inputs = [{0: 1}, {0: 1.1}, {1: 1}, {1: 1.1}]
         for vld_inp in valid_inputs:
             self.assertEqual(Employee(id=1, hourly_cost=1, hourly_gain=vld_inp, name='John',
-                                      surname='Ally').hourly_gain, vld_inp)
+                                      surname='Ally', shift_duration=8).hourly_gain, vld_inp)
 
         invalid_inputs = [{0: -1}, {-1: 0}, {-1: -1}]
         for inv_inp in invalid_inputs:
             with self.assertRaises(ValueError):
-                Employee(id=1, hourly_cost=1.0, hourly_gain=inv_inp, name='John', surname='Ally')
+                Employee(id=1, hourly_cost=1.0, hourly_gain=inv_inp, name='John', surname='Ally', shift_duration=8)
 
         invalid_inputs = [{"1": 1}, {1: "0"}, {"1": "1"}]
         for inv_inp in invalid_inputs:
             with self.assertRaises(TypeError):
-                Employee(id=1, hourly_cost=1.0, hourly_gain=inv_inp, name='John', surname='Ally')
+                Employee(id=1, hourly_cost=1.0, hourly_gain=inv_inp, name='John', surname='Ally', shift_duration=8)
 
     def test_name(self) -> None:
         invalid_inputs = [{0: -1}, [1], lambda: 0]
         for inv_inp in invalid_inputs:
             with self.assertRaises(TypeError):
-                Employee(id=1, hourly_cost=1.0, hourly_gain={1: 1}, name=inv_inp, surname='Ally')
+                Employee(id=1, hourly_cost=1.0, hourly_gain={1: 1}, name=inv_inp, surname='Ally', shift_duration=8)
 
-        self.assertEqual(Employee(id=1, hourly_cost=1.0, hourly_gain={1: 1}, name='John', surname='Ally').name,
-                         'John')
+        self.assertEqual(Employee(id=1, hourly_cost=1.0, hourly_gain={1: 1}, name='John', surname='Ally',
+                                  shift_duration=8).name,'John')
 
     def test_surname(self) -> None:
         invalid_inputs = [{0: -1}, [1], lambda: 0]
@@ -181,8 +186,22 @@ class EmployeeTests(TestCase):
             with self.assertRaises(TypeError):
                 Employee(id=1, hourly_cost=1.0, hourly_gain={1: 1}, name="John", surname=inv_inp)
 
-        self.assertEqual(Employee(id=1, hourly_cost=1.0, hourly_gain={1: 1}, name='John', surname='Ally').surname,
-                         'Ally')
+        self.assertEqual(Employee(id=1, hourly_cost=1.0, hourly_gain={1: 1}, name='John', surname='Ally',
+                                  shift_duration=8).surname,'Ally')
+
+    def test_shift_duration(self) -> None:
+        invalid_inputs = [{0: -1}, [1], lambda: 0]
+        for inv_inp in invalid_inputs:
+            with self.assertRaises(TypeError):
+                Employee(id=1, hourly_cost=1.0, hourly_gain={1: 1}, name="John", surname="Ally", shift_duration=inv_inp)
+
+        invalid_inputs = [-1, -2, -3]
+        for inv_inp in invalid_inputs:
+            with self.assertRaises(ValueError):
+                Employee(id=1, hourly_cost=1.0, hourly_gain={1: 1}, name="John", surname="Ally", shift_duration=inv_inp)
+
+        self.assertEqual(Employee(id=1, hourly_cost=1.0, hourly_gain={1: 1}, name="John", surname="Ally",
+                                  shift_duration=8).shift_duration, 8)
 
 
 # noinspection PyTypeChecker
@@ -248,8 +267,8 @@ class ResourceContainerTests(TestCase):
                 {"id": 1, "hourly_cost": 45.0, "hourly_gain": 110.0, "max_workers": 7, "inventory_nr": 101}
             ],
             "employees": [
-                {"id": 0, "hourly_cost": 20.0, "hourly_gain": {0: 5.0, 1: 6.0}, "name": "John", "surname": "Doe"},
-                {"id": 1, "hourly_cost": 18.0, "hourly_gain": {0: 4.0, 1: 5.0}, "name": "Jane", "surname": "Smith"}
+                {"id": 0, "hourly_cost": 20.0, "hourly_gain": {0: 5.0, 1: 6.0}, "name": "John", "surname": "Doe", "shift_duration": 4},
+                {"id": 1, "hourly_cost": 18.0, "hourly_gain": {0: 4.0, 1: 5.0}, "name": "Jane", "surname": "Smith", "shift_duration": 8}
             ],
             "time_span": [
                 {"id": 0, "datetime": datetime(2023, 11, 1, 6, 0, 0)},
@@ -307,7 +326,8 @@ class ResourceManagerTests(TestCase):
                                                 hourly_cost=test_employee_data['hourly_cost'],
                                                 hourly_gain=test_employee_data['hourly_gain'],
                                                 name=test_employee_data['name'],
-                                                surname=test_employee_data['surname']))
+                                                surname=test_employee_data['surname'],
+                                                shift_duration=test_employee_data['shift_duration']))
 
         for time_span, test_time_span_data in zip(imp_res.time_span, test_time_span):
             self.assertEqual(time_span, TimeSpan(id=test_time_span_data['id'],
@@ -357,7 +377,8 @@ class FactoryAssignmentScheduleTests(TestCase):
                                                 hourly_cost=test_employee_data['hourly_cost'],
                                                 hourly_gain=test_employee_data['hourly_gain'],
                                                 name=test_employee_data['name'],
-                                                surname=test_employee_data['surname']))
+                                                surname=test_employee_data['surname'],
+                                                shift_duration=test_employee_data['shift_duration']))
 
         for time_span, test_time_span_data in zip(schedule.time_span, test_time_span):
             self.assertEqual(time_span, TimeSpan(id=test_time_span_data['id'],
@@ -616,6 +637,16 @@ class FactoryAssignmentScheduleTests(TestCase):
         self.assertEqual(fraction.encountered_it, 2)
         self.assertEqual(fraction.allowed_values, [0, 1, 2])
         self.assertEqual(fraction.dtype, 'int32')
+
+
+class NeighbourGenerationTests(TestCase):
+    def __init__(self, *args, **kwargs) -> None:
+        super(NeighbourGenerationTests, self).__init__(*args, **kwargs)
+
+        self.res: ResourceContainer = ResourceManager().import_resources_from_json(test_database_path)
+
+    def test_decrease_workforce(self) -> None:
+        pass
 
 
 if __name__ == "__main__":

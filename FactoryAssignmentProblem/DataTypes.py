@@ -79,15 +79,17 @@ class Employee:
     hourly_gain: Dict[int, float]
     name: str
     surname: str
+    shift_duration: int
 
     def __post_init__(self):
         for field_name, field_value in self.__dict__.items():
             cls = type(self)
             cls.validate_id(field_name, field_value)
             cls.validate_hourly_cost(field_name, field_value)
-            self.validate_hourly_gain(field_name, field_value)
+            self.validate_hourly_gain(field_name, field_value)  # TODO self -> cls
             cls.validate_name(field_name, field_value)
             cls.validate_surname(field_name, field_value)
+            cls.validate_shift_duration(field_name, field_value)
 
     @staticmethod
     def validate_id(field_name, field_value) -> None:
@@ -141,6 +143,15 @@ class Employee:
             return
         if not isinstance(field_value, str):
             raise TypeError(f"Field must be of type str")
+
+    @staticmethod
+    def validate_shift_duration(field_name, field_value) -> None:
+        if field_name != "shift_duration":
+            return
+        if not isinstance(field_value, int):
+            raise TypeError(f"Field must be of type int")
+        if field_value < 0:
+            raise ValueError(f"Field must be non-negative int")
 
 
 @dataclass(frozen=True)
@@ -582,3 +593,40 @@ class FactoryAssignmentSchedule(np.ndarray):
 
         # noinspection PyAttributeOutsideInit
         self.__allowed_values: Iterable[Any] = value
+
+
+def increase_workforce(solution: FactoryAssignmentSchedule, employee: Employee) -> None:
+    """
+    Function increases workforce of given employee at first possible slot.
+    @param solution:
+    @type solution: FactoryAssignmentSchedule
+    @param employee:
+    @type employee: Employee
+    @return: None
+    @rtype:
+    """
+    pass
+
+
+def decrease_workforce(solution: FactoryAssignmentSchedule, employee: Employee) -> None:
+    """
+    Function decreases workforce of given employee at last possible slot.
+    @param solution:
+    @type solution:
+    @param employee:
+    @type employee:
+    @return:
+    @rtype:
+    """
+    pass
+
+
+def random_neighbour(solution: FactoryAssignmentSchedule) -> FactoryAssignmentSchedule:
+    """
+    Function generates instance of FactoryAssignmentSchedule that is randomly different from provided solution.
+    @param solution: base solution
+    @type solution: FactoryAssignmentSchedule
+    @return: new neighbour
+    @rtype: FactoryAssignmentSchedule
+    """
+    pass
