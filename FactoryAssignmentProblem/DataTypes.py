@@ -17,6 +17,7 @@ class Machine:
     hourly_gain: float
     max_workers: int
     inventory_nr: Union[str, int]
+    demand: Union[float, int]
 
     def __post_init__(self):
         for field_name, field_value in self.__dict__.items():
@@ -26,6 +27,7 @@ class Machine:
             cls.validate_hourly_gain(field_name, field_value)
             cls.validate_max_workers(field_name, field_value)
             cls.validate_inventory_nr(field_name, field_value)
+            cls.validate_demand(field_name, field_value)
 
     @staticmethod
     def validate_id(field_name, field_value) -> None:
@@ -70,6 +72,15 @@ class Machine:
         if not isinstance(field_value, (str, int)):
             raise TypeError(f"Field must be of type str or int")
 
+    @staticmethod
+    def validate_demand(field_name, field_value) -> None:
+        if field_name != "demand":
+            return
+        if not isinstance(field_value, (float, int)):
+            raise TypeError(f"Field must be of type float or int")
+        if field_value < 0:
+            raise ValueError(f'Field must be greater or equal to 0')
+
 
 @dataclass(frozen=True)
 class Employee:
@@ -86,7 +97,7 @@ class Employee:
             cls = type(self)
             cls.validate_id(field_name, field_value)
             cls.validate_hourly_cost(field_name, field_value)
-            self.validate_hourly_gain(field_name, field_value)  # TODO self -> cls
+            cls.validate_hourly_gain(field_name, field_value)
             cls.validate_name(field_name, field_value)
             cls.validate_surname(field_name, field_value)
             cls.validate_shift_duration(field_name, field_value)
@@ -343,7 +354,7 @@ class FactoryAssignmentScheduleError(Exception):
 
 class FactoryAssignmentSchedule(np.ndarray):
     """
-    Class representing solution of factory assignment problem.
+    Class representing schedule of factory assignment problem.
     Documentation: https://numpy.org/doc/stable/user/basics.subclassing.html#
     """
 
@@ -360,7 +371,7 @@ class FactoryAssignmentSchedule(np.ndarray):
         @type time_span: List[TimeSpan]
         @param input_array: input data, any form convertable to an array
         @type input_array: array_like
-        @param encountered_it: iteration of main loop of algorithm at which this solution was encountered
+        @param encountered_it: iteration of main loop of algorithm at which this schedule was encountered
         @type encountered_it: int
         @param allowed_values: list of values allowed within the matrix
         @type allowed_values: List[Any]
@@ -492,6 +503,7 @@ class FactoryAssignmentSchedule(np.ndarray):
 
         if input_array is None:  # Case: explicit constructor
             enforced_shape: Tuple[int, int, int] = (len(machines), len(employees), len(time_span))
+            # TODO implement assignment of proper schedules(only one machine for worker and max working hours)
             obj = np.ones(enforced_shape, dtype=dtype).view(cls)
             return obj
 
@@ -595,11 +607,22 @@ class FactoryAssignmentSchedule(np.ndarray):
         self.__allowed_values: Iterable[Any] = value
 
 
-def increase_workforce(solution: FactoryAssignmentSchedule, employee: Employee) -> None:
+def validate_total_production(schedule: FactoryAssignmentSchedule) -> bool:
+    """
+    Function checks if the total production in schedule meets the demand in Machines.
+    @param schedule: Schedule to be validated
+    @type schedule: FactoryAssignmentSchedule
+    @return: Is schedule valid
+    @rtype: bool
+    """
+    pass
+
+
+def increase_workforce(schedule: FactoryAssignmentSchedule, employee: Employee) -> None:
     """
     Function increases workforce of given employee at first possible slot.
-    @param solution:
-    @type solution: FactoryAssignmentSchedule
+    @param schedule:
+    @type schedule: FactoryAssignmentSchedule
     @param employee:
     @type employee: Employee
     @return: None
@@ -608,11 +631,11 @@ def increase_workforce(solution: FactoryAssignmentSchedule, employee: Employee) 
     pass
 
 
-def decrease_workforce(solution: FactoryAssignmentSchedule, employee: Employee) -> None:
+def decrease_workforce(schedule: FactoryAssignmentSchedule, employee: Employee) -> None:
     """
     Function decreases workforce of given employee at last possible slot.
-    @param solution:
-    @type solution:
+    @param schedule:
+    @type schedule:
     @param employee:
     @type employee:
     @return:
@@ -621,11 +644,11 @@ def decrease_workforce(solution: FactoryAssignmentSchedule, employee: Employee) 
     pass
 
 
-def random_neighbour(solution: FactoryAssignmentSchedule) -> FactoryAssignmentSchedule:
+def random_neighbour(schedule: FactoryAssignmentSchedule) -> FactoryAssignmentSchedule:
     """
-    Function generates instance of FactoryAssignmentSchedule that is randomly different from provided solution.
-    @param solution: base solution
-    @type solution: FactoryAssignmentSchedule
+    Function generates instance of FactoryAssignmentSchedule that is randomly different from provided schedule.
+    @param schedule: base schedule
+    @type schedule: FactoryAssignmentSchedule
     @return: new neighbour
     @rtype: FactoryAssignmentSchedule
     """

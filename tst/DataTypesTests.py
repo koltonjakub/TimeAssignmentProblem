@@ -21,6 +21,7 @@ test_database_path = os.path.join(parent_directory, "data", "test_database.json"
 invalid_machines_database_path = os.path.join(parent_directory, "data", "invalid_machine_ids_database.json")
 invalid_employees_database_path = os.path.join(parent_directory, "data", "invalid_employee_ids_database.json")
 invalid_time_span_database_path = os.path.join(parent_directory, "data", "invalid_time_span_ids_database.json")
+test_neighbours_database_path = os.path.join(parent_directory, "data", "test_neighbours_database.json")
 
 
 # noinspection PyTypeChecker
@@ -29,81 +30,98 @@ class MachineTests(TestCase):
         super(MachineTests, self).__init__(*args, **kwargs)
 
     def test_fields(self) -> None:
-        machine = Machine(id=1, hourly_cost=0, hourly_gain=1.1, max_workers=1, inventory_nr=123)
+        machine = Machine(id=1, hourly_cost=0, hourly_gain=1.1, max_workers=1, inventory_nr=123, demand=1)
 
         self.assertEqual(machine.id, 1)
         self.assertEqual(machine.hourly_cost, 0)
         self.assertEqual(machine.hourly_gain, 1.1)
         self.assertEqual(machine.max_workers, 1)
         self.assertEqual(machine.inventory_nr, 123)
+        self.assertEqual(machine.demand, 1)
 
     def test_id(self) -> None:
         valid_inputs = [0, 1, 2]
         for vld_inp in valid_inputs:
-            self.assertEqual(Machine(id=vld_inp, hourly_cost=1.0, hourly_gain=1.0, max_workers=1, inventory_nr=123).id,
+            self.assertEqual(Machine(id=vld_inp, hourly_cost=1.0, hourly_gain=1.0, max_workers=1, inventory_nr=123, demand=1).id,
                              vld_inp)
 
         invalid_inputs = [-1, -2]
         for inv_inp in invalid_inputs:
             with self.assertRaises(ValueError):
-                Machine(id=inv_inp, hourly_cost=1.0, hourly_gain=1.0, max_workers=1, inventory_nr=123)
+                Machine(id=inv_inp, hourly_cost=1.0, hourly_gain=1.0, max_workers=1, inventory_nr=123, demand=1)
 
         invalid_inputs = [-1.1, 2.0, 1.0, 1.1]
         for inv_inp in invalid_inputs:
             with self.assertRaises(TypeError):
-                Machine(id=inv_inp, hourly_cost=1.0, hourly_gain=1.0, max_workers=1, inventory_nr=123)
+                Machine(id=inv_inp, hourly_cost=1.0, hourly_gain=1.0, max_workers=1, inventory_nr=123, demand=1)
 
     def test_hourly_cost(self) -> None:
         valid_inputs = [0, 0.0, 1, 1.1]
         for vld_inp in valid_inputs:
             self.assertEqual(Machine(id=1,
-                                     hourly_cost=vld_inp, hourly_gain=1.0, max_workers=1, inventory_nr=123).hourly_cost,
+                                     hourly_cost=vld_inp, hourly_gain=1.0, max_workers=1, inventory_nr=123, demand=1).hourly_cost,
                              vld_inp)
 
         invalid_inputs = [-7, -1]
         for inv_inp in invalid_inputs:
             with self.assertRaises(ValueError):
-                Machine(id=1, hourly_cost=inv_inp, hourly_gain=1.0, max_workers=1, inventory_nr=123)
+                Machine(id=1, hourly_cost=inv_inp, hourly_gain=1.0, max_workers=1, inventory_nr=123, demand=1)
 
         invalid_inputs = ['str', float]
         for inv_inp in invalid_inputs:
             with self.assertRaises(TypeError):
-                Machine(id=1, hourly_cost=inv_inp, hourly_gain=1.0, max_workers=1, inventory_nr=123)
+                Machine(id=1, hourly_cost=inv_inp, hourly_gain=1.0, max_workers=1, inventory_nr=123, demand=1)
 
     def test_hourly_gain(self) -> None:
         valid_inputs = [0, 0.0, 1, 1.1]
         for vld_inp in valid_inputs:
             self.assertEqual(Machine(id=1, hourly_cost=1, hourly_gain=vld_inp, max_workers=1,
-                                     inventory_nr=123).hourly_gain, vld_inp)
+                                     inventory_nr=123, demand=1).hourly_gain, vld_inp)
 
         invalid_inputs = [-7, -1]
         for inv_inp in invalid_inputs:
             with self.assertRaises(ValueError):
-                Machine(id=1, hourly_cost=1, hourly_gain=inv_inp, max_workers=1, inventory_nr=123)
+                Machine(id=1, hourly_cost=1, hourly_gain=inv_inp, max_workers=1, inventory_nr=123, demand=1)
 
         invalid_inputs = ['str', float]
         for inv_inp in invalid_inputs:
             with self.assertRaises(TypeError):
-                Machine(id=1, hourly_cost=1.0, hourly_gain=inv_inp, max_workers=1, inventory_nr=123)
+                Machine(id=1, hourly_cost=1.0, hourly_gain=inv_inp, max_workers=1, inventory_nr=123, demand=1)
 
     def test_max_workers(self) -> None:
-        self.assertEqual(Machine(id=1, hourly_cost=1, hourly_gain=1.0, max_workers=1, inventory_nr=123).max_workers, 1)
+        self.assertEqual(Machine(id=1, hourly_cost=1, hourly_gain=1.0, max_workers=1, inventory_nr=123, demand=1).max_workers, 1)
 
         with self.assertRaises(ValueError):
-            Machine(id=1, hourly_cost=1, hourly_gain=1.0, max_workers=0, inventory_nr=123)
+            Machine(id=1, hourly_cost=1, hourly_gain=1.0, max_workers=0, inventory_nr=123, demand=1)
         with self.assertRaises(TypeError):
-            Machine(id=1, hourly_cost=1, hourly_gain=1.0, max_workers='1', inventory_nr=123)
+            Machine(id=1, hourly_cost=1, hourly_gain=1.0, max_workers='1', inventory_nr=123, demand=1)
 
     def test_inventory_nr(self) -> None:
         valid_inputs = [0, 1, '123', 'machine_1']
         for vld_inp in valid_inputs:
             self.assertEqual(Machine(id=1, hourly_cost=1, hourly_gain=1.0, max_workers=1,
-                                     inventory_nr=vld_inp).inventory_nr, vld_inp)
+                                     inventory_nr=vld_inp, demand=1).inventory_nr, vld_inp)
 
         invalid_inputs = [lambda: 0, {1: 2}, [1, 2]]
         for inv_inp in invalid_inputs:
             with self.assertRaises(TypeError):
-                Machine(id=1, hourly_cost=1.0, hourly_gain=1.0, max_workers=1, inventory_nr=inv_inp)
+                Machine(id=1, hourly_cost=1.0, hourly_gain=1.0, max_workers=1, inventory_nr=inv_inp, demand=1)
+
+    def test_demand(self) -> None:
+        valid_inputs = [0, 1, 2, 2.5, 3.5]
+        for vld_inp in valid_inputs:
+            self.assertEqual(Machine(id=1, hourly_cost=1, hourly_gain=1.0, max_workers=1,
+                                     inventory_nr=123, demand=vld_inp).demand, vld_inp)
+
+        invalid_inputs = [lambda: 0, {1: 2}, [1, 2]]
+        for inv_inp in invalid_inputs:
+            with self.assertRaises(TypeError):
+                Machine(id=1, hourly_cost=1.0, hourly_gain=1.0, max_workers=1, inventory_nr=123, demand=inv_inp)
+
+        invalid_inputs = [-1, -1.1]
+        for inv_inp in invalid_inputs:
+            with self.assertRaises(ValueError):
+                Machine(id=1, hourly_cost=1.0, hourly_gain=1.0, max_workers=1, inventory_nr=123, demand=inv_inp)
 
 
 # noinspection PyTypeChecker
@@ -178,16 +196,16 @@ class EmployeeTests(TestCase):
                 Employee(id=1, hourly_cost=1.0, hourly_gain={1: 1}, name=inv_inp, surname='Ally', shift_duration=8)
 
         self.assertEqual(Employee(id=1, hourly_cost=1.0, hourly_gain={1: 1}, name='John', surname='Ally',
-                                  shift_duration=8).name,'John')
+                                  shift_duration=8).name, 'John')
 
     def test_surname(self) -> None:
         invalid_inputs = [{0: -1}, [1], lambda: 0]
         for inv_inp in invalid_inputs:
             with self.assertRaises(TypeError):
-                Employee(id=1, hourly_cost=1.0, hourly_gain={1: 1}, name="John", surname=inv_inp)
+                Employee(id=1, hourly_cost=1.0, hourly_gain={1: 1}, name="John", surname=inv_inp, shift_duration=8)
 
         self.assertEqual(Employee(id=1, hourly_cost=1.0, hourly_gain={1: 1}, name='John', surname='Ally',
-                                  shift_duration=8).surname,'Ally')
+                                  shift_duration=8).surname, 'Ally')
 
     def test_shift_duration(self) -> None:
         invalid_inputs = [{0: -1}, [1], lambda: 0]
@@ -262,18 +280,22 @@ class ResourceContainerTests(TestCase):
 
     def test_fields(self) -> None:
         data = {
-            "machines": [
-                {"id": 0, "hourly_cost": 50.0, "hourly_gain": 120.0, "max_workers": 5, "inventory_nr": 100},
-                {"id": 1, "hourly_cost": 45.0, "hourly_gain": 110.0, "max_workers": 7, "inventory_nr": 101}
-            ],
-            "employees": [
-                {"id": 0, "hourly_cost": 20.0, "hourly_gain": {0: 5.0, 1: 6.0}, "name": "John", "surname": "Doe", "shift_duration": 4},
-                {"id": 1, "hourly_cost": 18.0, "hourly_gain": {0: 4.0, 1: 5.0}, "name": "Jane", "surname": "Smith", "shift_duration": 8}
-            ],
-            "time_span": [
+            "machines": (
+                {"id": 0, "hourly_cost": 50.0, "hourly_gain": 120.0, "max_workers": 5, "inventory_nr": 100,
+                 "demand": 1},
+                {"id": 1, "hourly_cost": 45.0, "hourly_gain": 110.0, "max_workers": 7, "inventory_nr": 101,
+                 "demand": 1.5}
+            ),
+            "employees": (
+                {"id": 0, "hourly_cost": 20.0, "hourly_gain": {0: 5.0, 1: 6.0}, "name": "John", "surname": "Doe",
+                 "shift_duration": 4},
+                {"id": 1, "hourly_cost": 18.0, "hourly_gain": {0: 4.0, 1: 5.0}, "name": "Jane", "surname": "Smith",
+                 "shift_duration": 8}
+            ),
+            "time_span": (
                 {"id": 0, "datetime": datetime(2023, 11, 1, 6, 0, 0)},
                 {"id": 1, "datetime": datetime(2023, 11, 1, 7, 0, 0)}
-            ]
+            )
         }
 
         mach = [Machine(**machine_data) for machine_data in data["machines"]]
@@ -319,7 +341,8 @@ class ResourceManagerTests(TestCase):
                                               hourly_cost=test_machine_data['hourly_cost'],
                                               hourly_gain=test_machine_data['hourly_gain'],
                                               max_workers=test_machine_data['max_workers'],
-                                              inventory_nr=test_machine_data['inventory_nr']))
+                                              inventory_nr=test_machine_data['inventory_nr'],
+                                              demand=test_machine_data['demand']))
 
         for employee, test_employee_data in zip(imp_res.employees, test_employees):
             self.assertEqual(employee, Employee(id=test_employee_data['id'],
@@ -370,7 +393,8 @@ class FactoryAssignmentScheduleTests(TestCase):
                                               hourly_cost=test_machine_data['hourly_cost'],
                                               hourly_gain=test_machine_data['hourly_gain'],
                                               max_workers=test_machine_data['max_workers'],
-                                              inventory_nr=test_machine_data['inventory_nr']))
+                                              inventory_nr=test_machine_data['inventory_nr'],
+                                              demand=test_machine_data['demand']))
 
         for employee, test_employee_data in zip(schedule.employees, test_employees):
             self.assertEqual(employee, Employee(id=test_employee_data['id'],
@@ -643,9 +667,28 @@ class NeighbourGenerationTests(TestCase):
     def __init__(self, *args, **kwargs) -> None:
         super(NeighbourGenerationTests, self).__init__(*args, **kwargs)
 
-        self.res: ResourceContainer = ResourceManager().import_resources_from_json(test_database_path)
+        self.res: ResourceContainer = ResourceManager().import_resources_from_json(test_neighbours_database_path)
+
+    def test_validate_total_production(self) -> None:
+        pass  # TODO implement it
 
     def test_decrease_workforce(self) -> None:
+        schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
+            machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span,
+            encountered_it=1, allowed_values=[0, 1], dtype='int32'
+        )
+        ana, bob = self.res.employees[0], self.res.employees[1]
+
+        template = np.ones(schedule.shape)
+        template[:, 0, -ana.shift_duration:] = np.zeros(ana.shift_duration)
+        template[:, 1, -bob.shift_duration:] = np.zeros(bob.shift_duration)
+
+        decrease_workforce(schedule=schedule, employee=ana)
+        print(template)
+        print(schedule)
+        #self.assertTrue(np.all(schedule == template))
+
+    def test_increase_workforce(self) -> None:
         pass
 
 

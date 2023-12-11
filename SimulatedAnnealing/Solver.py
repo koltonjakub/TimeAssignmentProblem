@@ -17,13 +17,13 @@ class Solver(pdt.BaseModel):
     """
     Class for solving problems with the Simulated Annealing method.
 
-    :param SolutionType: type of solution to be returned, used for validation during runtime
+    :param SolutionType: type of schedule to be returned, used for validation during runtime
     :type SolutionType: Type
 
-    :param cost: Objective function that is being optimized, takes solution as input and returns cost
+    :param cost: Objective function that is being optimized, takes schedule as input and returns cost
     :type cost: Callable returning real value
-    :param sol_gen: Function that returns solution generated randomly from the neighbourhood of the provided solution,
-    takes the solution as input and returns new solution as output
+    :param sol_gen: Function that returns schedule generated randomly from the neighbourhood of the provided schedule,
+    takes the schedule as input and returns new schedule as output
     :type sol_gen: Callable returning SolutionTemplate
     :param cool: Function that cools the temperature, takes temperature and iteration as parameters
     :type cool: Callable returning non-negative value
@@ -59,7 +59,7 @@ class Solver(pdt.BaseModel):
     :type remember_cost_function: bool
     :param remember_best_cost_function: flag whether to remember vector of best cost function during runtime
     :type remember_best_cost_function: bool
-    :param remember_visited_solution: flag whether to remember vector of visited solution during runtime
+    :param remember_visited_solution: flag whether to remember vector of visited schedule during runtime
     :type remember_visited_solution: bool
     """
 
@@ -117,10 +117,10 @@ class Solver(pdt.BaseModel):
 
         result = value(init_sol)
         if not isinstance(result, (float, int)):
-            raise ValidationError('cost is not a float or int for provided initial solution')
+            raise ValidationError('cost is not a float or int for provided initial schedule')
 
         if result < 0:
-            raise ValidationError('cost is negative for provided initial solution')
+            raise ValidationError('cost is negative for provided initial schedule')
 
         return value
 
@@ -282,9 +282,9 @@ class Solver(pdt.BaseModel):
         Function to dump the data to csv file
         @param init_cost: starting cost value
         @type init_cost: Union[int, float]
-        @param best_cost: cost of the best solution encountered
+        @param best_cost: cost of the best schedule encountered
         @type best_cost: Union[int, float]
-        @param absolute_improvement: absolute value of the difference between the best and the starting solution
+        @param absolute_improvement: absolute value of the difference between the best and the starting schedule
         @type absolute_improvement: Union[int, float], non-negative
         @param relative_improvement: ratio of improvement between the best and the starting cost
         @type relative_improvement: Union[int, float], between 0 and 1
@@ -314,7 +314,7 @@ class Solver(pdt.BaseModel):
     def simulate_annealing(self) -> Tuple[SolutionType, Scope] | None:
         """
         Function to perform simulated annealing problem for given initial conditions of certain SolutionType.
-        @return: best solution encountered during runtime and scope of runtime annealing problem parameters
+        @return: best schedule encountered during runtime and scope of runtime annealing problem parameters
         @rtype: SolutionType, ScopeValid
         """
 
