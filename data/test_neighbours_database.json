@@ -6,7 +6,7 @@
         "hourly_gain": 120.0,
         "inventory_nr": 100,
         "max_workers": 1,
-        "demand": 10
+        "demand": 8
       },
       {
         "id": 1,
@@ -14,22 +14,22 @@
         "hourly_gain": 110.0,
         "inventory_nr": 101,
         "max_workers": 2,
-        "demand": 10
+        "demand": 1000
       }
     ],
     "employees": [
       {
         "id": 0,
-        "hourly_cost": 20.0,
-        "hourly_gain": {"0": 5.0, "1": 6.0, "2": 7.0},
+        "hourly_cost": 1,
+        "hourly_gain": {"0": 1, "1": 1, "2": 1},
         "name": "John",
         "surname": "Doe",
         "shift_duration": 4
       },
       {
         "id": 1,
-        "hourly_cost": 18.0,
-        "hourly_gain": {"0": 4.0, "1": 5.0, "2": 6.0},
+        "hourly_cost": 2,
+        "hourly_gain": {"0": 2, "1": 2, "2": 2},
         "name": "Jane",
         "surname": "Smith",
         "shift_duration": 8

@@ -1,7 +1,7 @@
 """This file contains all tests designed for FactoryAssignmentProblem module from SimulatedAnnealing package."""
 
 from unittest import TestCase, main
-from unittest.mock import patch
+from unittest.mock import patch, Mock, create_autospec
 from typing import List, Union
 from itertools import product
 from datetime import datetime
@@ -10,7 +10,8 @@ from json import load
 from FactoryAssignmentProblem.DataTypes import (
     Machine, Employee, TimeSpan, ResourceContainer, ResourceImportError, ResourceManager,
     FactoryAssignmentSchedule, FactoryAssignmentScheduleError,
-    random_neighbour, increase_workforce, decrease_workforce)
+    validate_machine_production, validate_total_production,
+    increase_workforce, decrease_workforce, random_neighbour)
 
 import numpy as np
 import os
@@ -663,14 +664,39 @@ class FactoryAssignmentScheduleTests(TestCase):
         self.assertEqual(fraction.dtype, 'int32')
 
 
-class NeighbourGenerationTests(TestCase):
+class UtilsFunctionTests(TestCase):
     def __init__(self, *args, **kwargs) -> None:
-        super(NeighbourGenerationTests, self).__init__(*args, **kwargs)
+        super(UtilsFunctionTests, self).__init__(*args, **kwargs)
 
         self.res: ResourceContainer = ResourceManager().import_resources_from_json(test_neighbours_database_path)
 
+    def test_validate_machine_production(self) -> None:
+        shape = (len(self.res.machines), len(self.res.employees), len(self.res.time_span))
+        invalid_production_template = np.ones(shape)
+        production = FactoryAssignmentSchedule(
+            machines=self.res.machines,
+            employees=self.res.employees,
+            time_span=self.res.time_span,
+            allowed_values=[0, 1],
+            input_array=invalid_production_template
+        )
+
+        self.assertTrue(validate_machine_production(schedule=production, machine=self.res.machines[0]))
+        self.assertFalse(validate_machine_production(schedule=production, machine=self.res.machines[1]))
+
     def test_validate_total_production(self) -> None:
-        pass  # TODO implement it
+        shape = (len(self.res.machines), len(self.res.employees), len(self.res.time_span))
+        invalid_production_template = np.zeros(shape)
+        invalid_production = FactoryAssignmentSchedule(
+            machines=self.res.machines,
+            employees=self.res.employees,
+            time_span=self.res.time_span,
+            allowed_values=[0, 1],
+            input_array=invalid_production_template
+        )
+
+        print()
+        print(invalid_production)
 
     def test_decrease_workforce(self) -> None:
         schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(

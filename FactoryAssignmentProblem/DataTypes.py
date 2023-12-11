@@ -607,6 +607,24 @@ class FactoryAssignmentSchedule(np.ndarray):
         self.__allowed_values: Iterable[Any] = value
 
 
+def validate_machine_production(schedule: FactoryAssignmentSchedule, machine: Machine) -> bool:
+    """
+    Function checks if production demand is met for the given machine within provided schedule.
+    @param schedule: Schedule to be validated
+    @type schedule: FactoryAssignmentSchedule
+    @param machine: Machine from the schedule to be checked
+    @type machine: Machine
+    @return: Is production demand met
+    @rtype: bool
+    """
+    schedule_of_machine = schedule[:, machine.id, :]
+    hours_worked_per_employee = np.sum(schedule_of_machine, axis=2)
+    experience_per_employee = np.array([empl.hourly_gain[machine.id] for empl in schedule.employees]).reshape((len(schedule.employees), 1))
+    production_per_employee = np.multiply(hours_worked_per_employee, experience_per_employee)
+    machine_production = np.sum(production_per_employee)
+    return machine_production > machine.demand
+
+
 def validate_total_production(schedule: FactoryAssignmentSchedule) -> bool:
     """
     Function checks if the total production in schedule meets the demand in Machines.
