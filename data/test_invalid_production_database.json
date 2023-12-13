@@ -3,18 +3,18 @@
       {
         "id": 0,
         "hourly_cost": 50.0,
-        "hourly_gain": 120.0,
+        "hourly_gain": 1,
         "inventory_nr": 100,
         "max_workers": 1,
-        "demand": 8
+        "demand": 10000
       },
       {
         "id": 1,
         "hourly_cost": 45.0,
-        "hourly_gain": 110.0,
+        "hourly_gain": 1,
         "inventory_nr": 101,
-        "max_workers": 2,
-        "demand": 1000
+        "max_workers": 1,
+        "demand": 10000
       }
     ],
     "employees": [
@@ -29,7 +29,7 @@
       {
         "id": 1,
         "hourly_cost": 2,
-        "hourly_gain": {"0": 2, "1": 2, "2": 2},
+        "hourly_gain": {"0": 1, "1": 1, "2": 1},
         "name": "Jane",
         "surname": "Smith",
         "shift_duration": 8

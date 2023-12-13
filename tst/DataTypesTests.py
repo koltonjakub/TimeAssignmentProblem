@@ -1,7 +1,6 @@
 """This file contains all tests designed for FactoryAssignmentProblem module from SimulatedAnnealing package."""
 
 from unittest import TestCase, main
-from unittest.mock import patch, Mock, create_autospec
 from typing import List, Union
 from itertools import product
 from datetime import datetime
@@ -10,8 +9,10 @@ from json import load
 from FactoryAssignmentProblem.DataTypes import (
     Machine, Employee, TimeSpan, ResourceContainer, ResourceImportError, ResourceManager,
     FactoryAssignmentSchedule, FactoryAssignmentScheduleError,
+    get_machine_production, get_nr_of_assigned_employees,
     validate_machine_production, validate_total_production,
-    increase_workforce, decrease_workforce, random_neighbour)
+    validate_machine_assignment, validate_schedule_assignment,
+    assign_shift, unassign_shift, random_neighbour)
 
 import numpy as np
 import os
@@ -22,7 +23,8 @@ test_database_path = os.path.join(parent_directory, "data", "test_database.json"
 invalid_machines_database_path = os.path.join(parent_directory, "data", "invalid_machine_ids_database.json")
 invalid_employees_database_path = os.path.join(parent_directory, "data", "invalid_employee_ids_database.json")
 invalid_time_span_database_path = os.path.join(parent_directory, "data", "invalid_time_span_ids_database.json")
-test_neighbours_database_path = os.path.join(parent_directory, "data", "test_neighbours_database.json")
+test_invalid_production_database_path = os.path.join(parent_directory, "data", "test_invalid_production_database.json")
+test_valid_production_database_path = os.path.join(parent_directory, "data", "test_valid_production_database.json")
 
 
 # noinspection PyTypeChecker
@@ -668,54 +670,216 @@ class UtilsFunctionTests(TestCase):
     def __init__(self, *args, **kwargs) -> None:
         super(UtilsFunctionTests, self).__init__(*args, **kwargs)
 
-        self.res: ResourceContainer = ResourceManager().import_resources_from_json(test_neighbours_database_path)
+        self.inv_prod = ResourceManager().import_resources_from_json(test_invalid_production_database_path)
+        self.valid_prod = ResourceManager().import_resources_from_json(test_valid_production_database_path)
+
+    def test_get_machine_production(self) -> None:
+        shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
+        template = np.ones(shape)
+        template[[1, 0], [0, 1], :] = np.zeros(shape[2])
+        production = FactoryAssignmentSchedule(
+            machines=self.valid_prod.machines,
+            employees=self.valid_prod.employees,
+            time_span=self.valid_prod.time_span,
+            allowed_values=[0, 1],
+            input_array=template
+        )
+        (alice, bob) = production.employees
+        (machine_a, machine_b) = production.machines
+        proper_production = np.multiply(np.array([alice.hourly_gain[0], bob.hourly_gain[1]]),
+                                        np.array([machine_a.hourly_gain, machine_b.hourly_gain])) * shape[2]
+        for prod, mach in zip(proper_production, production.machines):
+            self.assertEqual(get_machine_production(production, mach), prod)
+
+    def test_get_nr_of_assigned_employees(self) -> None:
+        shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
+        template = np.ones(shape)
+        template[0, 1, :] = np.zeros(shape[2])
+        assignment = FactoryAssignmentSchedule(
+            machines=self.valid_prod.machines,
+            employees=self.valid_prod.employees,
+            time_span=self.valid_prod.time_span,
+            allowed_values=[0, 1],
+            input_array=template
+        )
+        for tm_sp in assignment.time_span:
+            self.assertEqual(get_nr_of_assigned_employees(assignment, assignment.machines[0], tm_sp), 1)
+            self.assertEqual(get_nr_of_assigned_employees(assignment, assignment.machines[1], tm_sp), 2)
 
     def test_validate_machine_production(self) -> None:
-        shape = (len(self.res.machines), len(self.res.employees), len(self.res.time_span))
-        invalid_production_template = np.ones(shape)
-        production = FactoryAssignmentSchedule(
-            machines=self.res.machines,
-            employees=self.res.employees,
-            time_span=self.res.time_span,
+        shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
+        template = np.ones(shape)
+        template[[1, 0], [0, 1], :] = np.zeros(shape[2])
+
+        valid_production = FactoryAssignmentSchedule(
+            machines=self.valid_prod.machines,
+            employees=self.valid_prod.employees,
+            time_span=self.valid_prod.time_span,
             allowed_values=[0, 1],
-            input_array=invalid_production_template
+            input_array=template
+        )
+        invalid_production = FactoryAssignmentSchedule(
+            machines=self.inv_prod.machines,
+            employees=self.inv_prod.employees,
+            time_span=self.inv_prod.time_span,
+            allowed_values=[0, 1],
+            input_array=template
         )
 
-        self.assertTrue(validate_machine_production(schedule=production, machine=self.res.machines[0]))
-        self.assertFalse(validate_machine_production(schedule=production, machine=self.res.machines[1]))
+        self.assertFalse(validate_machine_production(schedule=invalid_production,
+                                                     machine=invalid_production.machines[0]))
+        self.assertFalse(validate_machine_production(schedule=invalid_production,
+                                                     machine=invalid_production.machines[1]))
+
+        self.assertTrue(validate_machine_production(schedule=valid_production, machine=valid_production.machines[0]))
+        self.assertTrue(validate_machine_production(schedule=valid_production, machine=valid_production.machines[1]))
 
     def test_validate_total_production(self) -> None:
-        shape = (len(self.res.machines), len(self.res.employees), len(self.res.time_span))
-        invalid_production_template = np.zeros(shape)
-        invalid_production = FactoryAssignmentSchedule(
-            machines=self.res.machines,
-            employees=self.res.employees,
-            time_span=self.res.time_span,
+        shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
+        template = np.ones(shape)
+        template[[1, 0], [0, 1], :] = np.zeros(shape[2])
+
+        valid_production = FactoryAssignmentSchedule(
+            machines=self.valid_prod.machines,
+            employees=self.valid_prod.employees,
+            time_span=self.valid_prod.time_span,
             allowed_values=[0, 1],
-            input_array=invalid_production_template
+            input_array=template
         )
+        invalid_production = FactoryAssignmentSchedule(
+            machines=self.inv_prod.machines,
+            employees=self.inv_prod.employees,
+            time_span=self.inv_prod.time_span,
+            allowed_values=[0, 1],
+            input_array=template
+        )
+
+        self.assertFalse(validate_total_production(invalid_production))
+        self.assertTrue(validate_total_production(valid_production))
+
+    def test_validate_machine_assignment(self) -> None:
+        shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
+        template = np.ones(shape)
+        template[[1, 0], [0, 1], :] = np.zeros(shape[2])
+
+        valid_production = FactoryAssignmentSchedule(
+            machines=self.valid_prod.machines,
+            employees=self.valid_prod.employees,
+            time_span=self.valid_prod.time_span,
+            allowed_values=[0, 1],
+            input_array=template
+        )
+        invalid_production = FactoryAssignmentSchedule(
+            machines=self.inv_prod.machines,
+            employees=self.inv_prod.employees,
+            time_span=self.inv_prod.time_span,
+            allowed_values=[0, 1],
+            input_array=np.ones(shape)
+        )
+
+        for mach in valid_production.machines:
+            self.assertTrue(validate_machine_assignment(schedule=valid_production, machine=mach))
+
+        for mach in invalid_production.machines:
+            self.assertFalse(validate_machine_assignment(schedule=invalid_production, machine=mach))
+
+    def test_validate_schedule_assignment(self) -> None:
+        shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
+        template = np.ones(shape)
+        template[[1, 0], [0, 1], :] = np.zeros(shape[2])
+
+        valid_production = FactoryAssignmentSchedule(
+            machines=self.valid_prod.machines,
+            employees=self.valid_prod.employees,
+            time_span=self.valid_prod.time_span,
+            allowed_values=[0, 1],
+            input_array=template
+        )
+        invalid_production = FactoryAssignmentSchedule(
+            machines=self.inv_prod.machines,
+            employees=self.inv_prod.employees,
+            time_span=self.inv_prod.time_span,
+            allowed_values=[0, 1],
+            input_array=np.ones(shape)
+        )
+
+        self.assertTrue(validate_schedule_assignment(valid_production))
+        self.assertFalse(validate_schedule_assignment(invalid_production))
+
+    def test_assign_shift(self) -> None:
+        shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
+        template = np.zeros(shape)
+
+        assignment = FactoryAssignmentSchedule(
+            machines=self.valid_prod.machines,
+            employees=self.valid_prod.employees,
+            time_span=self.valid_prod.time_span,
+            allowed_values=[0, 1],
+            input_array=template.copy()
+        )
+
+        proper_assignment = np.zeros(shape)
+        proper_assignment[0, 0, 0:4] = np.ones(4)
+        proper_assignment[0, 1, 4:12] = np.ones(8)
+        proper_assignment[1, 0, 18:22] = np.ones(4)
+        proper_assignment[1, 1, 18:26] = np.ones(8)
+
+        (machine_1, machine_2) = assignment.machines
+        (ana, bob) = assignment.employees
+
+        assign_shift(assignment, ana, machine_1)
+        assign_shift(assignment, bob, machine_1)
+
+        assign_shift(assignment, ana, machine_2)
+        assign_shift(assignment, bob, machine_2)
+
+        self.assertTrue(np.all(proper_assignment == assignment))
+
+        # perform this once again to test if principle: one shift per workday is present
+        assign_shift(assignment, ana, machine_1)
+        assign_shift(assignment, bob, machine_1)
+
+        assign_shift(assignment, ana, machine_2)
+        assign_shift(assignment, bob, machine_2)
+
+        self.assertTrue(np.all(proper_assignment == assignment))
+
+    def test_unassign_shift(self) -> None:
+        shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
+
+        proper_assignment = np.zeros(shape)
+        proper_assignment[0, 0, 0:4] = np.ones(4)
+        proper_assignment[0, 1, 4:12] = np.ones(8)
+        proper_assignment[1, 0, 18:22] = np.ones(4)
+        proper_assignment[1, 1, 18:26] = np.ones(8)
+
+        assignment = FactoryAssignmentSchedule(
+            machines=self.valid_prod.machines,
+            employees=self.valid_prod.employees,
+            time_span=self.valid_prod.time_span,
+            allowed_values=[0, 1],
+            input_array=proper_assignment.copy()
+        )
+        (ana, bob) = assignment.employees
+        print()
+        print(assignment)
+
+        proper_assignment[1, 0, 18:22] = np.zeros(4)
+        proper_assignment[1, 1, 18:26] = np.zeros(8)
+        unassign_shift(assignment, ana)
+        unassign_shift(assignment, bob)
+
+        self.assertTrue(np.all(proper_assignment == assignment))
+
+        proper_assignment[0, 0, 0:4] = np.zeros(4)
+        proper_assignment[0, 1, 4:12] = np.zeros(8)
+        unassign_shift(assignment, ana)
+        unassign_shift(assignment, bob)
 
         print()
-        print(invalid_production)
+        print(assignment)
 
-    def test_decrease_workforce(self) -> None:
-        schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
-            machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span,
-            encountered_it=1, allowed_values=[0, 1], dtype='int32'
-        )
-        ana, bob = self.res.employees[0], self.res.employees[1]
-
-        template = np.ones(schedule.shape)
-        template[:, 0, -ana.shift_duration:] = np.zeros(ana.shift_duration)
-        template[:, 1, -bob.shift_duration:] = np.zeros(bob.shift_duration)
-
-        decrease_workforce(schedule=schedule, employee=ana)
-        print(template)
-        print(schedule)
-        #self.assertTrue(np.all(schedule == template))
-
-    def test_increase_workforce(self) -> None:
-        pass
+        self.assertTrue(np.all(proper_assignment == assignment))
 
 
 if __name__ == "__main__":
