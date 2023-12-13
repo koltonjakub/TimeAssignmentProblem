@@ -607,6 +607,42 @@ class FactoryAssignmentSchedule(np.ndarray):
         self.__allowed_values: Iterable[Any] = value
 
 
+def get_machine_production(schedule: FactoryAssignmentSchedule, machine: Machine) -> Union[int, float]:
+    """
+    Function calculates the machine production for a given schedule and returns it.
+    Calculated as machine.hourly_gain .* schedule[machine, :, :] .* schedule.employees.hourly_gain[machine].
+    @param schedule: Considered schedule
+    @type schedule: FactoryAssignmentSchedule
+    @param machine: Machine from the schedule
+    @type machine: Machine
+    @return: Total amount of production for the given machine
+    @rtype: Union[int, float]
+    """
+    employee_experience_matrix = np.array([empl.hourly_gain[machine.id] for empl in schedule.employees]).reshape(
+        (len(schedule.employees), 1))
+
+    schedule_of_machine = schedule[:, machine.id, :]
+    hours_worked_per_employee = np.sum(schedule_of_machine, axis=2)
+    production_per_employee = np.multiply(hours_worked_per_employee, employee_experience_matrix)
+    machine_production = machine.hourly_gain * np.sum(production_per_employee)
+    return machine_production
+
+
+def get_nr_of_assigned_employees(schedule: FactoryAssignmentSchedule, machine: Machine, timespan: TimeSpan) -> int:
+    """
+    Function calculates number of employees assigned to the machine in given timespan.
+    @param schedule: Considered schedule
+    @type schedule: FactoryAssignmentSchedule
+    @param machine: Machine from the schedule
+    @type machine: Machine
+    @param timespan: Moment in time of schedule in which the employees are assigned to the machine.
+    @type timespan: TimeSpan
+    @return: Number of assigned employees
+    @rtype: int
+    """
+    return np.count_nonzero(schedule[machine.id, :, timespan.id])
+
+
 def validate_machine_production(schedule: FactoryAssignmentSchedule, machine: Machine) -> bool:
     """
     Function checks if production demand is met for the given machine within provided schedule.
@@ -617,12 +653,7 @@ def validate_machine_production(schedule: FactoryAssignmentSchedule, machine: Ma
     @return: Is production demand met
     @rtype: bool
     """
-    schedule_of_machine = schedule[:, machine.id, :]
-    hours_worked_per_employee = np.sum(schedule_of_machine, axis=2)
-    experience_per_employee = np.array([empl.hourly_gain[machine.id] for empl in schedule.employees]).reshape((len(schedule.employees), 1))
-    production_per_employee = np.multiply(hours_worked_per_employee, experience_per_employee)
-    machine_production = np.sum(production_per_employee)
-    return machine_production > machine.demand
+    return get_machine_production(schedule, machine) >= machine.demand
 
 
 def validate_total_production(schedule: FactoryAssignmentSchedule) -> bool:
@@ -630,33 +661,76 @@ def validate_total_production(schedule: FactoryAssignmentSchedule) -> bool:
     Function checks if the total production in schedule meets the demand in Machines.
     @param schedule: Schedule to be validated
     @type schedule: FactoryAssignmentSchedule
-    @return: Is schedule valid
+    @return: Is production in schedule valid
     @rtype: bool
     """
-    pass
+    return np.all([validate_machine_production(schedule, machine) for machine in schedule.machines])
 
 
-def increase_workforce(schedule: FactoryAssignmentSchedule, employee: Employee) -> None:
+def validate_machine_assignment(schedule: FactoryAssignmentSchedule, machine: Machine) -> bool:
     """
-    Function increases workforce of given employee at first possible slot.
-    @param schedule:
+    Function checks if the assignment is valid for the given machine within provided schedule.
+    @param schedule: Considered schedule
     @type schedule: FactoryAssignmentSchedule
-    @param employee:
+    @param machine: Machine from the schedule
+    @type machine: Machine
+    @return: Is assignment valid
+    @rtype: bool
+    """
+    return np.all([get_nr_of_assigned_employees(schedule, machine, tm_sp) <=
+                   machine.max_workers for tm_sp in schedule.time_span])
+
+
+def validate_schedule_assignment(schedule: FactoryAssignmentSchedule) -> bool:
+    """
+    Function checks if the assignment is valid for the given schedule.
+    @param schedule: Schedule to be validated
+    @type schedule: FactoryAssignmentSchedule
+    @return: Is employee assignment valid
+    @rtype: bool
+    """
+    return np.all([validate_machine_assignment(schedule, machine) for machine in schedule.machines])
+
+
+def assign_shift(schedule: FactoryAssignmentSchedule, employee: Employee, machine: Machine) -> None:
+    """
+    Function assigns a shift of a given employee to provided machine at first possible slot if assignment is possible.
+    @param schedule: schedule to be changed
+    @type schedule: FactoryAssignmentSchedule
+    @param employee: employee to be assigned a shift in factory
     @type employee: Employee
+    @param machine: Machine for the employee to be assigned a shift to
+    @type machine: Machine
     @return: None
     @rtype:
     """
-    pass
+    work_day_duration = 18
+
+    for day in range(len(schedule.time_span) // work_day_duration):
+        # if employee is already assigned in this workday, skip
+        if np.count_nonzero(schedule[:, employee.id, day * work_day_duration: (day + 1) * work_day_duration]) > 0:
+            continue
+
+        for hour in range(work_day_duration - employee.shift_duration):
+            start_time = day * work_day_duration + hour
+            stop_time = day * work_day_duration + hour + employee.shift_duration
+
+            # check if all time slots in sequence allow for assignment of employee
+            if np.all([get_nr_of_assigned_employees(schedule, machine, tm_sp) < machine.max_workers
+                       for tm_sp in schedule.time_span[start_time: stop_time]]):
+                schedule[machine.id, employee.id, start_time: stop_time] = np.ones(employee.shift_duration)
+                return None
+    return None
 
 
-def decrease_workforce(schedule: FactoryAssignmentSchedule, employee: Employee) -> None:
+def unassign_shift(schedule: FactoryAssignmentSchedule, employee: Employee) -> None:
     """
-    Function decreases workforce of given employee at last possible slot.
+    Function unassigns a shift of a given employee to provided machine at last possible slot if assignment is possible.
     @param schedule:
     @type schedule:
     @param employee:
     @type employee:
-    @return:
+    @return: None
     @rtype:
     """
     pass
