@@ -257,6 +257,7 @@ class ResourceContainer:
 
 
 class ResourceImportError(Exception):
+    """Exception raised when a resource cannot be imported properly."""
     def __init__(self, msg: str = None, value: Any = None) -> None:
         super().__init__(msg)
         self.msg: str = msg
@@ -692,6 +693,14 @@ def validate_schedule_assignment(schedule: FactoryAssignmentSchedule) -> bool:
     return np.all([validate_machine_assignment(schedule, machine) for machine in schedule.machines])
 
 
+class ShiftAssignmentError(Exception):
+    """Exception raised when a shift cannot be assigned to employee."""
+    def __init__(self, msg: str = None, value: Any = None) -> None:
+        super().__init__(msg)
+        self.msg: str = msg
+        self.value: Any = value
+
+
 def assign_shift(schedule: FactoryAssignmentSchedule, employee: Employee, machine: Machine) -> None:
     """
     Function assigns a shift of a given employee to provided machine at first possible slot if assignment is possible.
@@ -707,7 +716,7 @@ def assign_shift(schedule: FactoryAssignmentSchedule, employee: Employee, machin
     work_day_duration = 18
 
     for day in range(len(schedule.time_span) // work_day_duration):
-        # if employee is already assigned in this workday, skip
+        # if employee is already assigned a shift in this workday, skip
         if np.count_nonzero(schedule[:, employee.id, day * work_day_duration: (day + 1) * work_day_duration]) > 0:
             continue
 
@@ -720,20 +729,49 @@ def assign_shift(schedule: FactoryAssignmentSchedule, employee: Employee, machin
                        for tm_sp in schedule.time_span[start_time: stop_time]]):
                 schedule[machine.id, employee.id, start_time: stop_time] = np.ones(employee.shift_duration)
                 return None
-    return None
+    raise ShiftAssignmentError(msg="Could not assign a shift due the lack of free slots in schedule",
+                               value=(schedule, employee, machine))
 
 
-def unassign_shift(schedule: FactoryAssignmentSchedule, employee: Employee) -> None:
+class ShiftUnassignmentError(Exception):
+    """Exception raised when a shift cannot be unassigned from employee."""
+    def __init__(self, msg: str = None, value: Any = None) -> None:
+        super().__init__(msg)
+        self.msg: str = msg
+        self.value: Any = value
+
+
+def unassign_shift(schedule: FactoryAssignmentSchedule, employee: Employee, machine: Machine) -> None:
     """
-    Function unassigns a shift of a given employee to provided machine at last possible slot if assignment is possible.
-    @param schedule:
-    @type schedule:
-    @param employee:
-    @type employee:
+    Function unassigns a shift of a given employee to provided machine at last possible slot if
+    unassignment is possible.
+    @param schedule: schedule to be changed
+    @type schedule: FactoryAssignmentSchedule
+    @param employee: employee to be unassigned a shift in factory
+    @type employee: Employee
+    @param machine: Machine for the employee to be unassigned a shift from
+    @type machine: Machine
     @return: None
     @rtype:
     """
-    pass
+    work_day_duration = 18
+
+    for day in range(len(schedule.time_span) // work_day_duration - 1, -1, -1):
+        # if employee is not assigned in this day, skip
+        if (np.count_nonzero(schedule[:, employee.id, day * work_day_duration: (day + 1) * work_day_duration]) ==
+                work_day_duration):
+            continue
+
+        for hour in range(work_day_duration - employee.shift_duration):
+            start_time = day * work_day_duration + hour
+            stop_time = day * work_day_duration + hour + employee.shift_duration
+
+            # check if sequence counts as employee assignment
+            if np.all(schedule[machine.id, employee.id, start_time: stop_time] == 1):
+                schedule[machine.id, employee.id, start_time: stop_time] = np.zeros(employee.shift_duration)
+                return None
+    raise ShiftUnassignmentError(msg="Could not unassign a shift(not present within provided schedule)",
+                                 value=(schedule, employee, machine))
 
 
 def random_neighbour(schedule: FactoryAssignmentSchedule) -> FactoryAssignmentSchedule:
