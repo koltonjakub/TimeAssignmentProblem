@@ -504,8 +504,6 @@ class FactoryAssignmentSchedule(np.ndarray):
 
         if input_array is None:  # Case: explicit constructor
             enforced_shape: Tuple[int, int, int] = (len(machines), len(employees), len(time_span))
-            # TODO implement assignment of proper schedules(only one machine for worker and max working hours)
-            # obj = np.ones(enforced_shape, dtype=dtype).view(cls)
             obj = np.zeros(enforced_shape, dtype=dtype).view(cls)
             return obj
 
@@ -540,8 +538,6 @@ class FactoryAssignmentSchedule(np.ndarray):
         self.__time_span: List[TimeSpan] = getattr(obj, 'time_span', None)
         self.__encountered_it: int = getattr(obj, 'encountered_it', None)
         self.__allowed_values: List[Any] = getattr(obj, 'allowed_values', None)
-
-    # TODO implement __array_ufunc__ method if numpy will have to handle FactoryAssignmentSchedule type arrays
 
     def cost(self) -> float:
         """
