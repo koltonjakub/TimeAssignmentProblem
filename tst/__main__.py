@@ -4,7 +4,8 @@ import time
 from SolverTests import SolverTests
 from VisualisationTests import ScopeTests
 from DataTypesTests import (MachineTests, EmployeeTests, TimeSpanTests,
-                            ResourceContainerTests, ResourceManagerTests, FactoryAssignmentScheduleTests)
+                            ResourceContainerTests, ResourceManagerTests, FactoryAssignmentScheduleTests,
+                            UtilsFunctionTests)
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -19,6 +20,7 @@ if __name__ == '__main__':
     test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ResourceContainerTests))
     test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ResourceManagerTests))
     test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(FactoryAssignmentScheduleTests))
+    test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(UtilsFunctionTests))
 
     test_result = unittest.TestResult()
     test_suite.run(result=test_result)

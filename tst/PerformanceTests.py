@@ -18,21 +18,23 @@ class DataTypesPerformanceTimeTests(TestCase):
     @staticmethod
     def test_read_performance(number: int = 10**5):
         def assign_read_machine():
-            machine = Machine(id=1, hourly_cost=0, hourly_gain=1.1, max_workers=1, inventory_nr=123)
+            machine = Machine(id=1, hourly_cost=0, hourly_gain=1.1, max_workers=1, inventory_nr=123, demand=1000)
             _ = machine.id
             _ = machine.hourly_cost
             _ = machine.hourly_gain
             _ = machine.max_workers
             _ = machine.inventory_nr
+            _ = machine.demand
 
         def assign_read_employee():
-            employee = Employee(id=1, hourly_cost=0, hourly_gain={1: 1}, name='John', surname='Ally')
+            employee = Employee(id=1, hourly_cost=0, hourly_gain={1: 1}, name='John', surname='Ally', shift_duration=8)
 
             _ = employee.id
             _ = employee.hourly_cost
             _ = employee.hourly_gain
             _ = employee.name
             _ = employee.surname
+            _ = employee.shift_duration
 
         def assign_read_timespan():
             time_span = TimeSpan(id=1, datetime=datetime(2023, 11, 1, 12, 0, 0))
@@ -41,8 +43,8 @@ class DataTypesPerformanceTimeTests(TestCase):
             _ = time_span.datetime
 
         def assign_read_resource_container():
-            machine = Machine(id=1, hourly_cost=0, hourly_gain=1.1, max_workers=1, inventory_nr=123)
-            employee = Employee(id=1, hourly_cost=0, hourly_gain={1: 1}, name='John', surname='Ally')
+            machine = Machine(id=1, hourly_cost=0, hourly_gain=1.1, max_workers=1, inventory_nr=123, demand=1000)
+            employee = Employee(id=1, hourly_cost=0, hourly_gain={1: 1}, name='John', surname='Ally', shift_duration=8)
             time_span = TimeSpan(id=1, datetime=datetime(2023, 11, 1, 12, 0, 0))
 
             resource_container = ResourceContainer(machines=[machine], employees=[employee], time_span=[time_span])
@@ -74,7 +76,7 @@ class SolverExecutionTimeTests(TestCase):
     @staticmethod
     def test_simulate_annealing_execution_time() -> None:
         """
-        Function to test the execution time of simulated annealing algorithm
+        Function to test the execution time of simulated annealing algorithm with the most basic functions provided.
         """
         solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda _: 0, cool=lambda t, k: 0.1,
                         probability=lambda de, t: 0.5, init_sol=1, init_temp=10,

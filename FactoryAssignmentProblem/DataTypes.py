@@ -619,10 +619,11 @@ def get_machine_production(schedule: FactoryAssignmentSchedule, machine: Machine
     @return: Total amount of production for the given machine
     @rtype: Union[int, float]
     """
-    employee_experience_matrix = np.array([empl.hourly_gain[machine.id] for empl in schedule.employees]).reshape(
-        (len(schedule.employees), 1))
+    # employee_experience_matrix = np.array([empl.hourly_gain[machine.id] for empl in schedule.employees]).reshape(
+    #     (len(schedule.employees), 1))
+    employee_experience_matrix = np.array([empl.hourly_gain[machine.id] for empl in schedule.employees])
 
-    schedule_of_machine = schedule[:, machine.id, :]
+    schedule_of_machine = schedule[machine.id, :, :]
     hours_worked_per_employee = np.sum(schedule_of_machine, axis=2)
     production_per_employee = np.multiply(hours_worked_per_employee, employee_experience_matrix)
     machine_production = machine.hourly_gain * np.sum(production_per_employee)
@@ -772,6 +773,35 @@ def unassign_shift(schedule: FactoryAssignmentSchedule, employee: Employee, mach
                 return None
     raise ShiftUnassignmentError(msg="Could not unassign a shift(not present within provided schedule)",
                                  value=(schedule, employee, machine))
+
+
+def populate_machine_with_employees(schedule: FactoryAssignmentSchedule, employee: Employee, machine: Machine) -> None:
+    """
+    Function tries to satisfy a machine demand by continually assigning shifts for given employee.
+    @param schedule: schedule to modify
+    @type schedule: FactoryAssignmentSchedule
+    @param employee: employee to be assigned unknown number of shifts
+    @type employee: Employee
+    @param machine: Machine of which the demand needs to be meet by production in schedule
+    @type machine: Machine
+    @return: None
+    """
+    while not validate_machine_production(schedule, machine):
+        try:
+            assign_shift(schedule, employee, machine)
+        except ShiftAssignmentError:
+            return
+    return
+
+
+def satisfy_schedule_production_demand(schedule: FactoryAssignmentSchedule) -> None:
+    """
+    Function tries to satisfy every demand in schedule by continually satisfying the demand of every machine.
+    @param schedule: schedule to modify
+    @type schedule: FactoryAssignmentSchedule
+    @return: None
+    """
+    pass
 
 
 def random_neighbour(schedule: FactoryAssignmentSchedule) -> FactoryAssignmentSchedule:

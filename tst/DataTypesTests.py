@@ -14,7 +14,8 @@ from FactoryAssignmentProblem.DataTypes import (
     validate_machine_production, validate_total_production,
     validate_machine_assignment, validate_schedule_assignment,
     assign_shift, ShiftAssignmentError,
-    unassign_shift, ShiftUnassignmentError
+    unassign_shift, ShiftUnassignmentError,
+    populate_machine_with_employees
 )
 
 import numpy as np
@@ -690,7 +691,7 @@ class UtilsFunctionTests(TestCase):
             employees=self.valid_prod.employees,
             time_span=self.valid_prod.time_span,
             allowed_values=[0, 1],
-            input_array=template
+            input_array=template.copy()
         )
         (alice, bob) = production.employees
         (machine_a, machine_b) = production.machines
@@ -1025,6 +1026,78 @@ class UtilsFunctionTests(TestCase):
                 unassign_shift(schedule=assignment, employee=employee, machine=machine)
 
         self.assertTrue(np.all(assignment == 0))
+
+    def test_populate_machine_with_employees(self) -> None:
+        boundary_machine_1 = Machine(id=0, hourly_cost=1, hourly_gain=1, max_workers=1, inventory_nr="101", demand=40)
+        boundary_machine_2 = Machine(id=1, hourly_cost=1, hourly_gain=1, max_workers=2, inventory_nr="102", demand=40)
+
+        free_machine_1 = Machine(id=0, hourly_cost=1, hourly_gain=1, max_workers=2, inventory_nr="103", demand=1)
+        free_machine_2 = Machine(id=1, hourly_cost=1, hourly_gain=1, max_workers=2, inventory_nr="104", demand=5)
+
+        (ana, bob) = self.valid_prod.employees
+        work_day_duration = 18
+
+        shape = (2, len(self.valid_prod.employees), len(self.valid_prod.time_span))
+        boundary_schedule_1 = FactoryAssignmentSchedule(
+            machines=[boundary_machine_1, boundary_machine_2],
+            employees=self.valid_prod.employees,
+            time_span=self.valid_prod.time_span,
+            allowed_values=[0, 1],
+            input_array=np.zeros(shape)
+        )
+        template = np.zeros(shape)
+        template[boundary_machine_1.id, ana.id, 0: ana.shift_duration] = np.ones(ana.shift_duration)
+        template[boundary_machine_1.id, ana.id, work_day_duration: work_day_duration + ana.shift_duration] = (
+            np.ones(ana.shift_duration))
+        template[boundary_machine_1.id, bob.id, ana.shift_duration: ana.shift_duration + bob.shift_duration] = (
+            np.ones(bob.shift_duration))
+        template[boundary_machine_1.id, bob.id, work_day_duration + ana.shift_duration: work_day_duration +
+                 ana.shift_duration + bob.shift_duration] = np.ones(bob.shift_duration)
+        populate_machine_with_employees(boundary_schedule_1, ana, boundary_machine_1)
+        populate_machine_with_employees(boundary_schedule_1, bob, boundary_machine_1)
+        populate_machine_with_employees(boundary_schedule_1, ana, boundary_machine_2)
+        populate_machine_with_employees(boundary_schedule_1, bob, boundary_machine_2)
+        self.assertTrue(np.all(boundary_schedule_1 == template))
+
+        shape = (2, len(self.valid_prod.employees), len(self.valid_prod.time_span))
+        boundary_schedule_2 = FactoryAssignmentSchedule(
+            machines=[boundary_machine_1, boundary_machine_2],
+            employees=self.valid_prod.employees,
+            time_span=self.valid_prod.time_span,
+            allowed_values=[0, 1],
+            input_array=np.zeros(shape)
+        )
+        template = np.zeros(shape)
+        template[boundary_machine_2.id, ana.id, 0: ana.shift_duration] = np.ones(ana.shift_duration)
+        template[boundary_machine_2.id, ana.id, work_day_duration: work_day_duration + ana.shift_duration] = (
+            np.ones(ana.shift_duration))
+        template[boundary_machine_2.id, bob.id, 0: bob.shift_duration] = np.ones(bob.shift_duration)
+        template[boundary_machine_2.id, bob.id, work_day_duration: work_day_duration + bob.shift_duration] = (
+            np.ones(bob.shift_duration))
+        populate_machine_with_employees(boundary_schedule_2, ana, boundary_machine_2)
+        populate_machine_with_employees(boundary_schedule_2, bob, boundary_machine_2)
+        populate_machine_with_employees(boundary_schedule_2, ana, boundary_machine_1)
+        populate_machine_with_employees(boundary_schedule_2, bob, boundary_machine_1)
+        self.assertTrue(np.all(boundary_schedule_2 == template))
+
+        shape = (2, len(self.valid_prod.employees), len(self.valid_prod.time_span))
+        free_schedule = FactoryAssignmentSchedule(
+            machines=[free_machine_1, free_machine_2],
+            employees=self.valid_prod.employees,
+            time_span=self.valid_prod.time_span,
+            allowed_values=[0, 1],
+            input_array=np.zeros(shape)
+        )
+        template = np.zeros(shape)
+        template[free_machine_1.id, bob.id, 0: bob.shift_duration] = np.ones(bob.shift_duration)
+        template[free_machine_2.id, ana.id, 0: ana.shift_duration] = np.ones(ana.shift_duration)
+        template[free_machine_2.id, ana.id, work_day_duration: work_day_duration + ana.shift_duration] = (
+            np.ones(ana.shift_duration))
+        populate_machine_with_employees(free_schedule, ana, free_machine_2)
+        populate_machine_with_employees(free_schedule, bob, free_machine_1)
+        populate_machine_with_employees(free_schedule, ana, free_machine_1)
+        populate_machine_with_employees(free_schedule, bob, free_machine_2)
+        self.assertTrue(np.all(free_schedule == template))
 
 
 if __name__ == "__main__":
