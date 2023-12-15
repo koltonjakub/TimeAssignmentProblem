@@ -15,7 +15,8 @@ from FactoryAssignmentProblem.DataTypes import (
     validate_machine_assignment, validate_schedule_assignment,
     assign_shift, ShiftAssignmentError,
     unassign_shift, ShiftUnassignmentError,
-    populate_machine_with_employees
+    order_machines, order_employees,
+    populate_machine_with_employee, populate_schedule
 )
 
 import numpy as np
@@ -32,6 +33,7 @@ test_valid_production_database_path = os.path.join(parent_directory, "data", "te
 test_advanced_shift_assignment_database_path = os.path.join(parent_directory, "data",
                                                             "test_advanced_shift_assignment_database.json")
 test_unassign_shift_database_path = os.path.join(parent_directory, "data", "test_unassign_shift_database.json")
+test_populate_schedule_database_path = os.path.join(parent_directory, "data", "test_populate_schedule_database.json")
 
 
 # noinspection PyTypeChecker
@@ -681,6 +683,7 @@ class UtilsFunctionTests(TestCase):
         self.valid_prod = ResourceManager().import_resources_from_json(test_valid_production_database_path)
         self.advanced_shift = ResourceManager().import_resources_from_json(test_advanced_shift_assignment_database_path)
         self.unassign_shift = ResourceManager().import_resources_from_json(test_unassign_shift_database_path)
+        self.populate_schedule = ResourceManager().import_resources_from_json(test_populate_schedule_database_path)
 
     def test_get_machine_production(self) -> None:
         shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
@@ -1027,7 +1030,58 @@ class UtilsFunctionTests(TestCase):
 
         self.assertTrue(np.all(assignment == 0))
 
-    def test_populate_machine_with_employees(self) -> None:
+    def test_order_machines(self) -> None:
+        machines = [
+            Machine(id=0, hourly_cost=1, hourly_gain=1, max_workers=1, inventory_nr="101", demand=1),
+            Machine(id=1, hourly_cost=1, hourly_gain=1, max_workers=1, inventory_nr="102", demand=3),
+            Machine(id=2, hourly_cost=1, hourly_gain=1, max_workers=1, inventory_nr="103", demand=4),
+            Machine(id=3, hourly_cost=1, hourly_gain=1, max_workers=1, inventory_nr="104", demand=2),
+            Machine(id=4, hourly_cost=1, hourly_gain=1, max_workers=1, inventory_nr="105", demand=5)
+        ]
+        expected = [
+            Machine(id=4, hourly_cost=1, hourly_gain=1, max_workers=1, inventory_nr="105", demand=5),
+            Machine(id=2, hourly_cost=1, hourly_gain=1, max_workers=1, inventory_nr="103", demand=4),
+            Machine(id=1, hourly_cost=1, hourly_gain=1, max_workers=1, inventory_nr="102", demand=3),
+            Machine(id=3, hourly_cost=1, hourly_gain=1, max_workers=1, inventory_nr="104", demand=2),
+            Machine(id=0, hourly_cost=1, hourly_gain=1, max_workers=1, inventory_nr="101", demand=1)
+        ]
+        result = order_machines(machines)
+        self.assertEqual(result, expected)
+
+    def test_order_employees(self) -> None:
+        employees = [
+            Employee(id=0, hourly_cost=1, hourly_gain={0: 5, 1: 1}, name="", surname="", shift_duration=4),
+            Employee(id=1, hourly_cost=1, hourly_gain={0: 2, 1: 2}, name="", surname="", shift_duration=4),
+            Employee(id=2, hourly_cost=1, hourly_gain={0: 4, 1: 3}, name="", surname="", shift_duration=4),
+            Employee(id=3, hourly_cost=1, hourly_gain={0: 1, 1: 4}, name="", surname="", shift_duration=4),
+            Employee(id=4, hourly_cost=1, hourly_gain={0: 3, 1: 5}, name="", surname="", shift_duration=4)
+        ]
+
+        machine_1 = Machine(id=0, hourly_cost=1, hourly_gain=1, max_workers=1, inventory_nr="101", demand=1)
+        machine_2 = Machine(id=1, hourly_cost=1, hourly_gain=1, max_workers=1, inventory_nr="102", demand=1)
+
+        expected_1 = [
+            Employee(id=0, hourly_cost=1, hourly_gain={0: 5, 1: 1}, name="", surname="", shift_duration=4),
+            Employee(id=2, hourly_cost=1, hourly_gain={0: 4, 1: 3}, name="", surname="", shift_duration=4),
+            Employee(id=4, hourly_cost=1, hourly_gain={0: 3, 1: 5}, name="", surname="", shift_duration=4),
+            Employee(id=1, hourly_cost=1, hourly_gain={0: 2, 1: 2}, name="", surname="", shift_duration=4),
+            Employee(id=3, hourly_cost=1, hourly_gain={0: 1, 1: 4}, name="", surname="", shift_duration=4)
+        ]
+        expected_2 = [
+            Employee(id=4, hourly_cost=1, hourly_gain={0: 3, 1: 5}, name="", surname="", shift_duration=4),
+            Employee(id=3, hourly_cost=1, hourly_gain={0: 1, 1: 4}, name="", surname="", shift_duration=4),
+            Employee(id=2, hourly_cost=1, hourly_gain={0: 4, 1: 3}, name="", surname="", shift_duration=4),
+            Employee(id=1, hourly_cost=1, hourly_gain={0: 2, 1: 2}, name="", surname="", shift_duration=4),
+            Employee(id=0, hourly_cost=1, hourly_gain={0: 5, 1: 1}, name="", surname="", shift_duration=4)
+        ]
+
+        result_1 = order_employees(employees, machine_1)
+        result_2 = order_employees(employees, machine_2)
+
+        self.assertEqual(result_1, expected_1)
+        self.assertEqual(result_2, expected_2)
+
+    def test_populate_machine_with_employee(self) -> None:
         boundary_machine_1 = Machine(id=0, hourly_cost=1, hourly_gain=1, max_workers=1, inventory_nr="101", demand=40)
         boundary_machine_2 = Machine(id=1, hourly_cost=1, hourly_gain=1, max_workers=2, inventory_nr="102", demand=40)
 
@@ -1053,10 +1107,10 @@ class UtilsFunctionTests(TestCase):
             np.ones(bob.shift_duration))
         template[boundary_machine_1.id, bob.id, work_day_duration + ana.shift_duration: work_day_duration +
                  ana.shift_duration + bob.shift_duration] = np.ones(bob.shift_duration)
-        populate_machine_with_employees(boundary_schedule_1, ana, boundary_machine_1)
-        populate_machine_with_employees(boundary_schedule_1, bob, boundary_machine_1)
-        populate_machine_with_employees(boundary_schedule_1, ana, boundary_machine_2)
-        populate_machine_with_employees(boundary_schedule_1, bob, boundary_machine_2)
+        populate_machine_with_employee(boundary_schedule_1, ana, boundary_machine_1)
+        populate_machine_with_employee(boundary_schedule_1, bob, boundary_machine_1)
+        populate_machine_with_employee(boundary_schedule_1, ana, boundary_machine_2)
+        populate_machine_with_employee(boundary_schedule_1, bob, boundary_machine_2)
         self.assertTrue(np.all(boundary_schedule_1 == template))
 
         shape = (2, len(self.valid_prod.employees), len(self.valid_prod.time_span))
@@ -1074,10 +1128,10 @@ class UtilsFunctionTests(TestCase):
         template[boundary_machine_2.id, bob.id, 0: bob.shift_duration] = np.ones(bob.shift_duration)
         template[boundary_machine_2.id, bob.id, work_day_duration: work_day_duration + bob.shift_duration] = (
             np.ones(bob.shift_duration))
-        populate_machine_with_employees(boundary_schedule_2, ana, boundary_machine_2)
-        populate_machine_with_employees(boundary_schedule_2, bob, boundary_machine_2)
-        populate_machine_with_employees(boundary_schedule_2, ana, boundary_machine_1)
-        populate_machine_with_employees(boundary_schedule_2, bob, boundary_machine_1)
+        populate_machine_with_employee(boundary_schedule_2, ana, boundary_machine_2)
+        populate_machine_with_employee(boundary_schedule_2, bob, boundary_machine_2)
+        populate_machine_with_employee(boundary_schedule_2, ana, boundary_machine_1)
+        populate_machine_with_employee(boundary_schedule_2, bob, boundary_machine_1)
         self.assertTrue(np.all(boundary_schedule_2 == template))
 
         shape = (2, len(self.valid_prod.employees), len(self.valid_prod.time_span))
@@ -1093,11 +1147,54 @@ class UtilsFunctionTests(TestCase):
         template[free_machine_2.id, ana.id, 0: ana.shift_duration] = np.ones(ana.shift_duration)
         template[free_machine_2.id, ana.id, work_day_duration: work_day_duration + ana.shift_duration] = (
             np.ones(ana.shift_duration))
-        populate_machine_with_employees(free_schedule, ana, free_machine_2)
-        populate_machine_with_employees(free_schedule, bob, free_machine_1)
-        populate_machine_with_employees(free_schedule, ana, free_machine_1)
-        populate_machine_with_employees(free_schedule, bob, free_machine_2)
+        populate_machine_with_employee(free_schedule, ana, free_machine_2)
+        populate_machine_with_employee(free_schedule, bob, free_machine_1)
+        populate_machine_with_employee(free_schedule, ana, free_machine_1)
+        populate_machine_with_employee(free_schedule, bob, free_machine_2)
         self.assertTrue(np.all(free_schedule == template))
+
+    def test_populate_schedule(self) -> None:
+        shape = (len(self.populate_schedule.machines),
+                 len(self.populate_schedule.employees),
+                 len(self.populate_schedule.time_span))
+        (mach1, mach2, mach3) = self.populate_schedule.machines
+        (emp1, emp2, emp3, emp4) = self.populate_schedule.employees
+        work_day_duration = 18
+        day = work_day_duration
+
+        result = FactoryAssignmentSchedule(
+            machines=self.populate_schedule.machines,
+            employees=self.populate_schedule.employees,
+            time_span=self.populate_schedule.time_span,
+            allowed_values=[0, 1],
+            input_array=np.zeros(shape)
+        )
+
+        expected = np.zeros(shape)
+        expected[mach2.id, emp1.id, 0: emp1.shift_duration] = np.ones(emp1.shift_duration)
+        expected[mach2.id, emp1.id, day: day + emp1.shift_duration] = np.ones(emp1.shift_duration)
+        expected[mach1.id, emp1.id, 2*day: 2*day + emp1.shift_duration] = np.ones(emp1.shift_duration)
+
+        expected[mach3.id, emp4.id, 0: emp4.shift_duration] = np.ones(emp4.shift_duration)
+        expected[mach3.id, emp3.id, 0: emp3.shift_duration] = np.ones(emp3.shift_duration)
+        expected[mach3.id, emp2.id, emp3.shift_duration: emp3.shift_duration + emp2.shift_duration] = (
+            np.ones(emp2.shift_duration))
+
+        expected[mach3.id, emp4.id, day: day + emp4.shift_duration] = np.ones(emp4.shift_duration)
+        expected[mach3.id, emp3.id, day: day + emp3.shift_duration] = np.ones(emp3.shift_duration)
+        expected[mach3.id, emp2.id, day + emp3.shift_duration: day + emp3.shift_duration + emp2.shift_duration] = (
+            np.ones(emp2.shift_duration))
+
+        expected[mach3.id, emp4.id, 2*day: 2*day + emp4.shift_duration] = np.ones(emp4.shift_duration)
+        expected[mach3.id, emp3.id, 2*day: 2*day + emp3.shift_duration] = np.ones(emp3.shift_duration)
+        expected[mach3.id, emp2.id, 2*day + emp3.shift_duration: 2*day + emp3.shift_duration + emp2.shift_duration] = (
+            np.ones(emp2.shift_duration))
+
+        populate_schedule(result)
+        self.assertTrue(np.all(expected == result))
+
+        # print()
+        # print(result)
 
 
 if __name__ == "__main__":

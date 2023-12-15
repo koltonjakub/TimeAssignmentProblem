@@ -1,5 +1,5 @@
 """This file contains all data types used in project"""
-
+from copy import deepcopy
 from typing import Union, Dict, List, Any, Tuple, Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -775,7 +775,7 @@ def unassign_shift(schedule: FactoryAssignmentSchedule, employee: Employee, mach
                                  value=(schedule, employee, machine))
 
 
-def populate_machine_with_employees(schedule: FactoryAssignmentSchedule, employee: Employee, machine: Machine) -> None:
+def populate_machine_with_employee(schedule: FactoryAssignmentSchedule, employee: Employee, machine: Machine) -> None:
     """
     Function tries to satisfy a machine demand by continually assigning shifts for given employee.
     @param schedule: schedule to modify
@@ -794,14 +794,57 @@ def populate_machine_with_employees(schedule: FactoryAssignmentSchedule, employe
     return
 
 
-def satisfy_schedule_production_demand(schedule: FactoryAssignmentSchedule) -> None:
+def order_machines(machines: List[Machine]) -> List[Machine]:
+    """
+    Function sorts list of machines by coefficient = (hourly_gain / demand), ascending.
+    @param machines: list of machines to sort
+    @type machines: List[Machines]
+    @return: sorted list of machines
+    @rtype: List[Machines]
+    """
+    machines_cp = deepcopy(machines)
+    machines_cp.sort(key=lambda machine: machine.hourly_gain / machine.demand)
+    return machines_cp
+
+
+def order_employees(employees: List[Employee], machine: Machine) -> List[Employee]:
+    """
+    Function sorts list of employees by coefficient hourly_gain[machine] for every employee, descending.
+    @param employees:
+    @type employees:
+    @param machine:
+    @type machine:
+    @return: list of sorted employees
+    @rtype: List[Employee]
+    """
+    employees_cp = deepcopy(employees)
+    employees_cp.sort(key=lambda employee: employee.hourly_gain[machine.id], reverse=True)
+    return employees_cp
+
+
+def populate_schedule(schedule: FactoryAssignmentSchedule) -> None:
     """
     Function tries to satisfy every demand in schedule by continually satisfying the demand of every machine.
     @param schedule: schedule to modify
     @type schedule: FactoryAssignmentSchedule
     @return: None
     """
-    pass
+    ord_machines = order_machines(schedule.machines)
+    for machine in ord_machines:
+        ord_employees = order_employees(schedule.employees, machine)
+
+        for employee in ord_employees:
+            populate_machine_with_employee(schedule, employee, machine)
+            if validate_machine_production(schedule, machine):
+                break
+
+    if not validate_total_production(schedule):
+        raise FactoryAssignmentScheduleError(msg='Invalid schedule: total production demand is not valid',
+                                             value=schedule)
+
+    if not validate_schedule_assignment(schedule):
+        raise FactoryAssignmentScheduleError(msg='Invalid schedule: schedule assignment is not valid',
+                                             value=schedule)
 
 
 def random_neighbour(schedule: FactoryAssignmentSchedule) -> FactoryAssignmentSchedule:
