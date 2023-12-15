@@ -419,7 +419,7 @@ class FactoryAssignmentScheduleTests(TestCase):
         for time_span, test_time_span_data in zip(schedule.time_span, test_time_span):
             self.assertEqual(time_span, TimeSpan(id=test_time_span_data['id'],
                                                  datetime=test_time_span_data['datetime']))
-        self.assertTrue(np.all(np.ones((5, 5, 5)) == schedule))
+        self.assertTrue(np.all(np.zeros((5, 5, 5)) == schedule))
         self.assertEqual(schedule.encountered_it, 1)
         self.assertEqual(schedule.allowed_values, [0, 1])
         self.assertEqual(schedule.dtype, 'int32')
@@ -634,6 +634,7 @@ class FactoryAssignmentScheduleTests(TestCase):
 
     def test_partial_assignment_not_changing_dim_list(self):
         schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
+            input_array=np.ones((5, 5, 5)),
             machines=self.res.machines, employees=self.res.employees, time_span=self.res.time_span,
             encountered_it=1, allowed_values=[0, 1], dtype='int32'
         )

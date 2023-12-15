@@ -505,7 +505,8 @@ class FactoryAssignmentSchedule(np.ndarray):
         if input_array is None:  # Case: explicit constructor
             enforced_shape: Tuple[int, int, int] = (len(machines), len(employees), len(time_span))
             # TODO implement assignment of proper schedules(only one machine for worker and max working hours)
-            obj = np.ones(enforced_shape, dtype=dtype).view(cls)
+            # obj = np.ones(enforced_shape, dtype=dtype).view(cls)
+            obj = np.zeros(enforced_shape, dtype=dtype).view(cls)
             return obj
 
         try:  # Case: array_like input
