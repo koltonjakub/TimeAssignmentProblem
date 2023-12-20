@@ -9,6 +9,7 @@ import numpy as np
 import os
 
 from FactoryAssignmentProblem.DataTypes import (
+    WORK_DAY_DURATION,
     ResourceImportError, FactoryAssignmentScheduleError, ShiftAssignmentError, ShiftUnassignmentError,
     InvalidTotalProductionError,
     Machine, Employee, TimeSpan, ResourceContainer, ResourceManager, FactoryAssignmentSchedule,
@@ -833,7 +834,6 @@ class UtilsFunctionTests(TestCase):
 
         (machine_1, machine_2) = assignment.machines
         (ana, bob) = assignment.employees
-        work_day_duration = 18
         proper_assignment = np.zeros(shape)
 
         proper_assignment[machine_1.id, ana.id, 0:ana.shift_duration] = np.ones(ana.shift_duration)
@@ -845,12 +845,12 @@ class UtilsFunctionTests(TestCase):
         assign_shift(assignment, bob, machine_1)
         self.assertTrue(np.all(proper_assignment == assignment))
 
-        proper_assignment[machine_2.id, ana.id, work_day_duration:work_day_duration + ana.shift_duration] = (
+        proper_assignment[machine_2.id, ana.id, WORK_DAY_DURATION:WORK_DAY_DURATION + ana.shift_duration] = (
             np.ones(ana.shift_duration))
         assign_shift(assignment, ana, machine_2)
         self.assertTrue(np.all(proper_assignment == assignment))
 
-        proper_assignment[machine_2.id, bob.id, work_day_duration:work_day_duration + bob.shift_duration] = (
+        proper_assignment[machine_2.id, bob.id, WORK_DAY_DURATION:WORK_DAY_DURATION + bob.shift_duration] = (
             np.ones(bob.shift_duration))
         assign_shift(assignment, bob, machine_2)
         self.assertTrue(np.all(proper_assignment == assignment))
@@ -881,7 +881,6 @@ class UtilsFunctionTests(TestCase):
 
         (machine) = advanced_assignment.machines[0]
         (ana_4h, bob_4h, cal_8h, dan_8h) = advanced_assignment.employees
-        work_day_duration = 18
         proper_assignment = np.zeros(shape)
 
         assign_shift(advanced_assignment, ana_4h, machine)
@@ -906,49 +905,49 @@ class UtilsFunctionTests(TestCase):
 
         assign_shift(advanced_assignment, ana_4h, machine)
         proper_assignment[machine.id, ana_4h.id,
-                          work_day_duration: work_day_duration + ana_4h.shift_duration] = (
+                          WORK_DAY_DURATION: WORK_DAY_DURATION + ana_4h.shift_duration] = (
             np.ones(ana_4h.shift_duration))
         self.assertTrue(np.all(proper_assignment == advanced_assignment))
 
         assign_shift(advanced_assignment, cal_8h, machine)
         proper_assignment[machine.id, cal_8h.id,
-                          work_day_duration: work_day_duration + cal_8h.shift_duration] = (
+                          WORK_DAY_DURATION: WORK_DAY_DURATION + cal_8h.shift_duration] = (
             np.ones(cal_8h.shift_duration))
         self.assertTrue(np.all(proper_assignment == advanced_assignment))
 
         assign_shift(advanced_assignment, bob_4h, machine)
         proper_assignment[machine.id, bob_4h.id,
-                          work_day_duration + ana_4h.shift_duration:
-                          work_day_duration + ana_4h.shift_duration + bob_4h.shift_duration] = (
+                          WORK_DAY_DURATION + ana_4h.shift_duration:
+                          WORK_DAY_DURATION + ana_4h.shift_duration + bob_4h.shift_duration] = (
             np.ones(bob_4h.shift_duration))
         self.assertTrue(np.all(proper_assignment == advanced_assignment))
 
         assign_shift(advanced_assignment, dan_8h, machine)
-        proper_assignment[machine.id, dan_8h.id, work_day_duration + cal_8h.shift_duration:
-                          work_day_duration + cal_8h.shift_duration + dan_8h.shift_duration] = (
+        proper_assignment[machine.id, dan_8h.id, WORK_DAY_DURATION + cal_8h.shift_duration:
+                          WORK_DAY_DURATION + cal_8h.shift_duration + dan_8h.shift_duration] = (
             np.ones(dan_8h.shift_duration))
         self.assertTrue(np.all(proper_assignment == advanced_assignment))
 
         assign_shift(advanced_assignment, ana_4h, machine)
-        proper_assignment[machine.id, ana_4h.id, 2 * work_day_duration:
-                          2 * work_day_duration + ana_4h.shift_duration] = np.ones(ana_4h.shift_duration)
+        proper_assignment[machine.id, ana_4h.id, 2 * WORK_DAY_DURATION:
+                          2 * WORK_DAY_DURATION + ana_4h.shift_duration] = np.ones(ana_4h.shift_duration)
         self.assertTrue(np.all(proper_assignment == advanced_assignment))
 
         assign_shift(advanced_assignment, cal_8h, machine)
-        proper_assignment[machine.id, cal_8h.id, 2 * work_day_duration:
-                          2 * work_day_duration + cal_8h.shift_duration] = (
+        proper_assignment[machine.id, cal_8h.id, 2 * WORK_DAY_DURATION:
+                          2 * WORK_DAY_DURATION + cal_8h.shift_duration] = (
             np.ones(cal_8h.shift_duration))
         self.assertTrue(np.all(proper_assignment == advanced_assignment))
 
         assign_shift(advanced_assignment, dan_8h, machine)
-        proper_assignment[machine.id, dan_8h.id, 2 * work_day_duration + ana_4h.shift_duration:
-                          2 * work_day_duration + ana_4h.shift_duration + dan_8h.shift_duration] = np.ones(
+        proper_assignment[machine.id, dan_8h.id, 2 * WORK_DAY_DURATION + ana_4h.shift_duration:
+                          2 * WORK_DAY_DURATION + ana_4h.shift_duration + dan_8h.shift_duration] = np.ones(
             dan_8h.shift_duration)
         self.assertTrue(np.all(proper_assignment == advanced_assignment))
 
         assign_shift(advanced_assignment, bob_4h, machine)
-        proper_assignment[machine.id, bob_4h.id, 2 * work_day_duration + cal_8h.shift_duration:
-                          2 * work_day_duration + cal_8h.shift_duration + bob_4h.shift_duration] = np.ones(
+        proper_assignment[machine.id, bob_4h.id, 2 * WORK_DAY_DURATION + cal_8h.shift_duration:
+                          2 * WORK_DAY_DURATION + cal_8h.shift_duration + bob_4h.shift_duration] = np.ones(
             bob_4h.shift_duration)
         self.assertTrue(np.all(proper_assignment == advanced_assignment))
 
@@ -968,7 +967,6 @@ class UtilsFunctionTests(TestCase):
 
         (machine_1, machine_2) = self.unassign_shift.machines
         (ana, bob, cal) = self.unassign_shift.employees
-        work_day_duration = 18
         proper_assignment = np.zeros(shape)
 
         proper_assignment[machine_1.id, ana.id, 0: ana.shift_duration] = np.ones(ana.shift_duration)
@@ -978,12 +976,12 @@ class UtilsFunctionTests(TestCase):
                           ana.shift_duration + bob.shift_duration + cal.shift_duration] = (
             np.ones(cal.shift_duration))
 
-        proper_assignment[machine_2.id, ana.id, work_day_duration: work_day_duration + ana.shift_duration] = (
+        proper_assignment[machine_2.id, ana.id, WORK_DAY_DURATION: WORK_DAY_DURATION + ana.shift_duration] = (
             np.ones(ana.shift_duration))
-        proper_assignment[machine_2.id, bob.id, work_day_duration: work_day_duration + bob.shift_duration] = (
+        proper_assignment[machine_2.id, bob.id, WORK_DAY_DURATION: WORK_DAY_DURATION + bob.shift_duration] = (
             np.ones(bob.shift_duration))
-        proper_assignment[machine_2.id, cal.id, work_day_duration + ana.shift_duration:
-                          work_day_duration + ana.shift_duration + cal.shift_duration] = (
+        proper_assignment[machine_2.id, cal.id, WORK_DAY_DURATION + ana.shift_duration:
+                          WORK_DAY_DURATION + ana.shift_duration + cal.shift_duration] = (
             np.ones(cal.shift_duration))
 
         assignment = FactoryAssignmentSchedule(
@@ -1009,18 +1007,18 @@ class UtilsFunctionTests(TestCase):
         unassign_shift(assignment, cal, machine_1)
         self.assertTrue(np.all(proper_assignment == assignment))
 
-        proper_assignment[machine_2.id, ana.id, work_day_duration: work_day_duration + ana.shift_duration] = (
+        proper_assignment[machine_2.id, ana.id, WORK_DAY_DURATION: WORK_DAY_DURATION + ana.shift_duration] = (
             np.zeros(ana.shift_duration))
         unassign_shift(assignment, ana, machine_2)
         self.assertTrue(np.all(proper_assignment == assignment))
 
-        proper_assignment[machine_2.id, bob.id, work_day_duration: work_day_duration + bob.shift_duration] = (
+        proper_assignment[machine_2.id, bob.id, WORK_DAY_DURATION: WORK_DAY_DURATION + bob.shift_duration] = (
             np.zeros(bob.shift_duration))
         unassign_shift(assignment, bob, machine_2)
         self.assertTrue(np.all(proper_assignment == assignment))
 
-        proper_assignment[machine_2.id, cal.id, work_day_duration + ana.shift_duration:
-                          work_day_duration + ana.shift_duration + cal.shift_duration] = (
+        proper_assignment[machine_2.id, cal.id, WORK_DAY_DURATION + ana.shift_duration:
+                          WORK_DAY_DURATION + ana.shift_duration + cal.shift_duration] = (
             np.zeros(cal.shift_duration))
         unassign_shift(assignment, cal, machine_2)
         self.assertTrue(np.all(proper_assignment == assignment))
@@ -1090,7 +1088,6 @@ class UtilsFunctionTests(TestCase):
         free_machine_2 = Machine(id=1, hourly_cost=1, hourly_gain=1, max_workers=2, inventory_nr="104", demand=5)
 
         (ana, bob) = self.valid_prod.employees
-        work_day_duration = 18
 
         shape = (2, len(self.valid_prod.employees), len(self.valid_prod.time_span))
         boundary_schedule_1 = FactoryAssignmentSchedule(
@@ -1102,11 +1099,11 @@ class UtilsFunctionTests(TestCase):
         )
         template = np.zeros(shape)
         template[boundary_machine_1.id, ana.id, 0: ana.shift_duration] = np.ones(ana.shift_duration)
-        template[boundary_machine_1.id, ana.id, work_day_duration: work_day_duration + ana.shift_duration] = (
+        template[boundary_machine_1.id, ana.id, WORK_DAY_DURATION: WORK_DAY_DURATION + ana.shift_duration] = (
             np.ones(ana.shift_duration))
         template[boundary_machine_1.id, bob.id, ana.shift_duration: ana.shift_duration + bob.shift_duration] = (
             np.ones(bob.shift_duration))
-        template[boundary_machine_1.id, bob.id, work_day_duration + ana.shift_duration: work_day_duration +
+        template[boundary_machine_1.id, bob.id, WORK_DAY_DURATION + ana.shift_duration: WORK_DAY_DURATION +
                  ana.shift_duration + bob.shift_duration] = np.ones(bob.shift_duration)
         populate_machine_with_employee(boundary_schedule_1, ana, boundary_machine_1)
         populate_machine_with_employee(boundary_schedule_1, bob, boundary_machine_1)
@@ -1124,10 +1121,10 @@ class UtilsFunctionTests(TestCase):
         )
         template = np.zeros(shape)
         template[boundary_machine_2.id, ana.id, 0: ana.shift_duration] = np.ones(ana.shift_duration)
-        template[boundary_machine_2.id, ana.id, work_day_duration: work_day_duration + ana.shift_duration] = (
+        template[boundary_machine_2.id, ana.id, WORK_DAY_DURATION: WORK_DAY_DURATION + ana.shift_duration] = (
             np.ones(ana.shift_duration))
         template[boundary_machine_2.id, bob.id, 0: bob.shift_duration] = np.ones(bob.shift_duration)
-        template[boundary_machine_2.id, bob.id, work_day_duration: work_day_duration + bob.shift_duration] = (
+        template[boundary_machine_2.id, bob.id, WORK_DAY_DURATION: WORK_DAY_DURATION + bob.shift_duration] = (
             np.ones(bob.shift_duration))
         populate_machine_with_employee(boundary_schedule_2, ana, boundary_machine_2)
         populate_machine_with_employee(boundary_schedule_2, bob, boundary_machine_2)
@@ -1146,7 +1143,7 @@ class UtilsFunctionTests(TestCase):
         template = np.zeros(shape)
         template[free_machine_1.id, bob.id, 0: bob.shift_duration] = np.ones(bob.shift_duration)
         template[free_machine_2.id, ana.id, 0: ana.shift_duration] = np.ones(ana.shift_duration)
-        template[free_machine_2.id, ana.id, work_day_duration: work_day_duration + ana.shift_duration] = (
+        template[free_machine_2.id, ana.id, WORK_DAY_DURATION: WORK_DAY_DURATION + ana.shift_duration] = (
             np.ones(ana.shift_duration))
         populate_machine_with_employee(free_schedule, ana, free_machine_2)
         populate_machine_with_employee(free_schedule, bob, free_machine_1)
@@ -1160,8 +1157,6 @@ class UtilsFunctionTests(TestCase):
                  len(self.populate_schedule.time_span))
         (mach1, mach2, mach3) = self.populate_schedule.machines
         (emp1, emp2, emp3, emp4) = self.populate_schedule.employees
-        work_day_duration = 18
-        day = work_day_duration
 
         result = FactoryAssignmentSchedule(
             machines=self.populate_schedule.machines,
@@ -1173,29 +1168,32 @@ class UtilsFunctionTests(TestCase):
 
         expected = np.zeros(shape)
         expected[mach2.id, emp1.id, 0: emp1.shift_duration] = np.ones(emp1.shift_duration)
-        expected[mach2.id, emp1.id, day: day + emp1.shift_duration] = np.ones(emp1.shift_duration)
-        expected[mach1.id, emp1.id, 2*day: 2*day + emp1.shift_duration] = np.ones(emp1.shift_duration)
+        expected[mach2.id, emp1.id, WORK_DAY_DURATION: WORK_DAY_DURATION + emp1.shift_duration] = (
+            np.ones(emp1.shift_duration))
+        expected[mach1.id, emp1.id, 2*WORK_DAY_DURATION: 2*WORK_DAY_DURATION + emp1.shift_duration] = (
+            np.ones(emp1.shift_duration))
 
         expected[mach3.id, emp4.id, 0: emp4.shift_duration] = np.ones(emp4.shift_duration)
         expected[mach3.id, emp3.id, 0: emp3.shift_duration] = np.ones(emp3.shift_duration)
         expected[mach3.id, emp2.id, emp3.shift_duration: emp3.shift_duration + emp2.shift_duration] = (
             np.ones(emp2.shift_duration))
 
-        expected[mach3.id, emp4.id, day: day + emp4.shift_duration] = np.ones(emp4.shift_duration)
-        expected[mach3.id, emp3.id, day: day + emp3.shift_duration] = np.ones(emp3.shift_duration)
-        expected[mach3.id, emp2.id, day + emp3.shift_duration: day + emp3.shift_duration + emp2.shift_duration] = (
-            np.ones(emp2.shift_duration))
+        expected[mach3.id, emp4.id, WORK_DAY_DURATION: WORK_DAY_DURATION + emp4.shift_duration] = (
+            np.ones(emp4.shift_duration))
+        expected[mach3.id, emp3.id, WORK_DAY_DURATION: WORK_DAY_DURATION + emp3.shift_duration] = (
+            np.ones(emp3.shift_duration))
+        expected[mach3.id, emp2.id, WORK_DAY_DURATION + emp3.shift_duration: WORK_DAY_DURATION + emp3.shift_duration +
+                 emp2.shift_duration] = np.ones(emp2.shift_duration)
 
-        expected[mach3.id, emp4.id, 2*day: 2*day + emp4.shift_duration] = np.ones(emp4.shift_duration)
-        expected[mach3.id, emp3.id, 2*day: 2*day + emp3.shift_duration] = np.ones(emp3.shift_duration)
-        expected[mach3.id, emp2.id, 2*day + emp3.shift_duration: 2*day + emp3.shift_duration + emp2.shift_duration] = (
-            np.ones(emp2.shift_duration))
+        expected[mach3.id, emp4.id, 2*WORK_DAY_DURATION: 2*WORK_DAY_DURATION + emp4.shift_duration] = (
+            np.ones(emp4.shift_duration))
+        expected[mach3.id, emp3.id, 2*WORK_DAY_DURATION: 2*WORK_DAY_DURATION + emp3.shift_duration] = (
+            np.ones(emp3.shift_duration))
+        expected[mach3.id, emp2.id, 2*WORK_DAY_DURATION + emp3.shift_duration: 2*WORK_DAY_DURATION +
+                 emp3.shift_duration + emp2.shift_duration] = np.ones(emp2.shift_duration)
 
         populate_schedule(result)
         self.assertTrue(np.all(expected == result))
-
-        # print()
-        # print(result)
 
     def test_fool_populate_schedule(self) -> None:
         """This tests performs populate_schedule function with data specially designed, so that populate_schedule
@@ -1215,17 +1213,7 @@ class UtilsFunctionTests(TestCase):
 
     def test_random_neighbour(self) -> None:
         # TODO implement this test
-        original = FactoryAssignmentSchedule(
-            machines=self.populate_schedule.machines,
-            employees=self.populate_schedule.employees,
-            time_span=self.populate_schedule.time_span,
-            allowed_values=[0, 1]
-        )
-        populate_schedule(original)
-        original = random_neighbour(original)
-        print()
-        print(original)
-        self.fail(msg="Implement this test")
+        self.fail()
 
 
 if __name__ == "__main__":

@@ -8,6 +8,11 @@ from json import load
 import numpy as np
 
 
+WORK_DAY_DURATION: int = 18
+WORK_DAY_START_HOUR: int = 6
+WORK_DAY_END_HOUR: int = 23
+
+
 class ResourceImportError(Exception):
     """Exception raised when a resource cannot be imported properly."""
     def __init__(self, msg: str = None, value: Any = None) -> None:
@@ -241,7 +246,7 @@ class TimeSpan:
             return
         if not isinstance(field_value, datetime):
             raise TypeError(f"Field must be of type datetime")
-        if (not (6 <= field_value.hour <= 23) or field_value.minute != 0 or
+        if (not (WORK_DAY_START_HOUR <= field_value.hour <= WORK_DAY_END_HOUR) or field_value.minute != 0 or
                 field_value.second != 0 or field_value.microsecond != 0):
             raise ValueError(f'invalid time: h={field_value.hour}, m={field_value.minute}, '
                              f's={field_value.second}, ms={field_value.microsecond}')
@@ -734,16 +739,14 @@ def assign_shift(schedule: FactoryAssignmentSchedule, employee: Employee, machin
     @return: None
     @rtype:
     """
-    work_day_duration = 18
-
-    for day in range(len(schedule.time_span) // work_day_duration):
+    for day in range(len(schedule.time_span) // WORK_DAY_DURATION):
         # if employee is already assigned a shift in this workday, skip
-        if np.count_nonzero(schedule[:, employee.id, day * work_day_duration: (day + 1) * work_day_duration]) > 0:
+        if np.count_nonzero(schedule[:, employee.id, day * WORK_DAY_DURATION: (day + 1) * WORK_DAY_DURATION]) > 0:
             continue
 
-        for hour in range(work_day_duration - employee.shift_duration):
-            start_time = day * work_day_duration + hour
-            stop_time = day * work_day_duration + hour + employee.shift_duration
+        for hour in range(WORK_DAY_DURATION - employee.shift_duration):
+            start_time = day * WORK_DAY_DURATION + hour
+            stop_time = day * WORK_DAY_DURATION + hour + employee.shift_duration
 
             # check if all time slots in sequence allow for assignment of employee
             if np.all([get_nr_of_assigned_employees(schedule, machine, tm_sp) < machine.max_workers
@@ -767,17 +770,15 @@ def unassign_shift(schedule: FactoryAssignmentSchedule, employee: Employee, mach
     @return: None
     @rtype:
     """
-    work_day_duration = 18
-
-    for day in range(len(schedule.time_span) // work_day_duration - 1, -1, -1):
+    for day in range(len(schedule.time_span) // WORK_DAY_DURATION - 1, -1, -1):
         # if employee is not assigned in this day, skip
-        if (np.count_nonzero(schedule[:, employee.id, day * work_day_duration: (day + 1) * work_day_duration]) ==
-                work_day_duration):
+        if (np.count_nonzero(schedule[:, employee.id, day * WORK_DAY_DURATION: (day + 1) * WORK_DAY_DURATION]) ==
+                WORK_DAY_DURATION):
             continue
 
-        for hour in range(work_day_duration - employee.shift_duration):
-            start_time = day * work_day_duration + hour
-            stop_time = day * work_day_duration + hour + employee.shift_duration
+        for hour in range(WORK_DAY_DURATION - employee.shift_duration):
+            start_time = day * WORK_DAY_DURATION + hour
+            stop_time = day * WORK_DAY_DURATION + hour + employee.shift_duration
 
             # check if sequence counts as employee assignment
             if np.all(schedule[machine.id, employee.id, start_time: stop_time] == 1):
