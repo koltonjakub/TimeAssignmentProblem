@@ -11,6 +11,7 @@ import numpy as np
 WORK_DAY_DURATION: int = 18
 WORK_DAY_START_HOUR: int = 6
 WORK_DAY_END_HOUR: int = 23
+MAX_TIME_SPAN_EXTENSION_OCCURRENCE: int = 100
 
 
 class ResourceImportError(Exception):
@@ -54,6 +55,14 @@ class InvalidTotalProductionError(Exception):
 
 class InvalidScheduleAssignmentError(Exception):
     """Exception raised when schedule assignment is invalid."""
+    def __init__(self, msg: str = None, value: Any = None) -> None:
+        super().__init__(msg)
+        self.msg: str = msg
+        self.value: Any = value
+
+
+class GenerateStartingSolutionError(Exception):
+    """Exception raised when the function cannot generate a valid starting solution."""
     def __init__(self, msg: str = None, value: Any = None) -> None:
         super().__init__(msg)
         self.msg: str = msg
