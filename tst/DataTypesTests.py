@@ -34,6 +34,7 @@ test_unassign_shift_database_path = os.path.join(parent_directory, "data", "test
 test_populate_schedule_database_path = os.path.join(parent_directory, "data", "test_populate_schedule_database.json")
 test_unable_to_create_valid_solution_database_path = os.path.join(parent_directory, "data",
                                                                   "test_unable_to_create_valid_solution_database.json")
+test_extend_time_span_database_path = os.path.join(parent_directory, "data", "test_extend_time_span_database.json")
 
 
 # noinspection PyTypeChecker
@@ -687,6 +688,7 @@ class UtilsFunctionTests(TestCase):
         self.populate_schedule = ResourceManager().import_resources_from_json(test_populate_schedule_database_path)
         self.fool_populate_schedule = ResourceManager().import_resources_from_json(
             test_unable_to_create_valid_solution_database_path)
+        self.extend_time_span = ResourceManager().import_resources_from_json(test_extend_time_span_database_path)
 
     def test_get_machine_production(self) -> None:
         shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
@@ -1209,7 +1211,15 @@ class UtilsFunctionTests(TestCase):
             populate_schedule(schedule)
 
     def test_extend_time_span(self) -> None:
-        self.fail()
+        expected_time_span = self.extend_time_span.time_span
+
+        starting_period = expected_time_span[0: WORK_DAY_DURATION]
+        result = extend_time_span(starting_period)
+        self.assertEqual(result, expected_time_span[0: 2 * WORK_DAY_DURATION])
+
+        starting_period = expected_time_span[0: 2 * WORK_DAY_DURATION]
+        result = extend_time_span(starting_period)
+        self.assertEqual(result, expected_time_span[0: 3 * WORK_DAY_DURATION])
 
     def test_generate_starting_solution(self) -> None:
         # TODO implement this test
