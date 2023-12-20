@@ -1,7 +1,7 @@
 """This file contains all data types used in project"""
 from typing import Union, Dict, List, Any, Tuple, Iterable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from copy import deepcopy
 from json import load
 
@@ -876,7 +876,11 @@ def extend_time_span(time_span: List[TimeSpan]) -> List[TimeSpan]:
     @return: extended time span
     @rtype: List[TimeSpan]
     """
-    pass
+    time_span_cp = deepcopy(time_span)
+    time_span_cp.extend([TimeSpan(id=last_day_and_hour.id + WORK_DAY_DURATION,
+                                  datetime=(last_day_and_hour.datetime + timedelta(days=1)))
+                         for last_day_and_hour in time_span[-WORK_DAY_DURATION::]])
+    return time_span_cp
 
 
 def generate_starting_solution(database_path: str) -> FactoryAssignmentSchedule:
