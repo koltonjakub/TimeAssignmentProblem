@@ -889,12 +889,33 @@ def generate_starting_solution(database_path: str) -> FactoryAssignmentSchedule:
     function is not able to generate valid assignment schedule, the time_span is extended and populating of the schedule
     is performed again.
 
-    @param database_path: path to the database file
+    @param database_path: path to the database file in .json format.
     @type database_path: str
     @return schedule: schedule to modify
     @rtype schedule: FactoryAssignmentSchedule
     """
-    pass
+    factory_resources = ResourceManager.import_resources_from_json(database_path)
+    failures_counter = 0
+
+    while failures_counter <= MAX_TIME_SPAN_EXTENSION_OCCURRENCE:
+        try:
+            schedule = FactoryAssignmentSchedule(
+                machines=factory_resources.machines,
+                employees=factory_resources.employees,
+                time_span=factory_resources.time_span,
+                allowed_values=[0, 1]
+            )
+            populate_schedule(schedule)
+        except InvalidScheduleAssignmentError:
+            raise
+        except InvalidTotalProductionError:
+            failures_counter += 1
+            factory_resources.time_span = extend_time_span(factory_resources.time_span)
+        else:
+            return schedule
+    raise GenerateStartingSolutionError(msg=f'The factory assignment schedule could not be generated within '
+                                            f'{failures_counter} extensions of time_span. Check the provided database.',
+                                        value=database_path)
 
 
 def random_neighbour(schedule: FactoryAssignmentSchedule) -> FactoryAssignmentSchedule:
