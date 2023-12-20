@@ -7,8 +7,8 @@ from timeit import timeit
 from datetime import datetime
 from unittest import TestCase, main
 
-from FactoryAssignmentProblem.DataTypes import Machine, Employee, TimeSpan, ResourceContainer
-from SimulatedAnnealing.Solver import Solver
+from tap_lib.Factory import Machine, Employee, TimeSpan, ResourceContainer
+from tap_lib.Solver import Solver
 
 
 class DataTypesPerformanceTimeTests(TestCase):
@@ -85,7 +85,7 @@ class SolverExecutionTimeTests(TestCase):
         execution_time = {}
         current_directory = os.getcwd()
         parent_directory = os.path.dirname(current_directory)
-        logger = os.path.join(parent_directory, "logs", "test_setup_logger.log")
+        logger = os.path.join(parent_directory, "logs", "tst_logs", "test_setup_logger.log")
         solver.setup_logger(log_file_path=logger)
 
         number = 100

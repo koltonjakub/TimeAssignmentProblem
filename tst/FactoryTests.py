@@ -1,4 +1,4 @@
-"""This file contains all tests designed for FactoryAssignmentProblem module from SimulatedAnnealing package."""
+"""This file contains all tests designed for tap_lib module from SimulatedAnnealing package."""
 
 from unittest import TestCase, main
 from typing import List, Union
@@ -8,7 +8,7 @@ from json import load
 import numpy as np
 import os
 
-from FactoryAssignmentProblem.DataTypes import (
+from tap_lib.Factory import (
     WORK_DAY_DURATION,
     ResourceImportError, FactoryAssignmentScheduleError, ShiftAssignmentError, ShiftUnassignmentError,
     InvalidTotalProductionError, GenerateStartingSolutionError,
@@ -22,23 +22,33 @@ from FactoryAssignmentProblem.DataTypes import (
 
 current_directory = os.getcwd()
 parent_directory = os.path.dirname(current_directory)
-test_database_path = os.path.join(parent_directory, "data", "test_database.json")
-invalid_machines_database_path = os.path.join(parent_directory, "data", "test_invalid_machine_ids_database.json")
-invalid_employees_database_path = os.path.join(parent_directory, "data", "test_invalid_employee_ids_database.json")
-invalid_time_span_database_path = os.path.join(parent_directory, "data", "test_invalid_time_span_ids_database.json")
-test_invalid_production_database_path = os.path.join(parent_directory, "data", "test_invalid_production_database.json")
-test_valid_production_database_path = os.path.join(parent_directory, "data", "test_valid_production_database.json")
-test_advanced_shift_assignment_database_path = os.path.join(parent_directory, "data",
-                                                            "test_advanced_shift_assignment_database.json")
-test_unassign_shift_database_path = os.path.join(parent_directory, "data", "test_unassign_shift_database.json")
-test_populate_schedule_database_path = os.path.join(parent_directory, "data", "test_populate_schedule_database.json")
-test_unable_to_create_valid_solution_database_path = os.path.join(parent_directory, "data",
-                                                                  "test_unable_to_create_valid_solution_database.json")
-test_extend_time_span_database_path = os.path.join(parent_directory, "data", "test_extend_time_span_database.json")
+
+test_database_path = os.path.join(parent_directory, "data", "tst_database", "test_database.json")
+test_invalid_machines_database_path = os.path.join(
+    parent_directory, "data", "tst_database", "test_invalid_machine_ids_database.json")
+test_invalid_employees_database_path = os.path.join(
+    parent_directory, "data", "tst_database", "test_invalid_employee_ids_database.json")
+test_invalid_time_span_database_path = os.path.join(
+    parent_directory, "data", "tst_database", "test_invalid_time_span_ids_database.json")
+test_invalid_production_database_path = os.path.join(
+    parent_directory, "data", "tst_database", "test_invalid_production_database.json")
+test_valid_production_database_path = os.path.join(
+    parent_directory, "data", "tst_database", "test_valid_production_database.json")
+test_advanced_shift_assignment_database_path = os.path.join(
+    parent_directory, "data", "tst_database", "test_advanced_shift_assignment_database.json")
+test_unassign_shift_database_path = os.path.join(
+    parent_directory, "data", "tst_database", "test_unassign_shift_database.json")
+test_populate_schedule_database_path = os.path.join(
+    parent_directory, "data", "tst_database", "test_populate_schedule_database.json")
+test_unable_to_create_valid_solution_database_path = os.path.join(
+    parent_directory, "data", "tst_database", "test_unable_to_create_valid_solution_database.json")
+test_extend_time_span_database_path = os.path.join(
+    parent_directory, "data", "tst_database", "test_extend_time_span_database.json")
 test_generate_starting_solution_extend_time_span_database_path = os.path.join(
-    parent_directory, "data", "test_generate_starting_solution_extend_time_span_database.json")
+    parent_directory, "data", "tst_database", "test_generate_starting_solution_extend_time_span_database.json")
 test_generate_starting_solution_invalid_database_path = (
-    os.path.join(parent_directory, "data", "test_generate_starting_solution_invalid_database_database.json"))
+    os.path.join(parent_directory, "data", "tst_database",
+                 "test_generate_starting_solution_invalid_database_database.json"))
 
 
 # noinspection PyTypeChecker
@@ -375,11 +385,11 @@ class ResourceManagerTests(TestCase):
 
     def test_validate_ids(self) -> None:
         with self.assertRaises(ResourceImportError):
-            ResourceManager().import_resources_from_json(invalid_machines_database_path)
+            ResourceManager().import_resources_from_json(test_invalid_machines_database_path)
         with self.assertRaises(ResourceImportError):
-            ResourceManager().import_resources_from_json(invalid_employees_database_path)
+            ResourceManager().import_resources_from_json(test_invalid_employees_database_path)
         with self.assertRaises(ResourceImportError):
-            ResourceManager().import_resources_from_json(invalid_time_span_database_path)
+            ResourceManager().import_resources_from_json(test_invalid_time_span_database_path)
 
 
 class FactoryAssignmentScheduleTests(TestCase):

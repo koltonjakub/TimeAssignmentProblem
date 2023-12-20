@@ -10,7 +10,7 @@ import numpy as np
 import pydantic as pdt
 from pydantic import ValidationError
 
-from SimulatedAnnealing.Visualisation.Visualisation import Scope
+from tap_lib.Visualisation import Scope
 
 
 class Solver(pdt.BaseModel):

@@ -1,7 +1,7 @@
 """This file contains all the test cases for the Visualisation.py module of the Simulated Annealing Problem package."""
 
 from unittest import TestCase, main
-from SimulatedAnnealing.Visualisation.Visualisation import Scope
+from tap_lib.Visualisation import Scope
 
 
 class ScopeTests(TestCase):

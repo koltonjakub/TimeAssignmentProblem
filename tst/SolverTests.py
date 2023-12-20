@@ -1,6 +1,6 @@
 """This file contains all tests designed for Solver module from SimulatedAnnealing package."""
 
-from SimulatedAnnealing.Solver import Solver
+from tap_lib.Solver import Solver
 from unittest import TestCase, main
 from pydantic import ValidationError
 
@@ -34,8 +34,8 @@ class SolverTests(TestCase):
         current_directory = os.getcwd()
         parent_directory = os.path.dirname(current_directory)
         logs_directory = os.path.join(parent_directory, "logs")
-        log_file_path = os.path.join(logs_directory, "test_setup_logger.log")
-        csv_file_path = os.path.join(logs_directory, "test_csv_dump.csv")
+        log_file_path = os.path.join(logs_directory, "tst_logs", "test_setup_logger.log")
+        csv_file_path = os.path.join(logs_directory, "tst_logs", "test_csv_dump.csv")
 
         solver = Solver(cost=cost, sol_gen=sol_gen, cool=cool, probability=probability, init_sol=init_sol,
                         SolutionType=Dummy, init_temp=init_temp, max_iterations=max_iterations,
@@ -328,7 +328,7 @@ class SolverTests(TestCase):
         current_directory = os.getcwd()
         parent_directory = os.path.dirname(current_directory)
         invalid_logger_directory = os.path.join(parent_directory, "invalid_logger_directory.not-extension")
-        valid_logger_directory = os.path.join(parent_directory, "logs", "test_setup_logger.log")
+        valid_logger_directory = os.path.join(parent_directory, "logs", "tst_logs", "test_setup_logger.log")
         self.assertNotEqual(valid_logger_directory, invalid_logger_directory)
 
         with self.assertRaises(FileNotFoundError):
@@ -348,7 +348,7 @@ class SolverTests(TestCase):
 
         current_directory = os.getcwd()
         parent_directory = os.path.dirname(current_directory)
-        test_csv_dump_path = os.path.join(parent_directory, "logs", "test_csv_dump.csv")
+        test_csv_dump_path = os.path.join(parent_directory, "logs", "tst_logs", "test_csv_dump.csv")
 
         solver.csv_file_path = test_csv_dump_path
 
