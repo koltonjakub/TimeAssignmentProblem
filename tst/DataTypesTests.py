@@ -34,7 +34,8 @@ test_unassign_shift_database_path = os.path.join(parent_directory, "data", "test
 test_populate_schedule_database_path = os.path.join(parent_directory, "data", "test_populate_schedule_database.json")
 test_unable_to_create_valid_solution_database_path = os.path.join(parent_directory, "data",
                                                                   "test_unable_to_create_valid_solution_database.json")
-test_extend_time_span_database_path = os.path.join(
+test_extend_time_span_database_path = os.path.join(parent_directory, "data", "test_extend_time_span_database.json")
+test_generate_starting_solution_extend_time_span_database_path = os.path.join(
     parent_directory, "data", "test_generate_starting_solution_extend_time_span_database.json")
 test_generate_starting_solution_invalid_database_path = (
     os.path.join(parent_directory, "data", "test_generate_starting_solution_invalid_database_database.json"))
@@ -1258,7 +1259,7 @@ class UtilsFunctionTests(TestCase):
         expected[mach2.id, bob.id, 3*WORK_DAY_DURATION: 3*WORK_DAY_DURATION + bob.shift_duration] = (
             np.ones(bob.shift_duration))
 
-        result = generate_starting_solution(test_extend_time_span_database_path)
+        result = generate_starting_solution(test_generate_starting_solution_extend_time_span_database_path)
 
         print()
         print(expected)
