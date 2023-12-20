@@ -17,7 +17,7 @@
         "demand": 1000
       },
       {
-        "id": 1,
+        "id": 2,
         "hourly_cost": 70.0,
         "hourly_gain": 120.0,
         "inventory_nr": 100,

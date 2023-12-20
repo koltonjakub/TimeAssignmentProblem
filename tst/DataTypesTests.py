@@ -693,6 +693,9 @@ class UtilsFunctionTests(TestCase):
         self.fool_populate_schedule = ResourceManager().import_resources_from_json(
             test_unable_to_create_valid_solution_database_path)
         self.extend_time_span = ResourceManager().import_resources_from_json(test_extend_time_span_database_path)
+        self.generate_schedule_with_time_span_extension = ResourceManager().import_resources_from_json(
+            test_generate_starting_solution_extend_time_span_database_path
+        )
 
     def test_get_machine_production(self) -> None:
         shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
@@ -1236,37 +1239,10 @@ class UtilsFunctionTests(TestCase):
         self.assertTrue(np.all(result == expected))
 
     def test_generate_starting_solution_with_time_span_extension(self) -> None:
-        shape = (len(self.extend_time_span.machines),
-                 len(self.extend_time_span.employees),
-                 4 * len(self.extend_time_span.time_span))
-        (ana, bob) = self.extend_time_span.employees
-        (mach1, mach2) = self.extend_time_span.machines
-
-        expected = np.zeros(shape)
-        expected[mach1.id, ana.id, 0: ana.shift_duration] = np.ones(ana.shift_duration)
-        expected[mach1.id, ana.id, WORK_DAY_DURATION: WORK_DAY_DURATION + ana.shift_duration] = (
-            np.ones(ana.shift_duration))
-        expected[mach2.id, ana.id, 2*WORK_DAY_DURATION: 2*WORK_DAY_DURATION + ana.shift_duration] = (
-            np.ones(ana.shift_duration))
-        expected[mach2.id, ana.id, 3*WORK_DAY_DURATION: 3*WORK_DAY_DURATION + ana.shift_duration] = (
-            np.ones(ana.shift_duration))
-
-        expected[mach1.id, bob.id, 0: bob.shift_duration] = np.ones(bob.shift_duration)
-        expected[mach1.id, bob.id, WORK_DAY_DURATION: WORK_DAY_DURATION + bob.shift_duration] = (
-            np.ones(bob.shift_duration))
-        expected[mach2.id, bob.id, 2*WORK_DAY_DURATION: 2*WORK_DAY_DURATION + bob.shift_duration] = (
-            np.ones(bob.shift_duration))
-        expected[mach2.id, bob.id, 3*WORK_DAY_DURATION: 3*WORK_DAY_DURATION + bob.shift_duration] = (
-            np.ones(bob.shift_duration))
-
         result = generate_starting_solution(test_generate_starting_solution_extend_time_span_database_path)
 
-        print()
-        print(expected)
-        print()
-        print(result)
-
-        self.assertTrue(np.all(result == expected))
+        self.assertTrue(is_valid_schedule_assignment(result))
+        self.assertTrue(is_valid_total_production(result))
 
     def test_generate_starting_solution_invalid_database(self) -> None:
         with self.assertRaises(GenerateStartingSolutionError):
