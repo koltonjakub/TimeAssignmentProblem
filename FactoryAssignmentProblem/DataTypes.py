@@ -859,6 +859,17 @@ def populate_schedule(schedule: FactoryAssignmentSchedule) -> None:
         raise InvalidScheduleAssignmentError(msg='Schedule assignment  of employees is not valid', value=schedule)
 
 
+def extend_time_span(time_span: List[TimeSpan]) -> List[TimeSpan]:
+    """
+    Function extends the time span by adding one day, which consists of WORK_DAY_DURATION number of elements
+    @param time_span: time span to be extended
+    @type time_span: List[TimeSpan]
+    @return: extended time span
+    @rtype: List[TimeSpan]
+    """
+    pass
+
+
 def generate_starting_solution(database_path: str) -> FactoryAssignmentSchedule:
     """
     Function generates a factory assignment schedule that meets the demand stored in database. If populate_schedule

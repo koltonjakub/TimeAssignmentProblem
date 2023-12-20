@@ -16,6 +16,7 @@ from FactoryAssignmentProblem.DataTypes import (
     get_machine_production, get_nr_of_assigned_employees,
     is_valid_machine_production, is_valid_total_production, is_valid_machine_assignment, is_valid_schedule_assignment,
     assign_shift, unassign_shift, order_machines, order_employees, populate_machine_with_employee, populate_schedule,
+    extend_time_span,
     generate_starting_solution, random_neighbour
 )
 
@@ -1206,6 +1207,9 @@ class UtilsFunctionTests(TestCase):
         )
         with self.assertRaises(InvalidTotalProductionError):
             populate_schedule(schedule)
+
+    def test_extend_time_span(self) -> None:
+        self.fail()
 
     def test_generate_starting_solution(self) -> None:
         # TODO implement this test
