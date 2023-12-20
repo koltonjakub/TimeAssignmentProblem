@@ -11,7 +11,7 @@ import os
 from FactoryAssignmentProblem.DataTypes import (
     WORK_DAY_DURATION,
     ResourceImportError, FactoryAssignmentScheduleError, ShiftAssignmentError, ShiftUnassignmentError,
-    InvalidTotalProductionError,
+    InvalidTotalProductionError, GenerateStartingSolutionError,
     Machine, Employee, TimeSpan, ResourceContainer, ResourceManager, FactoryAssignmentSchedule,
     get_machine_production, get_nr_of_assigned_employees,
     is_valid_machine_production, is_valid_total_production, is_valid_machine_assignment, is_valid_schedule_assignment,
@@ -34,7 +34,10 @@ test_unassign_shift_database_path = os.path.join(parent_directory, "data", "test
 test_populate_schedule_database_path = os.path.join(parent_directory, "data", "test_populate_schedule_database.json")
 test_unable_to_create_valid_solution_database_path = os.path.join(parent_directory, "data",
                                                                   "test_unable_to_create_valid_solution_database.json")
-test_extend_time_span_database_path = os.path.join(parent_directory, "data", "test_extend_time_span_database.json")
+test_extend_time_span_database_path = os.path.join(
+    parent_directory, "data", "test_generate_starting_solution_extend_time_span_database.json")
+test_generate_starting_solution_invalid_database_path = (
+    os.path.join(parent_directory, "data", "test_generate_starting_solution_invalid_database_database.json"))
 
 
 # noinspection PyTypeChecker
@@ -1165,8 +1168,7 @@ class UtilsFunctionTests(TestCase):
             machines=self.populate_schedule.machines,
             employees=self.populate_schedule.employees,
             time_span=self.populate_schedule.time_span,
-            allowed_values=[0, 1],
-            input_array=np.zeros(shape)
+            allowed_values=[0, 1]
         )
 
         expected = np.zeros(shape)
@@ -1221,9 +1223,53 @@ class UtilsFunctionTests(TestCase):
         result = extend_time_span(starting_period)
         self.assertEqual(result, expected_time_span[0: 3 * WORK_DAY_DURATION])
 
-    def test_generate_starting_solution(self) -> None:
-        # TODO implement this test
-        self.fail()
+    def test_generate_starting_solution_no_time_span_extension(self) -> None:
+        expected = FactoryAssignmentSchedule(
+            machines=self.populate_schedule.machines,
+            employees=self.populate_schedule.employees,
+            time_span=self.populate_schedule.time_span,
+            allowed_values=[0, 1]
+        )
+        populate_schedule(expected)
+        result = generate_starting_solution(test_populate_schedule_database_path)
+        self.assertTrue(np.all(result == expected))
+
+    def test_generate_starting_solution_with_time_span_extension(self) -> None:
+        shape = (len(self.extend_time_span.machines),
+                 len(self.extend_time_span.employees),
+                 4 * len(self.extend_time_span.time_span))
+        (ana, bob) = self.extend_time_span.employees
+        (mach1, mach2) = self.extend_time_span.machines
+
+        expected = np.zeros(shape)
+        expected[mach1.id, ana.id, 0: ana.shift_duration] = np.ones(ana.shift_duration)
+        expected[mach1.id, ana.id, WORK_DAY_DURATION: WORK_DAY_DURATION + ana.shift_duration] = (
+            np.ones(ana.shift_duration))
+        expected[mach2.id, ana.id, 2*WORK_DAY_DURATION: 2*WORK_DAY_DURATION + ana.shift_duration] = (
+            np.ones(ana.shift_duration))
+        expected[mach2.id, ana.id, 3*WORK_DAY_DURATION: 3*WORK_DAY_DURATION + ana.shift_duration] = (
+            np.ones(ana.shift_duration))
+
+        expected[mach1.id, bob.id, 0: bob.shift_duration] = np.ones(bob.shift_duration)
+        expected[mach1.id, bob.id, WORK_DAY_DURATION: WORK_DAY_DURATION + bob.shift_duration] = (
+            np.ones(bob.shift_duration))
+        expected[mach2.id, bob.id, 2*WORK_DAY_DURATION: 2*WORK_DAY_DURATION + bob.shift_duration] = (
+            np.ones(bob.shift_duration))
+        expected[mach2.id, bob.id, 3*WORK_DAY_DURATION: 3*WORK_DAY_DURATION + bob.shift_duration] = (
+            np.ones(bob.shift_duration))
+
+        result = generate_starting_solution(test_extend_time_span_database_path)
+
+        print()
+        print(expected)
+        print()
+        print(result)
+
+        self.assertTrue(np.all(result == expected))
+
+    def test_generate_starting_solution_invalid_database(self) -> None:
+        with self.assertRaises(GenerateStartingSolutionError):
+            generate_starting_solution(test_generate_starting_solution_invalid_database_path)
 
     def test_random_neighbour(self) -> None:
         # TODO implement this test
