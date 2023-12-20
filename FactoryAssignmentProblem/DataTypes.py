@@ -1,12 +1,58 @@
 """This file contains all data types used in project"""
-from copy import deepcopy
 from typing import Union, Dict, List, Any, Tuple, Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
+from copy import deepcopy
 from json import load
 
 import numpy as np
-from numpy import ndarray
+
+
+class ResourceImportError(Exception):
+    """Exception raised when a resource cannot be imported properly."""
+    def __init__(self, msg: str = None, value: Any = None) -> None:
+        super().__init__(msg)
+        self.msg: str = msg
+        self.value: Any = value
+
+
+class FactoryAssignmentScheduleError(Exception):
+    def __init__(self, msg: str = None, value: Any = None) -> None:
+        super().__init__(msg)
+        self.msg: str = msg
+        self.value: Any = value
+
+
+class ShiftAssignmentError(Exception):
+    """Exception raised when a shift cannot be assigned to employee."""
+    def __init__(self, msg: str = None, value: Any = None) -> None:
+        super().__init__(msg)
+        self.msg: str = msg
+        self.value: Any = value
+
+
+class ShiftUnassignmentError(Exception):
+    """Exception raised when a shift cannot be unassigned from employee."""
+    def __init__(self, msg: str = None, value: Any = None) -> None:
+        super().__init__(msg)
+        self.msg: str = msg
+        self.value: Any = value
+
+
+class InvalidTotalProductionError(Exception):
+    """Exception raised when total production is invalid ."""
+    def __init__(self, msg: str = None, value: Any = None) -> None:
+        super().__init__(msg)
+        self.msg: str = msg
+        self.value: Any = value
+
+
+class InvalidScheduleAssignmentError(Exception):
+    """Exception raised when schedule assignment is invalid."""
+    def __init__(self, msg: str = None, value: Any = None) -> None:
+        super().__init__(msg)
+        self.msg: str = msg
+        self.value: Any = value
 
 
 @dataclass(frozen=True)
@@ -256,14 +302,6 @@ class ResourceContainer:
             raise ValueError(f"All values in {field_name} must be a TimeSpan class")
 
 
-class ResourceImportError(Exception):
-    """Exception raised when a resource cannot be imported properly."""
-    def __init__(self, msg: str = None, value: Any = None) -> None:
-        super().__init__(msg)
-        self.msg: str = msg
-        self.value: Any = value
-
-
 class ResourceManager:
     """This class provides a user with utilities for importing and validating project databases."""
 
@@ -346,13 +384,6 @@ class ResourceManager:
             raise ResourceImportError(msg='time_span ids are not distinct')
 
 
-class FactoryAssignmentScheduleError(Exception):
-    def __init__(self, msg: str = None, value: Any = None) -> None:
-        super().__init__(msg)
-        self.msg: str = msg
-        self.value: Any = value
-
-
 class FactoryAssignmentSchedule(np.ndarray):
     """
     Class representing schedule of factory assignment problem.
@@ -394,7 +425,7 @@ class FactoryAssignmentSchedule(np.ndarray):
 
         return obj
 
-    def __getitem__(self, item) -> Union[ndarray[Any, Any], Any]:
+    def __getitem__(self, item) -> Union[np.ndarray[Any, Any], Any]:
         """
         Function handles standard __getitem__ utilities, performs reshape is a slice of FactoryAssignmentSchedule is
         taken and then slices the corresponding ResourceList attributes.
@@ -642,7 +673,7 @@ def get_nr_of_assigned_employees(schedule: FactoryAssignmentSchedule, machine: M
     return np.count_nonzero(schedule[machine.id, :, timespan.id])
 
 
-def validate_machine_production(schedule: FactoryAssignmentSchedule, machine: Machine) -> bool:
+def is_valid_machine_production(schedule: FactoryAssignmentSchedule, machine: Machine) -> bool:
     """
     Function checks if production demand is met for the given machine within provided schedule.
     @param schedule: Schedule to be validated
@@ -655,7 +686,7 @@ def validate_machine_production(schedule: FactoryAssignmentSchedule, machine: Ma
     return get_machine_production(schedule, machine) >= machine.demand
 
 
-def validate_total_production(schedule: FactoryAssignmentSchedule) -> bool:
+def is_valid_total_production(schedule: FactoryAssignmentSchedule) -> bool:
     """
     Function checks if the total production in schedule meets the demand in Machines.
     @param schedule: Schedule to be validated
@@ -663,10 +694,10 @@ def validate_total_production(schedule: FactoryAssignmentSchedule) -> bool:
     @return: Is production in schedule valid
     @rtype: bool
     """
-    return np.all([validate_machine_production(schedule, machine) for machine in schedule.machines])
+    return np.all([is_valid_machine_production(schedule, machine) for machine in schedule.machines])
 
 
-def validate_machine_assignment(schedule: FactoryAssignmentSchedule, machine: Machine) -> bool:
+def is_valid_machine_assignment(schedule: FactoryAssignmentSchedule, machine: Machine) -> bool:
     """
     Function checks if the assignment is valid for the given machine within provided schedule.
     @param schedule: Considered schedule
@@ -680,7 +711,7 @@ def validate_machine_assignment(schedule: FactoryAssignmentSchedule, machine: Ma
                    machine.max_workers for tm_sp in schedule.time_span])
 
 
-def validate_schedule_assignment(schedule: FactoryAssignmentSchedule) -> bool:
+def is_valid_schedule_assignment(schedule: FactoryAssignmentSchedule) -> bool:
     """
     Function checks if the assignment is valid for the given schedule.
     @param schedule: Schedule to be validated
@@ -688,15 +719,7 @@ def validate_schedule_assignment(schedule: FactoryAssignmentSchedule) -> bool:
     @return: Is employee assignment valid
     @rtype: bool
     """
-    return np.all([validate_machine_assignment(schedule, machine) for machine in schedule.machines])
-
-
-class ShiftAssignmentError(Exception):
-    """Exception raised when a shift cannot be assigned to employee."""
-    def __init__(self, msg: str = None, value: Any = None) -> None:
-        super().__init__(msg)
-        self.msg: str = msg
-        self.value: Any = value
+    return np.all([is_valid_machine_assignment(schedule, machine) for machine in schedule.machines])
 
 
 def assign_shift(schedule: FactoryAssignmentSchedule, employee: Employee, machine: Machine) -> None:
@@ -729,14 +752,6 @@ def assign_shift(schedule: FactoryAssignmentSchedule, employee: Employee, machin
                 return None
     raise ShiftAssignmentError(msg="Could not assign a shift due the lack of free slots in schedule",
                                value=(schedule, employee, machine))
-
-
-class ShiftUnassignmentError(Exception):
-    """Exception raised when a shift cannot be unassigned from employee."""
-    def __init__(self, msg: str = None, value: Any = None) -> None:
-        super().__init__(msg)
-        self.msg: str = msg
-        self.value: Any = value
 
 
 def unassign_shift(schedule: FactoryAssignmentSchedule, employee: Employee, machine: Machine) -> None:
@@ -783,7 +798,7 @@ def populate_machine_with_employee(schedule: FactoryAssignmentSchedule, employee
     @type machine: Machine
     @return: None
     """
-    while not validate_machine_production(schedule, machine):
+    while not is_valid_machine_production(schedule, machine):
         try:
             assign_shift(schedule, employee, machine)
         except ShiftAssignmentError:
@@ -821,7 +836,8 @@ def order_employees(employees: List[Employee], machine: Machine) -> List[Employe
 
 def populate_schedule(schedule: FactoryAssignmentSchedule) -> None:
     """
-    Function tries to satisfy every demand in schedule by continually satisfying the demand of every machine.
+    Function tries to satisfy every demand of the whole schedule by continually satisfying the demand of every machine.
+    Appropriate errors are raised if the schedule does not meet the requirements.
     @param schedule: schedule to modify
     @type schedule: FactoryAssignmentSchedule
     @return: None
@@ -832,16 +848,28 @@ def populate_schedule(schedule: FactoryAssignmentSchedule) -> None:
 
         for employee in ord_employees:
             populate_machine_with_employee(schedule, employee, machine)
-            if validate_machine_production(schedule, machine):
+            if is_valid_machine_production(schedule, machine):
                 break
 
-    if not validate_total_production(schedule):
-        raise FactoryAssignmentScheduleError(msg='Invalid schedule: total production demand is not valid',
-                                             value=schedule)
+    if not is_valid_total_production(schedule):
+        raise InvalidTotalProductionError(msg='Total production demand is not valid', value=schedule)
 
-    if not validate_schedule_assignment(schedule):
-        raise FactoryAssignmentScheduleError(msg='Invalid schedule: schedule assignment is not valid',
-                                             value=schedule)
+    if not is_valid_schedule_assignment(schedule):
+        raise InvalidScheduleAssignmentError(msg='Schedule assignment  of employees is not valid', value=schedule)
+
+
+def generate_starting_solution(database_path: str) -> FactoryAssignmentSchedule:
+    """
+    Function generates a factory assignment schedule that meets the demand stored in database. If populate_schedule
+    function is not able to generate valid assignment schedule, the time_span is extended and populating of the schedule
+    is performed again.
+
+    @param database_path: path to the database file
+    @type database_path: str
+    @return schedule: schedule to modify
+    @rtype schedule: FactoryAssignmentSchedule
+    """
+    pass
 
 
 def random_neighbour(schedule: FactoryAssignmentSchedule) -> FactoryAssignmentSchedule:
@@ -852,4 +880,12 @@ def random_neighbour(schedule: FactoryAssignmentSchedule) -> FactoryAssignmentSc
     @return: new neighbour
     @rtype: FactoryAssignmentSchedule
     """
-    pass
+    neighbour = deepcopy(schedule)
+    # noinspection PyTypeChecker
+    empl = np.random.choice(neighbour.employees)
+    # noinspection PyTypeChecker
+    mach = np.random.choice(neighbour.machines)
+    try:
+        unassign_shift(neighbour, empl, mach)
+    except ShiftUnassignmentError:
+        return neighbour

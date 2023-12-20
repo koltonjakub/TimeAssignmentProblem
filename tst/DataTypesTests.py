@@ -5,35 +5,33 @@ from typing import List, Union
 from itertools import product
 from datetime import datetime
 from json import load
-
-from FactoryAssignmentProblem.DataTypes import (
-    Machine, Employee, TimeSpan, ResourceContainer,
-    ResourceManager, ResourceImportError,
-    FactoryAssignmentSchedule, FactoryAssignmentScheduleError,
-    get_machine_production, get_nr_of_assigned_employees,
-    validate_machine_production, validate_total_production,
-    validate_machine_assignment, validate_schedule_assignment,
-    assign_shift, ShiftAssignmentError,
-    unassign_shift, ShiftUnassignmentError,
-    order_machines, order_employees,
-    populate_machine_with_employee, populate_schedule
-)
-
 import numpy as np
 import os
+
+from FactoryAssignmentProblem.DataTypes import (
+    ResourceImportError, FactoryAssignmentScheduleError, ShiftAssignmentError, ShiftUnassignmentError,
+    InvalidTotalProductionError,
+    Machine, Employee, TimeSpan, ResourceContainer, ResourceManager, FactoryAssignmentSchedule,
+    get_machine_production, get_nr_of_assigned_employees,
+    is_valid_machine_production, is_valid_total_production, is_valid_machine_assignment, is_valid_schedule_assignment,
+    assign_shift, unassign_shift, order_machines, order_employees, populate_machine_with_employee, populate_schedule,
+    generate_starting_solution, random_neighbour
+)
 
 current_directory = os.getcwd()
 parent_directory = os.path.dirname(current_directory)
 test_database_path = os.path.join(parent_directory, "data", "test_database.json")
-invalid_machines_database_path = os.path.join(parent_directory, "data", "invalid_machine_ids_database.json")
-invalid_employees_database_path = os.path.join(parent_directory, "data", "invalid_employee_ids_database.json")
-invalid_time_span_database_path = os.path.join(parent_directory, "data", "invalid_time_span_ids_database.json")
+invalid_machines_database_path = os.path.join(parent_directory, "data", "test_invalid_machine_ids_database.json")
+invalid_employees_database_path = os.path.join(parent_directory, "data", "test_invalid_employee_ids_database.json")
+invalid_time_span_database_path = os.path.join(parent_directory, "data", "test_invalid_time_span_ids_database.json")
 test_invalid_production_database_path = os.path.join(parent_directory, "data", "test_invalid_production_database.json")
 test_valid_production_database_path = os.path.join(parent_directory, "data", "test_valid_production_database.json")
 test_advanced_shift_assignment_database_path = os.path.join(parent_directory, "data",
                                                             "test_advanced_shift_assignment_database.json")
 test_unassign_shift_database_path = os.path.join(parent_directory, "data", "test_unassign_shift_database.json")
 test_populate_schedule_database_path = os.path.join(parent_directory, "data", "test_populate_schedule_database.json")
+test_unable_to_create_valid_solution_database_path = os.path.join(parent_directory, "data",
+                                                                  "test_unable_to_create_valid_solution_database.json")
 
 
 # noinspection PyTypeChecker
@@ -685,6 +683,8 @@ class UtilsFunctionTests(TestCase):
         self.advanced_shift = ResourceManager().import_resources_from_json(test_advanced_shift_assignment_database_path)
         self.unassign_shift = ResourceManager().import_resources_from_json(test_unassign_shift_database_path)
         self.populate_schedule = ResourceManager().import_resources_from_json(test_populate_schedule_database_path)
+        self.fool_populate_schedule = ResourceManager().import_resources_from_json(
+            test_unable_to_create_valid_solution_database_path)
 
     def test_get_machine_production(self) -> None:
         shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
@@ -719,7 +719,7 @@ class UtilsFunctionTests(TestCase):
             self.assertEqual(get_nr_of_assigned_employees(assignment, assignment.machines[0], tm_sp), 1)
             self.assertEqual(get_nr_of_assigned_employees(assignment, assignment.machines[1], tm_sp), 2)
 
-    def test_validate_machine_production(self) -> None:
+    def test_is_valid_machine_production(self) -> None:
         shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
         template = np.ones(shape)
         template[[1, 0], [0, 1], :] = np.zeros(shape[2])
@@ -739,15 +739,15 @@ class UtilsFunctionTests(TestCase):
             input_array=template
         )
 
-        self.assertFalse(validate_machine_production(schedule=invalid_production,
+        self.assertFalse(is_valid_machine_production(schedule=invalid_production,
                                                      machine=invalid_production.machines[0]))
-        self.assertFalse(validate_machine_production(schedule=invalid_production,
+        self.assertFalse(is_valid_machine_production(schedule=invalid_production,
                                                      machine=invalid_production.machines[1]))
 
-        self.assertTrue(validate_machine_production(schedule=valid_production, machine=valid_production.machines[0]))
-        self.assertTrue(validate_machine_production(schedule=valid_production, machine=valid_production.machines[1]))
+        self.assertTrue(is_valid_machine_production(schedule=valid_production, machine=valid_production.machines[0]))
+        self.assertTrue(is_valid_machine_production(schedule=valid_production, machine=valid_production.machines[1]))
 
-    def test_validate_total_production(self) -> None:
+    def test_is_valid_total_production(self) -> None:
         shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
         template = np.ones(shape)
         template[[1, 0], [0, 1], :] = np.zeros(shape[2])
@@ -767,10 +767,10 @@ class UtilsFunctionTests(TestCase):
             input_array=template
         )
 
-        self.assertFalse(validate_total_production(invalid_production))
-        self.assertTrue(validate_total_production(valid_production))
+        self.assertFalse(is_valid_total_production(invalid_production))
+        self.assertTrue(is_valid_total_production(valid_production))
 
-    def test_validate_machine_assignment(self) -> None:
+    def test_is_valid_machine_assignment(self) -> None:
         shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
         template = np.ones(shape)
         template[[1, 0], [0, 1], :] = np.zeros(shape[2])
@@ -791,12 +791,12 @@ class UtilsFunctionTests(TestCase):
         )
 
         for mach in valid_production.machines:
-            self.assertTrue(validate_machine_assignment(schedule=valid_production, machine=mach))
+            self.assertTrue(is_valid_machine_assignment(schedule=valid_production, machine=mach))
 
         for mach in invalid_production.machines:
-            self.assertFalse(validate_machine_assignment(schedule=invalid_production, machine=mach))
+            self.assertFalse(is_valid_machine_assignment(schedule=invalid_production, machine=mach))
 
-    def test_validate_schedule_assignment(self) -> None:
+    def test_is_valid_schedule_assignment(self) -> None:
         shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
         template = np.ones(shape)
         template[[1, 0], [0, 1], :] = np.zeros(shape[2])
@@ -816,8 +816,8 @@ class UtilsFunctionTests(TestCase):
             input_array=np.ones(shape)
         )
 
-        self.assertTrue(validate_schedule_assignment(valid_production))
-        self.assertFalse(validate_schedule_assignment(invalid_production))
+        self.assertTrue(is_valid_schedule_assignment(valid_production))
+        self.assertFalse(is_valid_schedule_assignment(invalid_production))
 
     def test_assign_shift(self) -> None:
         shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
@@ -1196,6 +1196,36 @@ class UtilsFunctionTests(TestCase):
 
         # print()
         # print(result)
+
+    def test_fool_populate_schedule(self) -> None:
+        """This tests performs populate_schedule function with data specially designed, so that populate_schedule
+        creates an invalid schedule."""
+        schedule = FactoryAssignmentSchedule(
+            machines=self.fool_populate_schedule.machines,
+            employees=self.fool_populate_schedule.employees,
+            time_span=self.fool_populate_schedule.time_span,
+            allowed_values=[0, 1]
+        )
+        with self.assertRaises(InvalidTotalProductionError):
+            populate_schedule(schedule)
+
+    def test_generate_starting_solution(self) -> None:
+        # TODO implement this test
+        self.fail()
+
+    def test_random_neighbour(self) -> None:
+        # TODO implement this test
+        original = FactoryAssignmentSchedule(
+            machines=self.populate_schedule.machines,
+            employees=self.populate_schedule.employees,
+            time_span=self.populate_schedule.time_span,
+            allowed_values=[0, 1]
+        )
+        populate_schedule(original)
+        original = random_neighbour(original)
+        print()
+        print(original)
+        self.fail(msg="Implement this test")
 
 
 if __name__ == "__main__":
