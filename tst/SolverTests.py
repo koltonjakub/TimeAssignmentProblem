@@ -2,6 +2,7 @@
 
 from tap_lib.Solver import Solver
 from unittest import TestCase, main
+from unittest.mock import patch
 from pydantic import ValidationError
 
 import logging as log
@@ -336,10 +337,6 @@ class SolverTests(TestCase):
 
         self.solver.setup_logger(log_file_path=valid_logger_directory)
         self.assertTrue(len(log.root.handlers) > 0)
-
-    def test_log(self) -> None:
-        # TODO force validation error on simul_scope, so that error log is logged
-        pass
 
     def test_csv_dump(self) -> None:
         solver = Solver(SolutionType=int, cost=lambda sol: sol, sol_gen=lambda sol: 0, cool=lambda t, k: t * 0.5 ** k,
