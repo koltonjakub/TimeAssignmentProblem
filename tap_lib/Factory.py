@@ -9,6 +9,8 @@ from copy import deepcopy
 from json import load
 
 import numpy as np
+
+import random
 import os
 
 
@@ -936,7 +938,23 @@ def perform_random_sub_step(schedule: FactoryAssignmentSchedule) -> None:
     @type schedule: FactoryAssignmentSchedule
     @return: None
     """
-    pass
+
+    random_machine = random.choice(schedule.machines)
+    random_employee = random.choice(schedule.employees)
+
+    option_flag = np.random.randint(low=0, high=2)
+    if option_flag == 0:
+        try:
+            unassign_shift(schedule, random_employee, random_machine)
+        except ShiftUnassignmentError:
+            return
+    elif option_flag == 1:
+        try:
+            assign_shift(schedule, random_employee, random_machine)
+        except ShiftAssignmentError:
+            return
+    else:
+        raise InvalidScheduleAssignmentError(msg='Unsupported option_flag value.', value=option_flag)
 
 
 def random_neighbour(schedule: FactoryAssignmentSchedule) -> FactoryAssignmentSchedule:
@@ -948,12 +966,4 @@ def random_neighbour(schedule: FactoryAssignmentSchedule) -> FactoryAssignmentSc
     @return: new neighbour
     @rtype: FactoryAssignmentSchedule
     """
-    neighbour = deepcopy(schedule)
-    # noinspection PyTypeChecker
-    empl = np.random.choice(neighbour.employees)
-    # noinspection PyTypeChecker
-    mach = np.random.choice(neighbour.machines)
-    try:
-        unassign_shift(neighbour, empl, mach)
-    except ShiftUnassignmentError:
-        return neighbour
+    pass
