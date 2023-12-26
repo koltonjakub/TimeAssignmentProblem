@@ -25,6 +25,7 @@ WORK_DAY_DURATION = config.getint('Globals', 'WORK_DAY_DURATION_IN_HOURS')
 WORK_DAY_START_HOUR = config.getint('Globals', 'WORK_DAY_START_AS_HOUR')
 WORK_DAY_END_HOUR = config.getint('Globals', 'WORK_DAY_END_AS_HOUR')
 MAX_TIME_SPAN_EXTENSION_OCCURRENCE = config.getint('Globals', 'MAX_TIME_SPAN_EXTENSION_OCCURRENCE')
+NEIGHBOURHOOD_DIAMETER = config.getfloat('Globals', 'NEIGHBOURHOOD_DIAMETER')
 
 
 class ResourceImportError(Exception):
