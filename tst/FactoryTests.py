@@ -1,5 +1,5 @@
 """This file contains all tests designed for tap_lib module from SimulatedAnnealing package."""
-
+from copy import deepcopy
 from unittest import TestCase, main
 from unittest.mock import patch
 from typing import List, Union
@@ -54,6 +54,8 @@ test_perform_random_sub_step_database_path = (
 test_perform_random_sub_step_multiple_assignments_database_path = (
     os.path.join(parent_directory, "data", "tst_database",
                  "test_perform_random_sub_step_multiple_assignments_database.json"))
+test_random_neighbour_database_path = os.path.join(parent_directory, "data", "tst_database",
+                                                   "test_random_neighbour_database.json")
 
 # Variables for UtilsFunctionTests.test_perform_random_sub_step_multiple_assignments parsed to @unittest.mock.patch
 mock_mach1 = Machine(id=0, hourly_cost=50.0, hourly_gain=120.0, inventory_nr=100, max_workers=2, demand=1000)
@@ -721,6 +723,7 @@ class UtilsFunctionTests(TestCase):
             test_perform_random_sub_step_database_path)
         self.perform_random_sub_step_multiple_assignments = ResourceManager.import_resources_from_json(
             test_perform_random_sub_step_multiple_assignments_database_path)
+        self.random_neighbour = ResourceManager.import_resources_from_json(test_random_neighbour_database_path)
 
     def test_get_machine_production(self) -> None:
         shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
@@ -1378,9 +1381,42 @@ class UtilsFunctionTests(TestCase):
         perform_random_sub_step(result)
         self.assertTrue(np.all(result == expected))
 
+    @patch('numpy.random.randint', 1)
     def test_random_neighbour(self) -> None:
-        # TODO implement this test
-        self.fail()
+        shape = (len(self.random_neighbour.machines),
+                 len(self.random_neighbour.machines),
+                 len(self.random_neighbour.time_span))
+        mach = self.random_neighbour.machines[0]
+        ana = self.random_neighbour.employees[0]
+
+        initial_assignment = np.zeros(shape)
+        initial_assignment[mach.id, ana.id, 0: ana.shift_duration] = np.ones(ana.shift_duration)
+
+        expected = FactoryAssignmentSchedule(
+            machines=self.random_neighbour.machines,
+            employees=self.random_neighbour.employees,
+            time_span=self.random_neighbour.time_span,
+            allowed_values=[0, 1],
+            input_array=initial_assignment
+        )
+        original = deepcopy(expected)
+
+        result = random_neighbour(expected)
+
+        self.assertNotEqual(expected.cost(), result.cost())
+        self.assertEqual(expected.machines, result.machines)
+        self.assertEqual(expected.employees, result.employees)
+        self.assertEqual(expected.time_span, result.time_span)
+
+        # check if deepcopy of input schedule was changed and the parsed schedule was not
+        self.assertEqual(original, expected)
+
+        print()
+        print(original)
+        print(original.cost())
+        print()
+        print(result)
+        print(result.cost())
 
 
 if __name__ == "__main__":
