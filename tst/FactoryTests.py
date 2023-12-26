@@ -51,6 +51,15 @@ test_generate_starting_solution_invalid_database_path = (
                  "test_generate_starting_solution_invalid_database_database.json"))
 test_perform_random_sub_step_database_path = (
     os.path.join(parent_directory, "data", "tst_database", "test_perform_random_sub_step_database.json"))
+test_perform_random_sub_step_multiple_assignments_database_path = (
+    os.path.join(parent_directory, "data", "tst_database",
+                 "test_perform_random_sub_step_multiple_assignments_database.json"))
+
+# Variables for UtilsFunctionTests.test_perform_random_sub_step_multiple_assignments parsed to @unittest.mock.patch
+mock_mach1 = Machine(id=0, hourly_cost=50.0, hourly_gain=120.0, inventory_nr=100, max_workers=2, demand=1000)
+mock_mach2 = Machine(id=1, hourly_cost=50.0, hourly_gain=120.0, inventory_nr=101, max_workers=2, demand=1000)
+mock_ana = Employee(id=0, hourly_cost=1, hourly_gain={0: 1, 1: 1}, name='Ana', surname='Doe', shift_duration=4)
+mock_bob = Employee(id=1, hourly_cost=2, hourly_gain={0: 1, 1: 1}, name='Bob', surname='Smith', shift_duration=8)
 
 
 # noinspection PyTypeChecker
@@ -710,6 +719,8 @@ class UtilsFunctionTests(TestCase):
         )
         self.perform_random_sub_step = ResourceManager.import_resources_from_json(
             test_perform_random_sub_step_database_path)
+        self.perform_random_sub_step_multiple_assignments = ResourceManager.import_resources_from_json(
+            test_perform_random_sub_step_multiple_assignments_database_path)
 
     def test_get_machine_production(self) -> None:
         shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
@@ -1263,7 +1274,7 @@ class UtilsFunctionTests(TestCase):
             generate_starting_solution(test_generate_starting_solution_invalid_database_path)
 
     @patch('numpy.random.randint', side_effect=[1, 1, 1, 0, 0, 0])
-    def test_perform_random_sub_step(self, mock_randint) -> None:
+    def test_perform_random_sub_step(self, _) -> None:
         shape = (len(self.perform_random_sub_step.machines),
                  len(self.perform_random_sub_step.employees),
                  len(self.perform_random_sub_step.time_span))
@@ -1304,6 +1315,66 @@ class UtilsFunctionTests(TestCase):
         self.assertTrue(np.all(result == expected))
 
         # further unassignment not possible, should not raise an error
+        perform_random_sub_step(result)
+        self.assertTrue(np.all(result == expected))
+
+    @patch('numpy.random.randint', side_effect=[1, 1, 0, 0, 1, 1, 0, 0])
+    @patch('random.choice', side_effect=[
+        mock_mach1, mock_ana,  # assign
+        mock_mach2, mock_bob,  # assign
+        mock_mach1, mock_ana,  # unassign
+        mock_mach2, mock_bob,  # unassign
+        mock_mach2, mock_ana,  # assign
+        mock_mach1, mock_bob,  # assign
+        mock_mach2, mock_ana,  # unassign
+        mock_mach1, mock_bob   # unassign
+    ])
+    def test_perform_random_sub_step_multiple_assignments(self, _, __) -> None:
+        shape = (len(self.perform_random_sub_step_multiple_assignments.machines),
+                 len(self.perform_random_sub_step_multiple_assignments.machines),
+                 len(self.perform_random_sub_step_multiple_assignments.time_span))
+
+        (ana, bob) = self.perform_random_sub_step_multiple_assignments.employees
+        (mach1, mach2) = self.perform_random_sub_step_multiple_assignments.machines
+
+        result = FactoryAssignmentSchedule(
+            machines=self.perform_random_sub_step_multiple_assignments.machines,
+            employees=self.perform_random_sub_step_multiple_assignments.employees,
+            time_span=self.perform_random_sub_step_multiple_assignments.time_span,
+            allowed_values=[0, 1],
+            input_array=np.zeros(shape)
+        )
+
+        expected = np.zeros(shape)
+
+        expected[mach1.id, ana.id, 0: ana.shift_duration] = np.ones(ana.shift_duration)
+        perform_random_sub_step(result)
+        self.assertTrue(np.all(result == expected))
+
+        expected[mach2.id, bob.id, 0: bob.shift_duration] = np.ones(bob.shift_duration)
+        perform_random_sub_step(result)
+        self.assertTrue(np.all(result == expected))
+
+        expected[mach1.id, ana.id, 0: ana.shift_duration] = np.zeros(ana.shift_duration)
+        perform_random_sub_step(result)
+        self.assertTrue(np.all(result == expected))
+        expected[mach2.id, bob.id, 0: bob.shift_duration] = np.zeros(bob.shift_duration)
+        perform_random_sub_step(result)
+        self.assertTrue(np.all(result == expected))
+
+        expected[mach2.id, ana.id, 0: ana.shift_duration] = np.ones(ana.shift_duration)
+        perform_random_sub_step(result)
+        self.assertTrue(np.all(result == expected))
+
+        expected[mach1.id, bob.id, 0: bob.shift_duration] = np.ones(bob.shift_duration)
+        perform_random_sub_step(result)
+        self.assertTrue(np.all(result == expected))
+
+        expected[mach2.id, ana.id, 0: ana.shift_duration] = np.zeros(ana.shift_duration)
+        perform_random_sub_step(result)
+        self.assertTrue(np.all(result == expected))
+
+        expected[mach1.id, bob.id, 0: bob.shift_duration] = np.zeros(bob.shift_duration)
         perform_random_sub_step(result)
         self.assertTrue(np.all(result == expected))
 
