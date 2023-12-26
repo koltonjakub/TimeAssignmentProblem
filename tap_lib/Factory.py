@@ -25,7 +25,7 @@ WORK_DAY_DURATION = config.getint('Globals', 'WORK_DAY_DURATION_IN_HOURS')
 WORK_DAY_START_HOUR = config.getint('Globals', 'WORK_DAY_START_AS_HOUR')
 WORK_DAY_END_HOUR = config.getint('Globals', 'WORK_DAY_END_AS_HOUR')
 MAX_TIME_SPAN_EXTENSION_OCCURRENCE = config.getint('Globals', 'MAX_TIME_SPAN_EXTENSION_OCCURRENCE')
-NEIGHBOURHOOD_DIAMETER = config.getfloat('Globals', 'NEIGHBOURHOOD_DIAMETER')
+NEIGHBOURHOOD_DIAMETER = config.getint('Globals', 'NEIGHBOURHOOD_DIAMETER')
 
 
 class ResourceImportError(Exception):
@@ -943,7 +943,7 @@ def perform_random_sub_step(schedule: FactoryAssignmentSchedule) -> None:
     random_machine = random.choice(schedule.machines)
     random_employee = random.choice(schedule.employees)
 
-    option_flag = np.random.randint(low=0, high=2)
+    option_flag = random.randint(a=0, b=1)
     if option_flag == 0:
         try:
             unassign_shift(schedule, random_employee, random_machine)
@@ -967,4 +967,11 @@ def random_neighbour(schedule: FactoryAssignmentSchedule) -> FactoryAssignmentSc
     @return: new neighbour
     @rtype: FactoryAssignmentSchedule
     """
-    pass
+
+    schedule_cp = deepcopy(schedule)
+
+    number_of_sub_steps = random.randint(a=1, b=NEIGHBOURHOOD_DIAMETER)
+    for _ in range(number_of_sub_steps):
+        perform_random_sub_step(schedule_cp)
+
+    return schedule_cp
