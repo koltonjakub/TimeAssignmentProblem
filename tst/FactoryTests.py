@@ -1,6 +1,7 @@
 """This file contains all tests designed for tap_lib module from SimulatedAnnealing package."""
 
 from unittest import TestCase, main
+from unittest.mock import patch
 from typing import List, Union
 from itertools import product
 from datetime import datetime
@@ -16,8 +17,7 @@ from tap_lib.Factory import (
     get_machine_production, get_nr_of_assigned_employees,
     is_valid_machine_production, is_valid_total_production, is_valid_machine_assignment, is_valid_schedule_assignment,
     assign_shift, unassign_shift, order_machines, order_employees, populate_machine_with_employee, populate_schedule,
-    extend_time_span,
-    generate_starting_solution, random_neighbour
+    extend_time_span, generate_starting_solution, perform_random_sub_step, random_neighbour
 )
 
 current_directory = os.getcwd()
@@ -49,6 +49,8 @@ test_generate_starting_solution_extend_time_span_database_path = os.path.join(
 test_generate_starting_solution_invalid_database_path = (
     os.path.join(parent_directory, "data", "tst_database",
                  "test_generate_starting_solution_invalid_database_database.json"))
+test_perform_random_sub_step_database_path = (
+    os.path.join(parent_directory, "data", "tst_database", "test_perform_random_sub_step_database.json"))
 
 
 # noinspection PyTypeChecker
@@ -706,6 +708,8 @@ class UtilsFunctionTests(TestCase):
         self.generate_schedule_with_time_span_extension = ResourceManager().import_resources_from_json(
             test_generate_starting_solution_extend_time_span_database_path
         )
+        self.perform_random_sub_step = ResourceManager.import_resources_from_json(
+            test_perform_random_sub_step_database_path)
 
     def test_get_machine_production(self) -> None:
         shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
@@ -1257,6 +1261,51 @@ class UtilsFunctionTests(TestCase):
     def test_generate_starting_solution_invalid_database(self) -> None:
         with self.assertRaises(GenerateStartingSolutionError):
             generate_starting_solution(test_generate_starting_solution_invalid_database_path)
+
+    @patch('numpy.random.randint', side_effect=[1, 1, 0, 0])
+    def test_perform_random_sub_step(self, mock_randint) -> None:
+        shape = (len(self.perform_random_sub_step.machines),
+                 len(self.perform_random_sub_step.employees),
+                 len(self.perform_random_sub_step.time_span))
+
+        ana = self.perform_random_sub_step.employees[0]
+        mach = self.perform_random_sub_step.machines[0]
+
+        result = FactoryAssignmentSchedule(
+            machines=self.perform_random_sub_step.machines,
+            employees=self.perform_random_sub_step.employees,
+            time_span=self.perform_random_sub_step.time_span,
+            allowed_values=[0, 1],
+            input_array=np.zeros(shape)
+        )
+
+        expected = np.zeros(shape)
+
+        expected[mach.id, ana.id, 0: ana.shift_duration] = np.ones(ana.shift_duration)
+        perform_random_sub_step(result)
+        print()
+        print(expected)
+        self.assertTrue(np.all(result == expected))
+
+        expected[mach.id, ana.id, WORK_DAY_DURATION: WORK_DAY_DURATION + ana.shift_duration] = (
+            np.ones(ana.shift_duration))
+        perform_random_sub_step(result)
+        print()
+        print(expected)
+        self.assertTrue(np.all(result == expected))
+
+        expected[mach.id, ana.id, WORK_DAY_DURATION: WORK_DAY_DURATION + ana.shift_duration] = (
+            np.zeros(ana.shift_duration))
+        perform_random_sub_step(result)
+        print()
+        print(expected)
+        self.assertTrue(np.all(result == expected))
+
+        expected[mach.id, ana.id, 0: ana.shift_duration] = np.zeros(ana.shift_duration)
+        perform_random_sub_step(result)
+        print()
+        print(expected)
+        self.assertTrue(np.all(result == expected))
 
     def test_random_neighbour(self) -> None:
         # TODO implement this test

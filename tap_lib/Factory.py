@@ -929,9 +929,20 @@ def generate_starting_solution(database_path: str) -> FactoryAssignmentSchedule:
                                         value=database_path)
 
 
+def perform_random_sub_step(schedule: FactoryAssignmentSchedule) -> None:
+    """
+    Function calls assign_shift or unassign_shift on a schedule object with random employee and machine.
+    @param schedule: schedule to be changed
+    @type schedule: FactoryAssignmentSchedule
+    @return: None
+    """
+    pass
+
+
 def random_neighbour(schedule: FactoryAssignmentSchedule) -> FactoryAssignmentSchedule:
     """
-    Function generates instance of FactoryAssignmentSchedule that is randomly different from provided schedule.
+    Function generates instance of FactoryAssignmentSchedule that is randomly different from provided schedule. Works
+    on copy, therefore the rest of the functions perform changes in place.
     @param schedule: base schedule
     @type schedule: FactoryAssignmentSchedule
     @return: new neighbour
