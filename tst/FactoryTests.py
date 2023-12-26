@@ -1262,7 +1262,7 @@ class UtilsFunctionTests(TestCase):
         with self.assertRaises(GenerateStartingSolutionError):
             generate_starting_solution(test_generate_starting_solution_invalid_database_path)
 
-    @patch('numpy.random.randint', side_effect=[1, 1, 0, 0])
+    @patch('numpy.random.randint', side_effect=[1, 1, 1, 0, 0, 0])
     def test_perform_random_sub_step(self, mock_randint) -> None:
         shape = (len(self.perform_random_sub_step.machines),
                  len(self.perform_random_sub_step.employees),
@@ -1283,28 +1283,28 @@ class UtilsFunctionTests(TestCase):
 
         expected[mach.id, ana.id, 0: ana.shift_duration] = np.ones(ana.shift_duration)
         perform_random_sub_step(result)
-        print()
-        print(expected)
         self.assertTrue(np.all(result == expected))
 
         expected[mach.id, ana.id, WORK_DAY_DURATION: WORK_DAY_DURATION + ana.shift_duration] = (
             np.ones(ana.shift_duration))
         perform_random_sub_step(result)
-        print()
-        print(expected)
+        self.assertTrue(np.all(result == expected))
+
+        # further assignment not possible, should not raise an error
+        perform_random_sub_step(result)
         self.assertTrue(np.all(result == expected))
 
         expected[mach.id, ana.id, WORK_DAY_DURATION: WORK_DAY_DURATION + ana.shift_duration] = (
             np.zeros(ana.shift_duration))
         perform_random_sub_step(result)
-        print()
-        print(expected)
         self.assertTrue(np.all(result == expected))
 
         expected[mach.id, ana.id, 0: ana.shift_duration] = np.zeros(ana.shift_duration)
         perform_random_sub_step(result)
-        print()
-        print(expected)
+        self.assertTrue(np.all(result == expected))
+
+        # further unassignment not possible, should not raise an error
+        perform_random_sub_step(result)
         self.assertTrue(np.all(result == expected))
 
     def test_random_neighbour(self) -> None:
