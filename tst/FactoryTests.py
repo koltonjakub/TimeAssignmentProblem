@@ -1276,7 +1276,7 @@ class UtilsFunctionTests(TestCase):
         with self.assertRaises(GenerateStartingSolutionError):
             generate_starting_solution(test_generate_starting_solution_invalid_database_path)
 
-    @patch('numpy.random.randint', side_effect=[1, 1, 1, 0, 0, 0])
+    @patch('random.randint', side_effect=[1, 1, 1, 0, 0, 0])
     def test_perform_random_sub_step(self, _) -> None:
         shape = (len(self.perform_random_sub_step.machines),
                  len(self.perform_random_sub_step.employees),
@@ -1321,7 +1321,7 @@ class UtilsFunctionTests(TestCase):
         perform_random_sub_step(result)
         self.assertTrue(np.all(result == expected))
 
-    @patch('numpy.random.randint', side_effect=[1, 1, 0, 0, 1, 1, 0, 0])
+    @patch('random.randint', side_effect=[1, 1, 0, 0, 1, 1, 0, 0])
     @patch('random.choice', side_effect=[
         mock_mach1, mock_ana,  # assign
         mock_mach2, mock_bob,  # assign
@@ -1381,7 +1381,7 @@ class UtilsFunctionTests(TestCase):
         perform_random_sub_step(result)
         self.assertTrue(np.all(result == expected))
 
-    @patch('numpy.random.randint', 1)
+    @patch('tap_lib.Factory.NEIGHBOURHOOD_DIAMETER', 1)
     def test_random_neighbour(self) -> None:
         shape = (len(self.random_neighbour.machines),
                  len(self.random_neighbour.machines),
@@ -1409,14 +1409,7 @@ class UtilsFunctionTests(TestCase):
         self.assertEqual(expected.time_span, result.time_span)
 
         # check if deepcopy of input schedule was changed and the parsed schedule was not
-        self.assertEqual(original, expected)
-
-        print()
-        print(original)
-        print(original.cost())
-        print()
-        print(result)
-        print(result.cost())
+        self.assertTrue(np.all(original == expected))
 
 
 if __name__ == "__main__":
