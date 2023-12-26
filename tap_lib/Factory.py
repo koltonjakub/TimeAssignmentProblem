@@ -1,17 +1,28 @@
-"""This file contains all data types used in project"""
+"""This file contains all data types and functions specified for factory"""
+
+
 from typing import Union, Dict, List, Any, Tuple, Iterable
+from configparser import ConfigParser
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from copy import deepcopy
 from json import load
 
 import numpy as np
+import os
 
 
-WORK_DAY_DURATION: int = 18
-WORK_DAY_START_HOUR: int = 6
-WORK_DAY_END_HOUR: int = 23
-MAX_TIME_SPAN_EXTENSION_OCCURRENCE: int = 100
+current_directory = os.getcwd()
+parent_directory = os.path.dirname(current_directory)
+config_directory = os.path.join(parent_directory, "tap_lib", "config.ini")
+
+config = ConfigParser()
+config.read(config_directory)
+
+WORK_DAY_DURATION = config.getint('Globals', 'WORK_DAY_DURATION_IN_HOURS')
+WORK_DAY_START_HOUR = config.getint('Globals', 'WORK_DAY_START_AS_HOUR')
+WORK_DAY_END_HOUR = config.getint('Globals', 'WORK_DAY_END_AS_HOUR')
+MAX_TIME_SPAN_EXTENSION_OCCURRENCE = config.getint('Globals', 'MAX_TIME_SPAN_EXTENSION_OCCURRENCE')
 
 
 class ResourceImportError(Exception):
