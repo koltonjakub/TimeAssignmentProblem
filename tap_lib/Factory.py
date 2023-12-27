@@ -610,7 +610,7 @@ class FactoryAssignmentSchedule(np.ndarray):
         costs_machs = np.multiply(ker_machs, [mach.hourly_cost for mach in self.machines])
         costs_empls = np.multiply(ker_empls, [emp.hourly_cost for emp in self.employees])
 
-        return np.sum(np.add(costs_empls, costs_machs))
+        return np.sum(costs_empls) + np.sum(costs_machs)
 
     @property
     def machines(self) -> List[Machine]:
