@@ -742,13 +742,56 @@ class UtilsFunctionTests(TestCase):
         self.random_neighbour = ResourceManager.import_resources_from_json(test_random_neighbour_database_path)
 
     def test_machines_maintenance(self) -> None:
-        pass
+        shape = (len(self.cost_db.machines), len(self.cost_db.employees), len(self.cost_db.time_span))
+        schedule = FactoryAssignmentSchedule(
+            machines=self.cost_db.machines,
+            employees=self.cost_db.employees,
+            time_span=self.cost_db.time_span,
+            allowed_values=[0, 1],
+            input_array=np.ones(shape)
+        )
+        expected = [2*1*18, 2*2*18]
+        for mach, exp in zip(schedule.machines, expected):
+            self.assertEqual(get_machine_maintenance(schedule, mach), exp)
 
     def test_employee_salary(self) -> None:
-        pass
+        shape = (len(self.cost_db.machines), len(self.cost_db.employees), len(self.cost_db.time_span))
+        schedule = FactoryAssignmentSchedule(
+            machines=self.cost_db.machines,
+            employees=self.cost_db.employees,
+            time_span=self.cost_db.time_span,
+            allowed_values=[0, 1],
+            input_array=np.ones(shape)
+        )
+        expected = [2 * 1 * 18, 2 * 2 * 18]
+        for empl, exp in zip(schedule.employees, expected):
+            self.assertEqual(get_employee_salary(schedule, empl), exp)
 
     def test_time_penalty(self) -> None:
-        pass
+        shape = (len(self.cost_db.machines), len(self.cost_db.employees), len(self.cost_db.time_span))
+        schedule = FactoryAssignmentSchedule(
+            machines=self.cost_db.machines,
+            employees=self.cost_db.employees,
+            time_span=self.cost_db.time_span,
+            allowed_values=[0, 1],
+            input_array=np.ones(shape),
+            exceeding_days=1
+        )
+        expected = 10*1 + 50*1**2
+        self.assertEqual(get_time_penalty(schedule), expected)
+
+    def test_get_cost(self) -> None:
+        shape = (len(self.cost_db.machines), len(self.cost_db.employees), len(self.cost_db.time_span))
+        schedule = FactoryAssignmentSchedule(
+            machines=self.cost_db.machines,
+            employees=self.cost_db.employees,
+            time_span=self.cost_db.time_span,
+            allowed_values=[0, 1],
+            input_array=np.ones(shape),
+            exceeding_days=1
+        )
+        expected = 2*1*18 + 2*2*18 + 2*1*18 + 2*2*18 + 10*1 + 50*1**2
+        self.assertEqual(get_time_penalty(schedule), expected)
 
     def test_get_machine_production(self) -> None:
         shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
