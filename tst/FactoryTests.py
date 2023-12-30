@@ -15,6 +15,7 @@ from tap_lib.Factory import (
     InvalidTotalProductionError, GenerateStartingSolutionError,
     Machine, Employee, TimeSpan, ResourceContainer, ResourceManager, FactoryAssignmentSchedule,
     get_machine_production, get_nr_of_assigned_employees,
+    get_machine_maintenance, get_employee_salary, get_time_penalty, get_cost,
     is_valid_machine_production, is_valid_total_production, is_valid_machine_assignment, is_valid_schedule_assignment,
     assign_shift, unassign_shift, order_machines, order_employees, populate_machine_with_employee, populate_schedule,
     extend_time_span, generate_starting_solution, perform_random_sub_step, random_neighbour
@@ -24,6 +25,7 @@ current_directory = os.getcwd()
 parent_directory = os.path.dirname(current_directory)
 
 test_database_path = os.path.join(parent_directory, "data", "tst_database", "test_database.json")
+test_cost_database_path = os.path.join(parent_directory, "data", "tst_database", "test_cost_database.json")
 test_invalid_machines_database_path = os.path.join(
     parent_directory, "data", "tst_database", "test_invalid_machine_ids_database.json")
 test_invalid_employees_database_path = os.path.join(
@@ -713,6 +715,7 @@ class UtilsFunctionTests(TestCase):
     def __init__(self, *args, **kwargs) -> None:
         super(UtilsFunctionTests, self).__init__(*args, **kwargs)
 
+        self.cost_db = ResourceManager().import_resources_from_json(test_cost_database_path)
         self.inv_prod = ResourceManager().import_resources_from_json(test_invalid_production_database_path)
         self.valid_prod = ResourceManager().import_resources_from_json(test_valid_production_database_path)
         self.advanced_shift = ResourceManager().import_resources_from_json(test_advanced_shift_assignment_database_path)
@@ -729,6 +732,15 @@ class UtilsFunctionTests(TestCase):
         self.perform_random_sub_step_multiple_assignments = ResourceManager.import_resources_from_json(
             test_perform_random_sub_step_multiple_assignments_database_path)
         self.random_neighbour = ResourceManager.import_resources_from_json(test_random_neighbour_database_path)
+
+    def test_machines_maintenance(self) -> None:
+        pass
+
+    def test_employee_salary(self) -> None:
+        pass
+
+    def test_time_penalty(self) -> None:
+        pass
 
     def test_get_machine_production(self) -> None:
         shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))

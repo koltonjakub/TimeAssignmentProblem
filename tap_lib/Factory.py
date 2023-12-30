@@ -664,6 +664,55 @@ class FactoryAssignmentSchedule(np.ndarray):
         self.__allowed_values: Iterable[Any] = value
 
 
+def get_machine_maintenance(schedule: FactoryAssignmentSchedule, machine: Machine) -> Union[int, float]:
+    """
+    Function calculates cost incurred from working machine due to it`s maintenance spending.
+    @param schedule: Schedule provided for evaluation
+    @type schedule: FactoryAssignmentSchedule
+    @param machine: machine producing cost
+    @type machine: Machine
+    @return: cost incurred by machine maintenance
+    @rtype: Union[int, float]
+    """
+    pass
+
+
+def get_employee_salary(schedule: FactoryAssignmentSchedule, employee: Employee) -> Union[int, float]:
+    """
+    Function calculates salary of the employee according to their`s worktime in schedule.
+    @param schedule: Schedule provided for evaluation
+    @type schedule: FactoryAssignmentSchedule
+    @param employee: employee to be paid
+    @type employee: Employee
+    @return: salary of employee
+    @rtype: Union[int, float]
+    """
+    pass
+
+
+def get_time_penalty(schedule: FactoryAssignmentSchedule) -> Union[int, float]:
+    """
+    Function calculates penalty incurred from time needed for completion of order.
+    @param schedule: Schedule provided for evaluation
+    @type schedule: FactoryAssignmentSchedule
+    @return: evaluated penalty
+    @rtype: Union[int, float]
+    """
+    pass
+
+
+def get_cost(schedule: FactoryAssignmentSchedule) -> Union[int, float]:
+    """
+    Function calculates total cost of provided schedule. The cost is sum of machines maintenance spending, employees`
+    salaries and time factor.
+    @param schedule: Schedule provided for evaluation of cost
+    @type schedule: FactoryAssignmentSchedule
+    @return: total cost
+    @rtype: Union[int, float]
+    """
+    pass
+
+
 def get_machine_production(schedule: FactoryAssignmentSchedule, machine: Machine) -> Union[int, float]:
     """
     Function calculates the machine production for a given schedule and returns it.
