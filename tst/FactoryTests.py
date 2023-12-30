@@ -750,7 +750,7 @@ class UtilsFunctionTests(TestCase):
             allowed_values=[0, 1],
             input_array=np.ones(shape)
         )
-        expected = [2*1*18, 2*2*18]
+        expected = [1*36, 2*36]
         for mach, exp in zip(schedule.machines, expected):
             self.assertEqual(get_machine_maintenance(schedule, mach), exp)
 
@@ -763,7 +763,7 @@ class UtilsFunctionTests(TestCase):
             allowed_values=[0, 1],
             input_array=np.ones(shape)
         )
-        expected = [2 * 1 * 18, 2 * 2 * 18]
+        expected = [2 * 1 * 36, 2 * 2 * 36]
         for empl, exp in zip(schedule.employees, expected):
             self.assertEqual(get_employee_salary(schedule, empl), exp)
 
@@ -777,7 +777,7 @@ class UtilsFunctionTests(TestCase):
             input_array=np.ones(shape),
             exceeding_days=1
         )
-        expected = 10*1 + 50*1**2
+        expected = 10*2 + 50*1**2
         self.assertEqual(get_time_penalty(schedule), expected)
 
     def test_get_cost(self) -> None:
@@ -790,8 +790,8 @@ class UtilsFunctionTests(TestCase):
             input_array=np.ones(shape),
             exceeding_days=1
         )
-        expected = 2*1*18 + 2*2*18 + 2*1*18 + 2*2*18 + 10*1 + 50*1**2
-        self.assertEqual(get_time_penalty(schedule), expected)
+        expected = 1*36 + 2*36 + 2*1*36 + 2*2*36 + 10*2 + 50*1**2
+        self.assertEqual(get_cost(schedule), expected)
 
     def test_get_machine_production(self) -> None:
         shape = (len(self.valid_prod.machines), len(self.valid_prod.employees), len(self.valid_prod.time_span))
@@ -1342,10 +1342,9 @@ class UtilsFunctionTests(TestCase):
         self.assertTrue(is_valid_total_production(result))
         self.assertEqual(result.exceeding_days, 5)
 
-    # TODO enable this test
-    # def test_generate_starting_solution_invalid_database(self) -> None:
-    #     with self.assertRaises(GenerateStartingSolutionError):
-    #         generate_starting_solution(test_generate_starting_solution_invalid_database_path)
+    def test_generate_starting_solution_invalid_database(self) -> None:
+        with self.assertRaises(GenerateStartingSolutionError):
+            generate_starting_solution(test_generate_starting_solution_invalid_database_path)
 
     @patch('random.randint', side_effect=[1, 1, 1, 0, 0, 0])
     def test_perform_random_sub_step(self, _) -> None:
