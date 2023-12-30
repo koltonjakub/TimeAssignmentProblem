@@ -451,6 +451,7 @@ class FactoryAssignmentScheduleTests(TestCase):
         self.assertEqual(schedule.encountered_it, 1)
         self.assertEqual(schedule.allowed_values, [0, 1])
         self.assertEqual(schedule.dtype, 'int32')
+        self.assertEqual(schedule.exceeding_days, 0)
 
     def test___new___input_array(self) -> None:
         schedule_default: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
@@ -474,6 +475,7 @@ class FactoryAssignmentScheduleTests(TestCase):
         self.assertEqual(schedule_default.allowed_values, schedule_template.allowed_values)
         self.assertEqual(schedule_default.shape, schedule_template.shape)
         self.assertEqual(schedule_default.dtype, schedule_template.dtype)
+        self.assertEqual(schedule_default.exceeding_days, 0)
 
     # noinspection PyTypeChecker
     def test___factory___raising_error(self) -> None:
@@ -565,6 +567,7 @@ class FactoryAssignmentScheduleTests(TestCase):
         self.assertEqual(schedule_view.allowed_values, schedule.allowed_values)
         self.assertEqual(schedule_view.dtype, schedule.dtype)
         self.assertEqual(schedule_view.shape, schedule.shape)
+        self.assertEqual(schedule_view.exceeding_days, 0)
 
     # noinspection PyArgumentList
     def test_missing_constructor_params(self) -> None:
@@ -694,6 +697,7 @@ class FactoryAssignmentScheduleTests(TestCase):
         self.assertEqual(schedule.encountered_it, 1)
         self.assertEqual(schedule.allowed_values, [0, 1])
         self.assertEqual(schedule.dtype, 'int32')
+        self.assertEqual(schedule.exceeding_days, 0)
 
         self.assertEqual(fraction.shape, (2, 2, 2))
         self.assertEqual(fraction.machines, frac_machines)
@@ -702,6 +706,7 @@ class FactoryAssignmentScheduleTests(TestCase):
         self.assertEqual(fraction.encountered_it, 2)
         self.assertEqual(fraction.allowed_values, [0, 1, 2])
         self.assertEqual(fraction.dtype, 'int32')
+        self.assertEqual(fraction.exceeding_days, 0)
 
 
 class UtilsFunctionTests(TestCase):
@@ -1265,12 +1270,14 @@ class UtilsFunctionTests(TestCase):
         populate_schedule(expected)
         result = generate_starting_solution(test_populate_schedule_database_path)
         self.assertTrue(np.all(result == expected))
+        self.assertEqual(result.exceeding_days, 0)
 
     def test_generate_starting_solution_with_time_span_extension(self) -> None:
         result = generate_starting_solution(test_generate_starting_solution_extend_time_span_database_path)
 
         self.assertTrue(is_valid_schedule_assignment(result))
         self.assertTrue(is_valid_total_production(result))
+        self.assertEqual(result.exceeding_days, 5)
 
     def test_generate_starting_solution_invalid_database(self) -> None:
         with self.assertRaises(GenerateStartingSolutionError):
