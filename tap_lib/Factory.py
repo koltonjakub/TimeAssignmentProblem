@@ -24,6 +24,8 @@ config.read(config_directory)
 WORK_DAY_DURATION = config.getint('Globals', 'WORK_DAY_DURATION_IN_HOURS')
 WORK_DAY_START_HOUR = config.getint('Globals', 'WORK_DAY_START_AS_HOUR')
 WORK_DAY_END_HOUR = config.getint('Globals', 'WORK_DAY_END_AS_HOUR')
+STANDARD_DAY_COEFFICIENT = config.getint('Globals', 'STANDARD_DAY_COEFFICIENT')
+EXCEEDED_DAY_COEFFICIENT = config.getint('Globals', 'EXCEEDED_DAY_COEFFICIENT')
 MAX_TIME_SPAN_EXTENSION_OCCURRENCE = config.getint('Globals', 'MAX_TIME_SPAN_EXTENSION_OCCURRENCE')
 NEIGHBOURHOOD_DIAMETER = config.getint('Globals', 'NEIGHBOURHOOD_DIAMETER')
 
@@ -691,7 +693,12 @@ def get_machine_maintenance(schedule: FactoryAssignmentSchedule, machine: Machin
     @return: cost incurred by machine maintenance
     @rtype: Union[int, float]
     """
-    pass
+    summed_employees = np.sum(schedule[machine.id, :, :], axis=1)
+    boolean_mask = summed_employees > 0
+    bit_mask = boolean_mask.astype(int)
+    working_hours = np.sum(bit_mask, axis=1)
+
+    return machine.hourly_cost * working_hours
 
 
 def get_employee_salary(schedule: FactoryAssignmentSchedule, employee: Employee) -> Union[int, float]:
@@ -704,7 +711,10 @@ def get_employee_salary(schedule: FactoryAssignmentSchedule, employee: Employee)
     @return: salary of employee
     @rtype: Union[int, float]
     """
-    pass
+    summed_machines = np.sum(schedule[:, employee.id, :], axis=2)
+    working_hours = np.sum(summed_machines, axis=0)
+
+    return employee.hourly_cost * working_hours
 
 
 def get_time_penalty(schedule: FactoryAssignmentSchedule) -> Union[int, float]:
@@ -715,7 +725,21 @@ def get_time_penalty(schedule: FactoryAssignmentSchedule) -> Union[int, float]:
     @return: evaluated penalty
     @rtype: Union[int, float]
     """
-    pass
+    time_span_len_in_days = len(schedule.time_span) // WORK_DAY_DURATION
+    last_working_day = None
+
+    for day in range(time_span_len_in_days - 1, -1, -1):
+        if np.sum(schedule[:, :, day * WORK_DAY_DURATION: (day + 1) * WORK_DAY_DURATION]) > 0:
+            last_working_day = day + 1
+            break
+    print(last_working_day, time_span_len_in_days)
+
+    standard_days = last_working_day
+    exceeded_days = time_span_len_in_days - last_working_day + schedule.exceeding_days
+    if exceeded_days < 0:
+        exceeded_days = 0  # this cancels extra penalty, if number of exceeded days is actually less than 0
+
+    return standard_days * STANDARD_DAY_COEFFICIENT + exceeded_days * EXCEEDED_DAY_COEFFICIENT
 
 
 def get_cost(schedule: FactoryAssignmentSchedule) -> Union[int, float]:
@@ -727,7 +751,11 @@ def get_cost(schedule: FactoryAssignmentSchedule) -> Union[int, float]:
     @return: total cost
     @rtype: Union[int, float]
     """
-    pass
+    maintenance = np.sum([get_machine_maintenance(schedule, mach) for mach in schedule.machines])
+    salary = np.sum([get_employee_salary(schedule, empl) for empl in schedule.employees])
+    time_penalty = get_time_penalty(schedule)
+
+    return maintenance + salary + time_penalty
 
 
 def get_machine_production(schedule: FactoryAssignmentSchedule, machine: Machine) -> Union[int, float]:
