@@ -1,7 +1,6 @@
 import numpy as np
 from enum import Enum
 from typing import Callable
-import matplotlib.pyplot as plt
 
 
 class CoolingTypes(Enum):
@@ -11,8 +10,8 @@ class CoolingTypes(Enum):
     LOG = 'logarithmic'
 
 
-def linear_cooling_init(init_temp: float, final_temp: float, max_iter: int, iters: int = 1) -> Callable[
-    [float, int], float]:
+def linear_cooling_init(init_temp: float, final_temp: float, max_iter: int, iters: int = 1) -> (
+        Callable)[[float, int], float]:
     def linear_cooling(temp: float, it: int):
         if it == 0:
             return init_temp
@@ -21,11 +20,12 @@ def linear_cooling_init(init_temp: float, final_temp: float, max_iter: int, iter
         series = (max_iter + iters) // iters - 1
         a = (init_temp - final_temp) / series
         return final_temp + a * (series - it // iters)
+
     return linear_cooling
 
 
-def polynomial_cooling_init(init_temp: float, final_temp: float, max_iter: int, iters: int = 1, poly=None) -> Callable[
-    [float, int], float]:
+def polynomial_cooling_init(init_temp: float, final_temp: float, max_iter: int, iters: int = 1, poly=None) -> (
+        Callable)[[float, int], float]:
     def polynomial_cooling(temp: float, it: int):
         if it == 0:
             return init_temp
@@ -33,23 +33,25 @@ def polynomial_cooling_init(init_temp: float, final_temp: float, max_iter: int, 
             return temp
         series = (max_iter + iters) // iters - 1
         a = (init_temp - final_temp) / (series ** poly)
-        return final_temp + a * (series - it // iters) ** (poly)
+        return final_temp + a * (series - it // iters) ** poly
+
     return polynomial_cooling
 
 
-def exponential_cooling_init(init_temp: float, final_temp: float, max_iter: int, iters: int = 1, poly=None) -> Callable[
-    [float, int], float]:
+def exponential_cooling_init(init_temp: float, final_temp: float, max_iter: int, iters: int = 1, poly=None) -> (
+        Callable)[[float, int], float]:
     def exponential_cooling(temp: float, it: int):
         if it == 0:
             return init_temp
         if it % iters != 0:
             return temp
         return final_temp + (init_temp - final_temp) * np.exp(-it // iters)
+
     return exponential_cooling
 
 
-def logarithmic_cooling_init(init_temp: float, final_temp: float, max_iter: int, iters: int = 1, poly=None) -> Callable[
-    [float, int], float]:
+def logarithmic_cooling_init(init_temp: float, final_temp: float, max_iter: int, iters: int = 1, poly=None) -> (
+        Callable)[[float, int], float]:
     def logarithmic_cooling(temp: float, it: int):
         if it == 0:
             return init_temp
@@ -58,6 +60,7 @@ def logarithmic_cooling_init(init_temp: float, final_temp: float, max_iter: int,
         series = (max_iter + iters) // iters - 1
         a = (init_temp - final_temp) / np.log(series)
         return final_temp + a * np.log(series - it // iters)
+
     return logarithmic_cooling
 
 
@@ -89,5 +92,3 @@ def cooling_factory(init_temp: float, final_temp: float, max_iter: int, cool_typ
 
     if cool_type == CoolingTypes.LOG:
         return logarithmic_cooling_init(init_temp, final_temp, max_iter, iters)
-
-

@@ -190,7 +190,6 @@ class UiMainWindow(object):
         self.browse_button.setText(QtCore.QCoreApplication.translate("MainWindow", u"Browse file", None))
         self.browse_button.clicked.connect(self.__open_dialog_box)
 
-
     def validate_values(self, param):
         """
         Function validating values if they are logically correct

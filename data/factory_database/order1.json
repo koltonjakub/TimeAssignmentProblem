@@ -1,12 +1,12 @@
 {
   "machines": [
-    {"id": 0, "hourly_cost": 50.0, "hourly_gain": 120.0, "inventory_nr": 100, "max_workers": 2, "demand": 1000},
-    {"id": 1, "hourly_cost": 57.6, "hourly_gain": 106.1, "inventory_nr": 101, "max_workers": 6, "demand": 1182},
-    {"id": 2, "hourly_cost": 45.8, "hourly_gain": 119.0, "inventory_nr": 102, "max_workers": 7, "demand": 965},
-    {"id": 3, "hourly_cost": 53.8, "hourly_gain": 113.4, "inventory_nr": 103, "max_workers": 3, "demand": 842},
-    {"id": 4, "hourly_cost": 59.5, "hourly_gain": 122.9, "inventory_nr": 104, "max_workers": 5, "demand": 1003},
-    {"id": 5, "hourly_cost": 43.8, "hourly_gain": 116.7, "inventory_nr": 105, "max_workers": 4, "demand": 1169},
-    {"id": 6, "hourly_cost": 56.5, "hourly_gain": 102.3, "inventory_nr": 106, "max_workers": 7, "demand": 1115}
+    {"id": 0, "hourly_cost": 50.0, "hourly_gain": 120.0, "inventory_nr": 100, "max_workers": 2, "demand": 100000},
+    {"id": 1, "hourly_cost": 57.6, "hourly_gain": 106.1, "inventory_nr": 101, "max_workers": 6, "demand": 11820},
+    {"id": 2, "hourly_cost": 45.8, "hourly_gain": 119.0, "inventory_nr": 102, "max_workers": 7, "demand": 96500},
+    {"id": 3, "hourly_cost": 53.8, "hourly_gain": 113.4, "inventory_nr": 103, "max_workers": 3, "demand": 28420},
+    {"id": 4, "hourly_cost": 59.5, "hourly_gain": 122.9, "inventory_nr": 104, "max_workers": 5, "demand": 100300},
+    {"id": 5, "hourly_cost": 43.8, "hourly_gain": 116.7, "inventory_nr": 105, "max_workers": 4, "demand": 116900},
+    {"id": 6, "hourly_cost": 56.5, "hourly_gain": 102.3, "inventory_nr": 106, "max_workers": 7, "demand": 111500}
   ],
   "employees": [
     {"id": 0, "hourly_cost": 15, "hourly_gain": {"0": 20, "1": 15, "2": 10, "3": 5, "4": 21, "5": 17, "6": 3}, "name": "Ana", "surname": "Doe", "shift_duration": 4},

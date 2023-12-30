@@ -167,3 +167,7 @@ test_simulate_annealing,1,0,1,1,99,max iterations reached
 test_simulate_annealing,0,0,0,1,99,max iterations reached
 test_simulate_annealing,1,0,1,1,99,max iterations reached
 test_simulate_annealing,0,0,0,1,99,max iterations reached
+test_simulate_annealing,1,0,1,1,99,max iterations reached
+test_simulate_annealing,0,0,0,1,99,max iterations reached
+test_simulate_annealing,1,0,1,1,99,max iterations reached
+test_simulate_annealing,0,0,0,1,99,max iterations reached
