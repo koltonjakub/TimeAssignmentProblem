@@ -420,7 +420,7 @@ class FactoryAssignmentSchedule(np.ndarray):
 
     def __new__(cls, machines: List[Machine], employees: List[Employee], time_span: List[TimeSpan],
                 input_array: object = None, allowed_values: List[Any] = None, encountered_it: int = None,
-                dtype: object = None) -> 'FactoryAssignmentSchedule':
+                exceeding_days: int = 0, dtype: object = None) -> 'FactoryAssignmentSchedule':
         """
         Function creates new instance of class, assigns extra properties and returns created obj.
         @param machines: machines in schedule
@@ -447,6 +447,7 @@ class FactoryAssignmentSchedule(np.ndarray):
         obj.__employees = employees
         obj.__time_span = time_span
         obj.allowed_values = allowed_values
+        obj.__exceeding_days = exceeding_days
 
         if encountered_it is not None:
             obj.__encountered_it = encountered_it
@@ -597,6 +598,7 @@ class FactoryAssignmentSchedule(np.ndarray):
         self.__time_span: List[TimeSpan] = getattr(obj, 'time_span', None)
         self.__encountered_it: int = getattr(obj, 'encountered_it', None)
         self.__allowed_values: List[Any] = getattr(obj, 'allowed_values', None)
+        self.__exceeding_days: int = getattr(obj, 'exceeding_days', None)
 
     def cost(self) -> float:
         """
@@ -662,6 +664,21 @@ class FactoryAssignmentSchedule(np.ndarray):
 
         # noinspection PyAttributeOutsideInit
         self.__allowed_values: Iterable[Any] = value
+
+    @property
+    def exceeding_days(self) -> int:
+        return self.__exceeding_days
+
+    @exceeding_days.setter
+    def exceeding_days(self, value: int) -> None:
+        if not isinstance(value, int):
+            raise TypeError('exceeding_days must be of type int')
+
+        if value < 0:
+            raise ValueError('exceeding_days must be non-negative')
+
+        # noinspection PyAttributeOutsideInit
+        self.__exceeding_days = value
 
 
 def get_machine_maintenance(schedule: FactoryAssignmentSchedule, machine: Machine) -> Union[int, float]:
@@ -966,7 +983,9 @@ def generate_starting_solution(database_path: str) -> FactoryAssignmentSchedule:
                 machines=factory_resources.machines,
                 employees=factory_resources.employees,
                 time_span=factory_resources.time_span,
-                allowed_values=[0, 1]
+                allowed_values=[0, 1],
+                encountered_it=0,
+                exceeding_days=failures_counter
             )
             populate_schedule(schedule)
         except InvalidScheduleAssignmentError:
@@ -974,6 +993,7 @@ def generate_starting_solution(database_path: str) -> FactoryAssignmentSchedule:
         except InvalidTotalProductionError:
             failures_counter += 1
             factory_resources.time_span = extend_time_span(factory_resources.time_span)
+
         else:
             return schedule
     raise GenerateStartingSolutionError(msg=f'The factory assignment schedule could not be generated within '
