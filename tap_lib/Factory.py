@@ -602,20 +602,6 @@ class FactoryAssignmentSchedule(np.ndarray):
         self.__allowed_values: List[Any] = getattr(obj, 'allowed_values', None)
         self.__exceeding_days: int = getattr(obj, 'exceeding_days', None)
 
-    def cost(self) -> float:
-        """
-        Function evaluates cost of schedule.
-        """
-        ker = np.sum(self.view(np.ndarray), axis=2)
-        ker_bool = np.sum(self.view(np.ndarray), axis=1, dtype=bool)
-        ker_empls = np.sum(ker, axis=0)
-        ker_machs = np.sum(ker_bool, axis=1).transpose()
-
-        costs_machs = np.multiply(ker_machs, [mach.hourly_cost for mach in self.machines])
-        costs_empls = np.multiply(ker_empls, [emp.hourly_cost for emp in self.employees])
-
-        return np.sum(costs_empls) + np.sum(costs_machs)
-
     @property
     def machines(self) -> List[Machine]:
         return self.__machines
@@ -726,13 +712,12 @@ def get_time_penalty(schedule: FactoryAssignmentSchedule) -> Union[int, float]:
     @rtype: Union[int, float]
     """
     time_span_len_in_days = len(schedule.time_span) // WORK_DAY_DURATION
-    last_working_day = None
+    last_working_day = 0
 
     for day in range(time_span_len_in_days - 1, -1, -1):
         if np.sum(schedule[:, :, day * WORK_DAY_DURATION: (day + 1) * WORK_DAY_DURATION]) > 0:
             last_working_day = day + 1
             break
-    print(last_working_day, time_span_len_in_days)
 
     standard_days = last_working_day
     exceeded_days = time_span_len_in_days - last_working_day + schedule.exceeding_days

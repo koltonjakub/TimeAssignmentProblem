@@ -632,47 +632,6 @@ class FactoryAssignmentScheduleTests(TestCase):
             with self.assertRaises(FactoryAssignmentScheduleError):
                 schedule[0, 0, 0] = inv_val
 
-    def test_cost(self) -> None:
-        arr1 = np.array(
-            [[[0], [0], [1], [0], [0]], [[0], [0], [0], [0], [0]], [[1], [0], [0], [1], [1]], [[0], [1], [0], [0], [0]],
-             [[0], [0], [0], [0], [0]], ])
-        arr2 = np.array([[[0, 0], [0, 0], [0, 0], [1, 0], [0, 1]], [[0, 0], [0, 0], [1, 0], [0, 0], [0, 0]],
-                         [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]],
-                         [[0, 1], [1, 1], [0, 0], [0, 1], [1, 0]], [[1, 0], [0, 0], [0, 0], [0, 0], [0, 0]]])
-        arr3 = np.array([[[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 1, 1]],
-                         [[1, 0, 0], [0, 0, 1], [1, 0, 0], [0, 1, 0], [0, 0, 0]],
-                         [[0, 1, 1], [0, 0, 0], [0, 0, 1], [0, 0, 1], [1, 0, 0]],
-                         [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-                         [[0, 0, 0], [0, 0, 0], [0, 1, 0], [1, 0, 0], [0, 0, 0]]])
-
-        schedule1: FactoryAssignmentSchedule = FactoryAssignmentSchedule(input_array=arr1,
-                                                                         machines=self.res.machines,
-                                                                         employees=self.res.employees,
-                                                                         time_span=self.res.time_span[0:1],
-                                                                         encountered_it=1, allowed_values=[0, 1],
-                                                                         dtype='int32'
-                                                                         )
-
-        schedule2: FactoryAssignmentSchedule = FactoryAssignmentSchedule(input_array=arr2,
-                                                                         machines=self.res.machines,
-                                                                         employees=self.res.employees,
-                                                                         time_span=self.res.time_span[0:2],
-                                                                         encountered_it=1, allowed_values=[0, 1],
-                                                                         dtype='int32'
-                                                                         )
-
-        schedule3: FactoryAssignmentSchedule = FactoryAssignmentSchedule(input_array=arr3,
-                                                                         machines=self.res.machines,
-                                                                         employees=self.res.employees,
-                                                                         time_span=self.res.time_span[0:3],
-                                                                         encountered_it=1, allowed_values=[0, 1],
-                                                                         dtype='int32'
-                                                                         )
-
-        self.assertEqual(schedule1.cost(), 271)
-        self.assertEqual(schedule2.cost(), 503)
-        self.assertEqual(schedule3.cost(), 778)
-
     def test_partial_assignment_not_changing_dim_list(self):
         schedule: FactoryAssignmentSchedule = FactoryAssignmentSchedule(
             input_array=np.ones((5, 5, 5)),
@@ -1473,7 +1432,7 @@ class UtilsFunctionTests(TestCase):
 
         result = random_neighbour(expected)
 
-        self.assertNotEqual(expected.cost(), result.cost())
+        self.assertNotEqual(get_cost(expected), get_cost(result))
         self.assertEqual(expected.machines, result.machines)
         self.assertEqual(expected.employees, result.employees)
         self.assertEqual(expected.time_span, result.time_span)
