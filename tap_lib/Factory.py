@@ -14,12 +14,11 @@ import random
 import os
 
 
-current_directory = os.getcwd()
-parent_directory = os.path.dirname(current_directory)
-config_directory = os.path.join(parent_directory, "tap_lib", "config.ini")
+tap_lib_dir = os.path.dirname(os.path.abspath(__file__))
+config_dir = os.path.join(tap_lib_dir, "config.ini")
 
 config = ConfigParser()
-config.read(config_directory)
+config.read(config_dir)
 
 WORK_DAY_DURATION = config.getint('Globals', 'WORK_DAY_DURATION_IN_HOURS')
 WORK_DAY_START_HOUR = config.getint('Globals', 'WORK_DAY_START_AS_HOUR')

@@ -10,7 +10,7 @@ import numpy as np
 import os
 
 from tap_lib.Factory import (
-    WORK_DAY_DURATION,
+    WORK_DAY_DURATION, STANDARD_DAY_COEFFICIENT, EXCEEDED_DAY_COEFFICIENT,
     ResourceImportError, FactoryAssignmentScheduleError, ShiftAssignmentError, ShiftUnassignmentError,
     InvalidTotalProductionError, GenerateStartingSolutionError,
     Machine, Employee, TimeSpan, ResourceContainer, ResourceManager, FactoryAssignmentSchedule,
@@ -736,7 +736,7 @@ class UtilsFunctionTests(TestCase):
             input_array=np.ones(shape),
             exceeding_days=1
         )
-        expected = 10*2 + 50*1**2
+        expected = STANDARD_DAY_COEFFICIENT*2 + EXCEEDED_DAY_COEFFICIENT*1**2
         self.assertEqual(get_time_penalty(schedule), expected)
 
     def test_get_cost(self) -> None:
@@ -749,7 +749,7 @@ class UtilsFunctionTests(TestCase):
             input_array=np.ones(shape),
             exceeding_days=1
         )
-        expected = 1*36 + 2*36 + 2*1*36 + 2*2*36 + 10*2 + 50*1**2
+        expected = 1*36 + 2*36 + 2*1*36 + 2*2*36 + STANDARD_DAY_COEFFICIENT*2 + EXCEEDED_DAY_COEFFICIENT*1**2
         self.assertEqual(get_cost(schedule), expected)
 
     def test_get_machine_production(self) -> None:
