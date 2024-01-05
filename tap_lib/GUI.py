@@ -251,6 +251,7 @@ class UiMainWindow(object):
         self.init_temp_line = None
         self.centralwidget = None
 
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
