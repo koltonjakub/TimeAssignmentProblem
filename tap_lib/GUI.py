@@ -106,7 +106,7 @@ class UiResultWindow(object):
 
         solver = Solver(cost=fac.get_cost, sol_gen=fac.random_neighbour, cool=self.cool, probability=prob.exponential,
                         init_temp=self.init_temp, max_iterations=self.max_iter,
-                        log_file_path=os.path.join(dir, "logs", "log_junk", "junk.log"),
+                        # log_file_path=os.path.join(dir, "logs", "log_junk", "junk.log"),
                         csv_file_path=os.path.join(dir, "tst_algorithm_properties", "results", "test_gui.csv"))
 
         solver.SolutionType = fac.FactoryAssignmentSchedule
