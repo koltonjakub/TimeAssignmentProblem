@@ -1,12 +1,16 @@
+import codecs
+
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtGui import QDoubleValidator, QValidator
 import pyqtgraph as pg
-import Cooling
-from Solver import Solver
-import Factory as fac
+import tap_lib.Cooling as Cooling
+from tap_lib.Solver import Solver
+import tap_lib.Factory as fac
 from typing import Callable
-import Probability as prob
+import tap_lib.Probability as prob
 import os
+import json
+import numpy as np
 
 
 class TemperatureLineEdit(QtWidgets.QLineEdit):
@@ -42,6 +46,22 @@ class IterationLineEdit(QtWidgets.QLineEdit):
         else:
             self.setText('')
 
+class NeighborDiameterLineEdit(QtWidgets.QLineEdit):
+    def __init__(self, parent=None):
+        super(NeighborDiameterLineEdit, self).__init__(parent)
+
+        self.widg = parent
+        self.editingFinished.connect(self.validating)
+
+    def validating(self):
+        validation_rule = QDoubleValidator(1, 2 ** 31 - 1, 0)
+
+        if validation_rule.validate(self.text(), 0)[0] == QValidator.State.Acceptable:
+            self.setFocus()
+            fac.NEIGHBOURHOOD_DIAMETER = int(self.text())
+        else:
+            self.setText('')
+
 
 class CoolTypeComboBox(QtWidgets.QComboBox):
     def __init__(self, parent=None):
@@ -63,6 +83,7 @@ class MyCentralWidget(QtWidgets.QWidget):
 
 class UiResultWindow(object):
     def __init__(self, path: str, cool_fcn: Callable[[float, int], float], init_temp: float, max_iter: int):
+        self.save_button = None
         self.rel_improvement_label = None
         self.abs_improvement_label = None
         self.best_obj_label = None
@@ -85,8 +106,8 @@ class UiResultWindow(object):
 
         solver = Solver(cost=fac.get_cost, sol_gen=fac.random_neighbour, cool=self.cool, probability=prob.exponential,
                         init_temp=self.init_temp, max_iterations=self.max_iter,
-                        log_file_path=os.path.join(par, "logs", "log_junk", "junk.log"),
-                        csv_file_path=os.path.join(par, "tst_algorithm_properties", "results", "test_gui.csv"))
+                        log_file_path=os.path.join(dir, "logs", "log_junk", "junk.log"),
+                        csv_file_path=os.path.join(dir, "tst_algorithm_properties", "results", "test_gui.csv"))
 
         solver.SolutionType = fac.FactoryAssignmentSchedule
         solver.probability = prob.exponential
@@ -116,7 +137,7 @@ class UiResultWindow(object):
         self.menubar.setObjectName(u"menubar")
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 22))
         ResultWindow.setMenuBar(self.menubar)
-        self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        self.statusbar = QtWidgets.QStatusBar()
         self.statusbar.setObjectName(u"statusbar")
         ResultWindow.setStatusBar(self.statusbar)
 
@@ -133,6 +154,14 @@ class UiResultWindow(object):
         self.rel_improvement_label = QtWidgets.QLabel(parent=self.centralwidget)
         self.rel_improvement_label.setGeometry(QtCore.QRect(100, 660, 300, 16))
         self.rel_improvement_label.setObjectName("rel_improv")
+
+        """Button"""
+
+        self.save_button = QtWidgets.QPushButton(self.centralwidget)
+        self.save_button.setObjectName(u"save_button")
+        self.save_button.setGeometry(QtCore.QRect(400, 650, 85, 24))
+
+        """Retranslation"""
 
         self.retranslateUi(ResultWindow)
 
@@ -224,11 +253,40 @@ class UiResultWindow(object):
         self.rel_improvement_label.setText(_translate(
             "ResultWindow", "Relative improvement: "+str(self.rel_improvement)+"%"))
 
+        self.save_button.setText(QtCore.QCoreApplication.translate("MainWindow", u"Save solution", None))
+        self.save_button.clicked.connect(self.__save_solution)
+
+
+    def __save_solution(self):
+        filename = QtWidgets.QFileDialog.getSaveFileName(filter="Data files (*.json);; Text files (*.txt)")
+        M, P, T = self.solution.shape
+        time_span = self.solution.time_span
+        if filename[0].endswith(".txt"):
+            json_string = '{\n'
+            for t in range(T):
+                json_string += '\t' + str(time_span[t].datetime) + ': {\n'
+                for m in range(M):
+                    json_string += '\t\t' + str(m) + ': ' + str([int(self.solution[m, p, t]) for p in range(P)])
+                    if m == M-1:
+                        json_string += '\n\t}\n'
+                    else:
+                        json_string += ',\n'
+            json_string += '}'
+            with open (filename[0], 'w') as outfile:
+                outfile.write(json_string)
+        else:
+            data = {}
+            for t in range(T):
+                data[str(time_span[t].datetime)] = {m: [int(self.solution[m, p, t]) for p in range(P)] for m in range(M)}
+            with open(filename[0], 'w') as outfile:
+                outfile.write(json.dumps(data, indent=1))
 
 
 
 class UiMainWindow(object):
     def __init__(self):
+        self.neighbor_label = None
+        self.neighbor_line = None
         self.statusbar = None
         self.menubar = None
         self.__data_path = None
@@ -282,6 +340,10 @@ class UiMainWindow(object):
         self.poly_line.setObjectName("poly_line")
         self.poly_line.hide()
 
+        self.neighbor_line = NeighborDiameterLineEdit(parent=self.centralwidget)
+        self.neighbor_line.setGeometry(QtCore.QRect(600, 380, 113, 22))
+        self.neighbor_line.setObjectName("neighbor_line")
+
         """ComboBox"""
 
         self.cool_types_box = CoolTypeComboBox(parent=self.centralwidget)
@@ -324,19 +386,23 @@ class UiMainWindow(object):
         self.poly_label.setObjectName("poly_label")
         self.poly_label.hide()
 
+        self.neighbor_label = QtWidgets.QLabel(parent=self.centralwidget)
+        self.neighbor_label.setGeometry(QtCore.QRect(600, 360, 191, 20))
+        self.neighbor_label.setObjectName("neighbor_label")
+
         """Buttons"""
 
         self.b_cooling = QtWidgets.QPushButton(self.centralwidget)
         self.b_cooling.setObjectName(u"b_cooling")
-        self.b_cooling.setGeometry(QtCore.QRect(600, 400, 75, 24))
+        self.b_cooling.setGeometry(QtCore.QRect(600, 420, 75, 24))
 
         self.browse_button = QtWidgets.QPushButton(self.centralwidget)
         self.browse_button.setObjectName(u"browse_file_button")
-        self.browse_button.setGeometry(QtCore.QRect(600, 450, 75, 24))
+        self.browse_button.setGeometry(QtCore.QRect(600, 470, 75, 24))
 
         self.run_button = QtWidgets.QPushButton(self.centralwidget)
         self.run_button.setText(u"run_button")
-        self.run_button.setGeometry(QtCore.QRect(600, 500, 90, 24))
+        self.run_button.setGeometry(QtCore.QRect(600, 520, 90, 24))
 
         """Plot"""
 
@@ -382,6 +448,7 @@ class UiMainWindow(object):
         self.final_temp_label.setText(_translate("MainWindow", "Final temperature"))
         self.max_iter_label.setText(_translate("MainWindow", "Number of iterations"))
         self.iters_label.setText(_translate("MainWindow", "Iterations in single temperature"))
+        self.neighbor_label.setText(_translate("MainWindow", "Neighbor diameter"))
 
         self.type_label.setText(_translate("MainWindow", "Coolong function"))
         self.cool_types_box.setItemText(0, _translate("MainWindow", "Linear"))
@@ -459,11 +526,18 @@ class UiMainWindow(object):
                 self.plot_cooling.show()
 
     def __open_dialog_box(self):
-        filename = QtWidgets.QFileDialog.getOpenFileName()
+        filter = 'Data File (*.json)'
+        filename = QtWidgets.QFileDialog.getOpenFileName(
+            caption='Select a file',
+            directory=os.getcwd(),
+            filter=filter,
+            initialFilter=filter
+        )
         msg = QtWidgets.QMessageBox()
         if filename[0].endswith('.json'):
             self.__data_path = filename[0]
             msg.setText("Data loaded")
+            msg.setIcon(QtWidgets.QMessageBox.Icon.Information)
         else:
             msg.setWindowTitle("Error")
             msg.setText("Wrong file extension\nExpected .json")
@@ -473,7 +547,7 @@ class UiMainWindow(object):
 
     def __open_result_window(self):
         if all(txt != '' for txt in [self.init_temp_line.text(), self.final_temp_line.text(), self.max_iter_line.text(),
-                                     self.iters_line.text()]):
+                                     self.iters_line.text(), self.neighbor_line.text()]):
             if self.cool_types_box.currentText() == "Polynominal" and self.poly_line == '':
                 pass
             else:
@@ -489,15 +563,16 @@ class UiMainWindow(object):
                     poly = int(self.poly_line.text())
                 cool_f = Cooling.cooling_factory(init_temp, final_temp, max_iter, cool_type, iters, poly)
 
+
                 self.window = QtWidgets.QMainWindow()
                 self.ui = UiResultWindow(self.__data_path, cool_f, init_temp, max_iter)
                 self.ui.setupUi(self.window)
                 self.window.show()
 
-
-if __name__ == "__main__":
+def run_app():
+    if __name__ == "__main__":
+        import sys
     import sys
-
     app = QtCore.QCoreApplication.instance()
     if app is None:
         app = QtWidgets.QApplication(sys.argv)
@@ -506,3 +581,5 @@ if __name__ == "__main__":
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec())
+
+
